@@ -1,0 +1,133 @@
+import 'package:powerps/helper/connector/dio.dart';
+import 'package:powerps/helper/constes.dart';
+import 'package:powerps/helper/shared_prefrencess.dart';
+import 'package:powerps/provider/agent/agent_ballance_provider.dart';
+import 'package:powerps/provider/agent/agent_provider.dart';
+import 'package:powerps/provider/auth_provider.dart';
+import 'package:powerps/provider/panel_controller.dart';
+import 'package:powerps/provider/menu_provider.dart';
+import 'package:powerps/provider/prodct_provider.dart';
+import 'package:powerps/provider/product_category_provider.dart';
+import 'package:powerps/provider/transaction_provider.dart';
+import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
+import 'package:powerps/screens/home_screen.dart';
+import 'package:powerps/styles/app_theme.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> stateKey = GlobalKey<NavigatorState>();
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+        key: stateKey,
+        providers: [
+          ChangeNotifierProvider(
+            create: (context) => MenuAppController(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => PannelChangeController(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => TransactionProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => AuthChangeController(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => AgentProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => AgentBallanceProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => ProductProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => ProductCategoryProvider(),
+          ),
+        ],
+        child: MaterialApp(
+            builder: EasyLoading.init(),
+            title: projectName,
+            theme: ThemeData.dark().copyWith(
+              scaffoldBackgroundColor: AppStyle.bgColor,
+              textTheme:
+                  GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
+                      .apply(bodyColor: Colors.white),
+              canvasColor: AppStyle.secondaryColor,
+            ),
+            routes: {
+              '/home': (context) => const HomeScreen(
+                    selectedPage: 0,
+                  ),
+              '/login': (context) => const LoginScreen(),
+            },
+            debugShowCheckedModeBanner: false,
+            navigatorKey: navigatorKey,
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: CheckAuth(),
+            )));
+  }
+}
+
+class CheckAuth extends StatefulWidget {
+  const CheckAuth({super.key});
+
+  @override
+  State<CheckAuth> createState() => _CheckAuthState();
+}
+
+class _CheckAuthState extends State<CheckAuth> {
+  bool isAuth = false;
+  @override
+  void initState() {
+    _checkLogin();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child;
+    if (isAuth) {
+      child = const Directionality(
+        textDirection: TextDirection.rtl,
+        child: HomeScreen(
+          selectedPage: 0,
+        ),
+      );
+    } else {
+      child = const Directionality(
+          textDirection: TextDirection.rtl, child: LoginScreen());
+    }
+    return Scaffold(
+      body: child,
+    );
+  }
+
+  void _checkLogin() async {
+    String token = await LoggingPreference().getToken();
+    if (token == 'void' || token.isEmpty) {
+      setState(() {
+        isAuth = false;
+      });
+      return;
+    }
+    setState(() {
+      GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
+      GenaralApi.dio.options.headers['x-access-token'] = token;
+
+      isAuth = true;
+    });
+  }
+}

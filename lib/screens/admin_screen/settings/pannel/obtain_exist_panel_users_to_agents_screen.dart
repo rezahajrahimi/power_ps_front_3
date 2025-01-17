@@ -1,0 +1,630 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:provider/provider.dart';
+import 'package:powerps/helper/public.dart';
+import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/models/product_category_model.dart';
+import 'package:powerps/provider/panel_controller.dart';
+import 'package:powerps/repositories/agent_product_repository.dart';
+import 'package:powerps/repositories/bot_user_repository.dart';
+import 'package:powerps/repositories/hiddify_repository.dart';
+import 'package:powerps/repositories/pannel_repository.dart';
+import 'package:powerps/styles/app_theme.dart';
+import 'package:powerps/widgets/product_details/hiddify_config_details_with_check_box_widget.dart';
+import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:searchable_listview/searchable_listview.dart';
+
+class ObtainExistPanelUsersToAgentsScreen extends StatefulWidget {
+  const ObtainExistPanelUsersToAgentsScreen({super.key});
+
+  @override
+  State<ObtainExistPanelUsersToAgentsScreen> createState() =>
+      _ObtainExistPanelUsersToAgentsScreenState();
+}
+
+class _ObtainExistPanelUsersToAgentsScreenState
+    extends State<ObtainExistPanelUsersToAgentsScreen> {
+  bool _showData = false;
+  bool _showPannelData = false;
+  bool _showBotUsers = false;
+  String _selectedUserName = "";
+  final List<String> _botUserList = [];
+  final List<Widget> _productCatWidgetLIst = [];
+  final List<ProductCategory> _productCategoryList = [];
+  final List<String> _pannelNameList = [];
+  String _selectedPannelName = "";
+  List<HiddifyConfig> _usersList = [];
+  List<HiddifyConfig> selecedUsersList = [];
+
+  @override
+  void dispose() {
+    selecedUsersList.clear();
+    _usersList.clear();
+    _productCategoryList.clear();
+    _productCatWidgetLIst.clear();
+    _pannelNameList.clear();
+    _selectedPannelName = "";
+    _showData = false;
+    _showPannelData = false;
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    _fillData();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: appBarWithBackButton(
+            context: context, title: "ورود کانفیگهای موجود به اپلیکیشن"),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            primary: false,
+            child: Padding(
+              padding: EdgeInsets.all(AppStyle.defaultPadding),
+              child: Column(
+                children: [
+                  _showData == false
+                      ? const SizedBox(
+                          width: 50,
+                          height: 50,
+                          child: Center(child: CircularProgressIndicator()))
+                      : _content(context),
+                ],
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: Responsive.isMobile(context)
+            ? _buildBottomNavigationBar(context)
+            : const Opacity(opacity: 1),
+      ),
+    );
+  }
+
+  _buildBottomNavigationBar(BuildContext context) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: 50.0,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          Flexible(
+            flex: 1,
+            child: ElevatedButton(
+              onPressed: () async {
+                await _submitData(context);
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppStyle.secondaryColor),
+              child: const Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    SizedBox(
+                      width: 4.0,
+                    ),
+                    Text(
+                      "ذخیره",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _content(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Column(
+                children: [
+                  _pannelListInfoTabCard(context),
+                  SizedBox(width: AppStyle.defaultPadding),
+                  if (_showBotUsers) _botUserListInfoTabCard(context),
+                  SizedBox(width: AppStyle.defaultPadding),
+                  if (_showPannelData) _usersListInfoTabCard(context),
+                  if (Responsive.isMobile(context))
+                    _existConfigsListInfoCard(context)
+                ],
+              ),
+            ),
+            if (!Responsive.isMobile(context))
+              SizedBox(width: AppStyle.defaultPadding),
+            // On Mobile means if the screen is less than 850 we dont want to show it
+            if (!Responsive.isMobile(context)) // side windows
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    _operationInfoCard(context),
+                    SizedBox(width: AppStyle.defaultPadding),
+                    _existConfigsListInfoCard(context)
+                  ],
+                ),
+              ),
+          ],
+        )
+      ],
+    );
+  }
+
+  _operationInfoCard(BuildContext context) {
+    List<Widget> actionsWidgetList = [];
+
+    setState(() {
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _submitData(context);
+        },
+        icon: const Icon(Icons.done),
+        label: const Text("ذخیره"),
+      ));
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "عملیات ها",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  crossAxisCount: 1,
+                  importedList: actionsWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 1,
+                  importedList: actionsWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionsWidgetList,
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _existConfigsListInfoCard(BuildContext context) {
+    final configs = context.watch<PannelChangeController>().obtinedConfigList;
+
+    List<Widget> myWidgetList = [];
+    for (var i in configs) {
+      setState(() {
+        myWidgetList.add(HiddifyConfigDetailsWithCheckBoxWidget(
+          item: i,
+        ));
+      });
+    }
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "کانفیگ های انتخاب شده (${myWidgetList.length})",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  crossAxisCount: 1,
+                  importedList: myWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4,
+                  crossAxisCount: 1,
+                  importedList: myWidgetList),
+              desktop: widgetsGridview(
+                  importedList: myWidgetList,
+                  context: context,
+                  childAspectRatio: 4,
+                  crossAxisCount: 1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _fillData() async {
+    if (context.mounted) {
+      await getBotUserList().then((val) {
+        if (val != null && val.isNotEmpty) {
+          setState(() {
+            for (var i in val) {
+              _botUserList.add("${i.accountId}: ${i.username}");
+            }
+            _selectedUserName = "${val[0].accountId}: ${val[0].username}";
+
+            _showBotUsers = true;
+          });
+        }
+      }).onError((e, s) {
+        if (!mounted) return;
+        showMsg(msg: "$e خطا", context: context, type: "error");
+        Navigator.of(context).pop();
+      });
+      await getPannels().then((onValue) {
+        if (onValue.isNotEmpty) {
+          setState(() {
+            _pannelNameList.clear();
+            for (var i in onValue) {
+              _pannelNameList.add(
+                  "${i.id}: ${getPannelName(name: i.type)} - ${i.location}");
+            }
+            _selectedPannelName =
+                "${onValue[0].id}: ${getPannelName(name: onValue[0].type)} - ${onValue[0].location}";
+            _showData = true;
+          });
+        }
+      }).onError((e, s) {
+        if (!mounted) return;
+
+        showMsg(msg: "خطا", context: context, type: "error");
+        Navigator.of(context).pop();
+      });
+    }
+  }
+
+  _pannelListInfoTabCard(BuildContext context) {
+    List<Widget> myList = [];
+    setState(() {
+      myList.add(const Text("یک پنل را انتخاب کنید"));
+      myList.add(DropdownButtonFormField(
+        isExpanded: true,
+        hint: const Text('پنل'),
+        value: _selectedPannelName,
+        alignment: Alignment.centerRight,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedPannelName = newValue.toString();
+          });
+        },
+        items: _pannelNameList.map((clType) {
+          return DropdownMenuItem(
+            value: clType,
+            alignment: Alignment.centerRight,
+            child: Text(clType),
+          );
+        }).toList(),
+      ));
+      myList.add(ElevatedButton.icon(
+          onPressed: () async {
+            Provider.of<PannelChangeController>(context, listen: false)
+                .clearConfigList();
+            EasyLoading.show();
+            _showPannelData = false;
+            int pannelID = 1;
+            if (_selectedPannelName != "") {
+              pannelID = int.parse(_selectedPannelName.split(":")[0]);
+            }
+            await getHiddifyPanelUsersByPannelID(pannelID: pannelID)
+                .then((res) {
+              if (res != null && res != false) {
+                setState(() {
+                  _usersList = res;
+                  _showPannelData = true;
+                  EasyLoading.dismiss();
+                });
+              } else {
+                EasyLoading.dismiss();
+                if (!context.mounted) return;
+
+                showMsg(
+                    msg: "خطا در دریافت لیست کانفیگ‌ها",
+                    context: context,
+                    type: "error");
+              }
+            }).onError((e, s) {
+              EasyLoading.dismiss();
+              if (!context.mounted) return;
+
+              showMsg(
+                  msg: "خطا در دریافت لیست کانفیگ‌ها",
+                  context: context,
+                  type: "error");
+            });
+          },
+          label: const Text("دریافت لیست کانفیگ‌ها")));
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "پنل",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 3.2,
+                    context: context,
+                    importedList: myList),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4.5,
+                    importedList: myList),
+                desktop: widgetsGridview(
+                    importedList: myList,
+                    context: context,
+                    childAspectRatio: 4.5,
+                    crossAxisCount: 3),
+              )),
+        ],
+      ),
+    );
+  }
+
+  _usersListInfoTabCard(BuildContext context) {
+    // List<Widget> myList = [];
+    // setState(() {
+    //   const Text("کاربر را انتخاب کنید.");
+
+    //   for (var i in _usersList) {
+    //     myList.add(HiddifyConfigDetailsWithCheckBoxWidget(item: i));
+    //   }
+    // });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "کانفیگ‌های موجود در پنل",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height - 180,
+              child: SearchableList<HiddifyConfig>(
+                initialList: _usersList,
+                shrinkWrap: false,
+                textStyle: const TextStyle(fontSize: 25),
+                itemBuilder: (HiddifyConfig config) =>
+                    HiddifyConfigDetailsWithCheckBoxWidget(item: config),
+                loadingWidget: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Text('بارگذاری کانفیگ ها ...')
+                  ],
+                ),
+                errorWidget: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error,
+                      color: Colors.red,
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Text('خطا')
+                  ],
+                ),
+                filter: (q) {
+                  return _usersList
+                      .where((element) => element.name.toString().contains(q))
+                      .toList();
+                },
+                textAlign: TextAlign.right,
+                emptyWidget: const EmptyView(),
+                onRefresh: () async {},
+                sortPredicate: (a, b) => a.name.compareTo(b.name),
+                displayClearIcon: true,
+                inputDecoration: InputDecoration(
+                  labelText: "کانفیگ را انتخاب کنید",
+                  fillColor: Colors.white,
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Colors.blue,
+                      width: 1.0,
+                    ),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  _botUserListInfoTabCard(BuildContext context) {
+    List<Widget> myList = [];
+    setState(() {
+      myList.add(const Text("کاربر را انتخاب کنید."));
+
+      myList.add(DropdownButtonFormField(
+        isExpanded: true,
+        hint: const Text('کاربر'),
+        value: _selectedUserName,
+        alignment: Alignment.centerRight,
+        onChanged: (newValue) {
+          setState(() {
+            _selectedUserName = newValue.toString();
+          });
+        },
+        items: _botUserList.map((user) {
+          return DropdownMenuItem(
+            value: user,
+            alignment: Alignment.centerRight,
+            child: Text(user),
+          );
+        }).toList(),
+      ));
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "کاربران شما",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 3.2,
+                    context: context,
+                    importedList: myList),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4,
+                    importedList: myList),
+                desktop: widgetsGridview(
+                    importedList: myList,
+                    context: context,
+                    childAspectRatio: 4.5,
+                    crossAxisCount: 2),
+              )),
+        ],
+      ),
+    );
+  }
+
+  _submitData(BuildContext context) async {
+    EasyLoading.show();
+    if (_selectedUserName.isEmpty) {
+      EasyLoading.dismiss();
+      showMsg(msg: "لطفا یک کاربر راانتخاب کنید.", context: context);
+      return;
+    }
+    if (_selectedPannelName.isEmpty) {
+      EasyLoading.dismiss();
+      showMsg(msg: "لطفا یک پنل راانتخاب کنید.", context: context);
+      return;
+    }
+    int pannelID = 1;
+    if (_selectedPannelName != "") {
+      pannelID = int.parse(_selectedPannelName.split(":")[0]);
+    }
+    int selectedUserTelID = 0;
+    if (_selectedUserName != "") {
+      selectedUserTelID = int.parse(_selectedUserName.split(":")[0]);
+    }
+    await obtainBatchOfExistProductsToUser(
+            accountID: selectedUserTelID,
+            pannelID: pannelID,
+            hiddifyConfig:
+                Provider.of<PannelChangeController>(context, listen: false)
+                    .obtinedConfigList)
+        .then((value) {
+      if (value) {
+        if (!context.mounted) return;
+
+        Provider.of<PannelChangeController>(context, listen: false)
+            .clearConfigList();
+        EasyLoading.dismiss();
+        showMsg(msg: "تغییرات با موفقیت اعمال شد.", context: context);
+        return;
+      }
+      EasyLoading.dismiss();
+      if (!context.mounted) return;
+
+      showMsg(msg: "خطا", context: context, type: "error");
+      return;
+    }).onError((e, s) {
+      debugPrint(e.toString());
+      EasyLoading.dismiss();
+      if (!context.mounted) return;
+
+      showMsg(msg: "خطا", context: context, type: "error");
+    });
+  }
+}
+
+class EmptyView extends StatelessWidget {
+  const EmptyView({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.error,
+          color: Colors.red,
+        ),
+        Text("کانفیگی پیدا نشد."),
+      ],
+    );
+  }
+}
