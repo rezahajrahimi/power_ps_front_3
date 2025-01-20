@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/user_model.dart';
@@ -223,6 +224,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       }
     }
     if (_currentUserData!.role == "admin") {
+      if (!context.mounted) return;
+      EasyLoading.show();
+
       await updateUser(
               user: User(
                   id: _currentUserData!.id,
@@ -238,6 +242,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         }
         showMsg(msg: "خطا", context: context, type: "error");
       });
+      EasyLoading.dismiss();
     } else {
       await updateUserPassword(password: _password.text).then((value) {
         if (!context.mounted) return;

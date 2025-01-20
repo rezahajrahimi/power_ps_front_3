@@ -14,7 +14,7 @@ Future<TestAccount?> getTestAccountDetails() async {
           'Access-Control-Allow-Origin': '*'
         }));
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data != null && response.data != "") {
       TestAccount testAccount = TestAccount.fromJson(response.data);
       return testAccount;
     } else if (response.statusCode == 201) {

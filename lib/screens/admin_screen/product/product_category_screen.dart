@@ -141,7 +141,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       }).whenComplete(() async {
         await getPannels().then((resPannel) {
           setStateIfMounted(() {
-            if (resPannel != false && resPannel != null) {
+            if (resPannel != false && resPannel != null && resPannel.isNotEmpty) {
               setStateIfMounted(() {
                 _pannelNameList.clear();
                 for (var i in resPannel) {

@@ -18,7 +18,7 @@ Future logIn({
           "Charset": "utf-8",
           'Access-Control-Allow-Origin': '*'
         }));
-
+      debugPrint(response.statusCode.toString());
     if (response.statusCode == 200 && response.data != null) {
       User user = User.fromJson(response.data["user"]);
 

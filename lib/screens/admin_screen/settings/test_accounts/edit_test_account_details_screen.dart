@@ -126,6 +126,12 @@ class _EditTestAccountDetailsScreenState
           }
           _showData = true;
         });
+      } else {
+        if (!mounted) return;
+        showMsg(msg: "خطا", context: context, type: "error");
+        showMsg(msg: "در صورتیکه به تازگی ربات را راه‌اندازی کرده اید، ابتدا می بایست یک پنل ایجاد کنید.", context: context, type: "error");
+
+        Navigator.pop(context);
       }
     });
   }
