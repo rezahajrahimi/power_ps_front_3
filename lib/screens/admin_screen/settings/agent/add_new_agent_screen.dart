@@ -290,10 +290,10 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
                 Provider.of<AgentProvider>(context, listen: false)
                     .getAgentCategoriesAdded())
         .then((val) {
+      if (!context.mounted) return;
+
       if (val == true) {
         EasyLoading.dismiss();
-        if (!context.mounted) return;
-
         showMsg(msg: "دستیار فروش با موفقیت ایجاد شد.", context: context);
         Navigator.of(context).pop();
         return;
@@ -301,22 +301,19 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
       } else if (val.runtimeType == String) {
         debugPrint(val);
         EasyLoading.dismiss();
-        if (!context.mounted) return;
 
         showMsg(msg: "$val", context: context, type: "error");
         Navigator.of(context).pop();
         return;
       }
       EasyLoading.dismiss();
-      if (!context.mounted) return;
-
       showMsg(msg: "خطا", context: context, type: "error");
       return;
     }).onError((e, s) {
       debugPrint(e.toString());
-      if (!context.mounted) return;
-
       EasyLoading.dismiss();
+            if (!context.mounted) return;
+
       showMsg(msg: "خطا", context: context, type: "error");
     });
   }

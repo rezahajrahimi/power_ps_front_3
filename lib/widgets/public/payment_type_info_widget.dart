@@ -39,7 +39,7 @@ class _PaymentTypeItemInfoWidgetState extends State<PaymentTypeItemInfoWidget> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         border: Border.all(
-            width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
         borderRadius: BorderRadius.all(
           Radius.circular(AppStyle.defaultPadding),
         ),
@@ -49,14 +49,15 @@ class _PaymentTypeItemInfoWidgetState extends State<PaymentTypeItemInfoWidget> {
           const SizedBox(
             height: 20,
             width: 20,
-            child: Icon(Icons.menu),
+            child: Icon(Icons.payment),
           ),
           Expanded(
             child: Padding(
               padding:
                   EdgeInsets.symmetric(horizontal: AppStyle.defaultPadding),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Text(
                     widget.paymentType.name,
@@ -74,65 +75,55 @@ class _PaymentTypeItemInfoWidgetState extends State<PaymentTypeItemInfoWidget> {
               ),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: Switch(
-                      value: _newState,
-                      onChanged: (bool newValue) async {
-                        EasyLoading.show();
-                        if (newValue == true) {
-                          bool res = await reActivePaymentType(
-                              name: widget.paymentType.name);
-                          if (res == true) {
-                            if (context.mounted) {
-                              showMsg(msg: "فعال شد.", context: context);
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: Switch(
+                        value: _newState,
+                        onChanged: (bool newValue) async {
+                          EasyLoading.show();
+                          if (newValue == true) {
+                            bool res = await reActivePaymentType(
+                                name: widget.paymentType.name);
+                            if (res == true) {
+                              if (context.mounted) {
+                                showMsg(msg: "فعال شد.", context: context);
+                              }
+                            }
+                          } else {
+                            bool res = await deActivePaymentType(
+                                name: widget.paymentType.name);
+                            if (res == true) {
+                              if (context.mounted) {
+                                showMsg(msg: "غیر فعال شد.", context: context);
+                              }
                             }
                           }
-                        } else {
-                          bool res = await deActivePaymentType(
-                              name: widget.paymentType.name);
-                          if (res == true) {
-                            if (context.mounted) {
-                              showMsg(msg: "غیر فعال شد.", context: context);
-                            }
-                          }
-                        }
-                        setState(() {
-                          _newState = newValue;
-                        });
-                        EasyLoading.dismiss();
-                      })),
-              const SizedBox(
-                height: 10,
-              ),
-              GestureDetector(
-                onTap: () async {
-                  await _openAddNewAdditionDialog(context: context);
-                },
-                child: const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: Icon(Icons.edit),
+                          setState(() {
+                            _newState = newValue;
+                          });
+                          EasyLoading.dismiss();
+                        })),
+                IconButton(
+                  onPressed: () async {
+                    await _openAddNewAdditionDialog(context: context);
+                  },
+                  icon: const Icon(Icons.edit),
                 ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              GestureDetector(
-                onTap: () async {
-                  await _openDeleteDialog(context: context);
-                },
-                child: const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: Icon(Icons.delete_forever, color: Colors.red),
+                IconButton(
+                  onPressed: () async {
+                    await _openDeleteDialog(context: context);
+                  },
+                  icon: const Icon(Icons.delete_forever, color: Colors.red),
                 ),
-              ),
-            ],
+              ],
+            ),
           )
         ],
       ),

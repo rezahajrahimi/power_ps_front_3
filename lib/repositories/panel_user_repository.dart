@@ -55,6 +55,30 @@ Future<bool> updateUser({required User user, required String password}) async {
   }
 }
 
+Future<bool> updateUserPassword({required String password}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.put("/api/updateUserPassword", data: {
+      "password": password,
+    });
+
+    if (response.statusCode == 200 && response.data != null) {
+      return true;
+    } else if (response.statusCode == 200) {
+      return false;
+    } else if (response.statusCode == 401) {
+      return false;
+    } else if (response.statusCode == 500) {
+      return false;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
+
 Future getAgents() async {
   try {
     List<User> userList = [];
@@ -83,6 +107,69 @@ Future getAgents() async {
   } on DioException catch (e) {
     debugPrint(e.message.toString());
     return null;
+  }
+}
+
+Future<List<User>?> getAdmins() async {
+  try {
+    List<User> userList = [];
+
+    await GenaralApi.dio.get("/api/getAdminUsers").then((response) {
+      if (response.statusCode == 200 && response.data != null) {
+        for (var i in response.data['admins']) {
+          User user = User.fromJson(i);
+          userList.add(user);
+        }
+        return userList;
+      } else if (response.statusCode == 201) {
+        return null;
+      } else if (response.statusCode == 401) {
+        return null;
+      } else if (response.statusCode == 500) {
+        return null;
+      } else {
+        return null;
+      }
+    }).catchError((e) {
+      debugPrint(e.toString());
+      return null;
+    });
+    return userList;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<bool> changeUserRoleToAdmin({required int userId}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.patch("/api/changeUserRoleToAdmin/$userId");
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
+
+Future<bool> changeAgentRoleToUser({required int userId}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.patch("/api/changeAgentRoleToUser/$userId");
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
   }
 }
 

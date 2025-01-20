@@ -60,7 +60,7 @@ class _AgentSelectCategoryWithPriceInputWidgetState
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           borderRadius: BorderRadius.all(
             Radius.circular(AppStyle.defaultPadding),
           ),

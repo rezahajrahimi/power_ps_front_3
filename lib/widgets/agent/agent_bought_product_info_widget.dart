@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:persian_datetimepickers/persian_datetimepickers.dart';
+import 'package:powerps/provider/user_provider.dart';
+import 'package:powerps/repositories/bot_user_repository.dart';
+import 'package:powerps/screens/admin_screen/user/bot_user_bougth_product_details.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
@@ -12,8 +15,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 class AgentBoughtProductInfoWidget extends StatefulWidget {
   final BoughtProductDetailsModel boughtProductDetailsModel;
+  final String userRole;
   const AgentBoughtProductInfoWidget(
-      {super.key, required this.boughtProductDetailsModel});
+      {super.key,
+      required this.boughtProductDetailsModel,
+      this.userRole = "user"});
 
   @override
   State<AgentBoughtProductInfoWidget> createState() =>
@@ -42,41 +48,66 @@ class _AgentBoughtProductInfoWidgetState
     return GestureDetector(
       onTap: () async {
         EasyLoading.show();
+        if (widget.userRole == "agent") {
+          await getBoughtProductsStatusFromServerById(
+                  productID: widget.boughtProductDetailsModel.id.toInt())
+              .then((value) {
+            if (!context.mounted) return;
+            if (value != false) {
+              EasyLoading.dismiss();
 
-        await getBoughtProductsStatusFromServerById(
-                productID: widget.boughtProductDetailsModel.id.toInt())
-            .then((value) {
-          if (!context.mounted) return;
+              _showDialog(context, value);
+            } else {
+              EasyLoading.dismiss();
 
-          if (value != false) {
-            EasyLoading.dismiss();
+              showMsg(
+                  msg: "خطا در دریافت اطلاعات",
+                  context: context,
+                  type: "error");
+            }
+          });
+        } else {
+          await getProductBoughtedByProductIdUserMode(
+                  productID: widget.boughtProductDetailsModel.id.toInt())
+              .then((value) {
+            if (!context.mounted) return;
+            if (value != false) {
+              EasyLoading.dismiss();
 
-            _showDialog(context, value);
-          } else {
-            EasyLoading.dismiss();
+              _showDialog(context, value);
+            } else {
+              EasyLoading.dismiss();
 
-            showMsg(
-                msg: "خطا در دریافت اطلاعات", context: context, type: "error");
-          }
-        });
+              showMsg(
+                  msg: "خطا در دریافت اطلاعات",
+                  context: context,
+                  type: "error");
+            }
+          });
+        }
       },
       child: Container(
         margin: EdgeInsets.only(top: AppStyle.defaultPadding),
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor.withValues(alpha: .15)),
+              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           borderRadius: BorderRadius.all(
             Radius.circular(AppStyle.defaultPadding),
           ),
         ),
         child: Row(
           children: [
-            const SizedBox(
-              height: 20,
-              width: 20,
-              child: Icon(Icons.settings_input_hdmi_outlined),
-            ),
+            if (_showdata == false)
+              Icon(Icons.code, color: AppStyle.primaryColor),
+            if (_showdata)
+              SizedBox(
+                height: 20,
+                width: 20,
+                child: _hiddifyConfig!.isActive
+                    ? Icon(Icons.code, color: AppStyle.primaryColor)
+                    : const Icon(Icons.code_off, color: Colors.red),
+              ),
             Expanded(
               child: Padding(
                 padding:
@@ -172,6 +203,10 @@ class _AgentBoughtProductInfoWidgetState
                           style: AppStyle.thirdTitleStyle),
                       SizedBox(width: AppStyle.defaultPadding),
                       Text("زمان باقیمانده: ${_getRemindDate(hiddifyConfig)}",
+                          style: AppStyle.thirdTitleStyle),
+                      SizedBox(width: AppStyle.defaultPadding),
+                      Text(
+                          "وضعیت: ${hiddifyConfig.isActive == true ? "فعال" : "غیر فعال"}",
                           style: AppStyle.thirdTitleStyle)
                     ],
                   ),
@@ -193,50 +228,99 @@ class _AgentBoughtProductInfoWidgetState
                         ElevatedButton(
                             onPressed: () async {
                               EasyLoading.show();
+                              if (widget.userRole == "agent") {
+                                await reChargeProductByAgentWithPrID(
+                                  productID: widget.boughtProductDetailsModel.id
+                                      .toInt(),
+                                ).then((val) {
+                                  if (!context.mounted) return;
+                                  if (val == true) {
+                                    // open val as a link in a new window
+                                    showMsg(
+                                        msg:
+                                            "شارژ مجدد بسته با موفقیت انجام گرفت",
+                                        context: context);
+                                    EasyLoading.dismiss();
+                                    Navigator.of(context).pop();
+                                  } else if (val
+                                      .toString()
+                                      .contains("Reached")) {
+                                    Navigator.of(context).pop();
 
-                              await reChargeProductByAgentWithPrID(
-                                productID:
-                                    widget.boughtProductDetailsModel.id.toInt(),
-                              ).then((val) {
-                                if (!context.mounted) return;
+                                    EasyLoading.dismiss();
+                                    showMsg(
+                                        msg: "$val",
+                                        context: context,
+                                        type: "error");
+                                  } else {
+                                    Navigator.of(context).pop();
 
-                                if (val == true) {
-                                  // open val as a link in a new window
-                                  showMsg(
-                                      msg:
-                                          "شارژ مجدد بسته با موفقیت انجام گرفت",
-                                      context: context);
-                                  EasyLoading.dismiss();
-                                  Navigator.of(context).pop();
-                                } else if (val.toString().contains("Reached")) {
-                                  Navigator.of(context).pop();
+                                    EasyLoading.dismiss();
+                                    showMsg(
+                                        msg: "خطا",
+                                        context: context,
+                                        type: "error");
+                                  }
+                                }).then((val) {
+                                  if (val == true) {}
+                                  // لیست خریدها را آپدیت کن
+                                }).whenComplete(() {
+                                  if (!context.mounted) return;
+                                  Provider.of<AgentProvider>(context,
+                                          listen: false)
+                                      .setChanged(true);
+                                });
+                              } else {
+                                await reChargeProductByUserWithPrID(
+                                  productID: widget.boughtProductDetailsModel.id
+                                      .toInt(),
+                                ).then((val) {
+                                  if (!context.mounted) return;
+                                  if (val == true) {
+                                    // open val as a link in a new window
+                                    showMsg(
+                                        msg:
+                                            "شارژ مجدد بسته با موفقیت انجام گرفت",
+                                        context: context);
+                                    EasyLoading.dismiss();
+                                    Navigator.of(context).pop();
+                                  } else if (val
+                                      .toString()
+                                      .contains("Reached")) {
+                                    Navigator.of(context).pop();
 
-                                  EasyLoading.dismiss();
-                                  showMsg(
-                                      msg: "$val",
-                                      context: context,
-                                      type: "error");
-                                } else {
-                                  Navigator.of(context).pop();
+                                    EasyLoading.dismiss();
+                                    showMsg(
+                                        msg: "$val",
+                                        context: context,
+                                        type: "error");
+                                  } else {
+                                    Navigator.of(context).pop();
 
-                                  EasyLoading.dismiss();
-                                  showMsg(
-                                      msg: "خطا",
-                                      context: context,
-                                      type: "error");
-                                }
-                              }).then((val) {
-                                if (val == true) {}
-                                // لیست خریدها را آپدیت کن
-                              }).whenComplete(() {
-                                if (!context.mounted) return;
-
-                                Provider.of<AgentProvider>(context,
-                                        listen: false)
-                                    .setChanged(true);
-                              });
+                                    EasyLoading.dismiss();
+                                    showMsg(
+                                        msg: "خطا",
+                                        context: context,
+                                        type: "error");
+                                  }
+                                }).then((val) {
+                                  if (val == true) {}
+                                  // لیست خریدها را آپدیت کن
+                                }).whenComplete(() {
+                                  if (!context.mounted) return;
+                                  Provider.of<UserProvider>(context,
+                                          listen: false)
+                                      .setChanged(true);
+                                });
+                              }
                             },
                             child: const Text('شارژ مجدد')),
+                        if (widget.userRole == "agent")
+                          ElevatedButton(
+                              onPressed: () async {
+                                _showChangeProductsDialog(context);
+                              },
+                              child: const Text('تغییر بسته')),
                         ElevatedButton(
                             onPressed: () async {
                               EasyLoading.show();
@@ -245,13 +329,12 @@ class _AgentBoughtProductInfoWidgetState
                                           .boughtProductDetailsModel.id
                                           .toInt())
                                   .then((link) {
+                                if (!context.mounted) return;
                                 if (link != false && link != null) {
                                   launchUrl(Uri.parse(link));
                                   EasyLoading.dismiss();
                                   // Navigator.of(context).pop();
                                 } else {
-                                  if (!context.mounted) return;
-
                                   Navigator.of(context).pop();
 
                                   EasyLoading.dismiss();
@@ -281,42 +364,112 @@ class _AgentBoughtProductInfoWidgetState
                             onPressed: () async {
                               EasyLoading.show();
 
-                              await softDeleteProductByAgentWithPrID(
-                                productID:
-                                    widget.boughtProductDetailsModel.id.toInt(),
-                              ).then((val) {
+                              await changeActivationOfHiddifyUserByAgent(
+                                      enable: !hiddifyConfig.isActive,
+                                      productID: widget
+                                          .boughtProductDetailsModel.id
+                                          .toInt())
+                                  .then((res) {
                                 if (!context.mounted) return;
+                                EasyLoading.dismiss();
 
-                                if (val != false && val != null) {
-                                  // open val as a link in a new window
-                                  showMsg(msg: "حذف گردید", context: context);
-                                  EasyLoading.dismiss();
-
-                                  Navigator.of(context).pop();
+                                if (res.runtimeType == bool) {
+                                  if (res == true) {
+                                    showMsg(msg: "انجام شد", context: context);
+                                    Navigator.of(context).pop();
+                                    Provider.of<AgentProvider>(context,
+                                            listen: false)
+                                        .setChanged(true);
+                                  } else {
+                                    showMsg(
+                                        msg: "خطا",
+                                        context: context,
+                                        type: "error");
+                                    Navigator.of(context).pop();
+                                  }
                                 } else {
-                                  Navigator.of(context).pop();
-
-                                  EasyLoading.dismiss();
                                   showMsg(
-                                      msg: "خطا",
+                                      msg: "$res",
                                       context: context,
                                       type: "error");
+                                  Navigator.of(context).pop();
                                 }
-                              }).then((val) {
-                                // لیست خریدها را آپدیت کن
                               }).whenComplete(() {
-                                if (!context.mounted) return;
-
-                                Provider.of<AgentProvider>(context,
-                                        listen: false)
-                                    .setChanged(true);
+                                _fillData();
                               });
+                            },
+                            child: const Text('تغییر وضعیت بسته')),
+                        ElevatedButton(
+                            onPressed: () async {
+                              EasyLoading.show();
+                              if (widget.userRole == "agent") {
+                                await softDeleteProductByAgentWithPrID(
+                                  productID: widget.boughtProductDetailsModel.id
+                                      .toInt(),
+                                ).then((val) {
+                                  if (!context.mounted) return;
+                                  if (val != false && val != null) {
+                                    // open val as a link in a new window
+                                    showMsg(msg: "حذف گردید", context: context);
+                                    EasyLoading.dismiss();
+
+                                    Navigator.of(context).pop();
+                                  } else {
+                                    Navigator.of(context).pop();
+
+                                    EasyLoading.dismiss();
+                                    showMsg(
+                                        msg: "خطا",
+                                        context: context,
+                                        type: "error");
+                                  }
+                                }).then((val) {
+                                  if (!context.mounted) return;
+                                  // لیست خریدها را آپدیت کن
+                                }).whenComplete(() {
+                                  if (!context.mounted) return;
+                                  Provider.of<AgentProvider>(context,
+                                          listen: false)
+                                      .setChanged(true);
+                                });
+                              } else {
+                                await softDeleteProductByUserWithPrID(
+                                  productID: widget.boughtProductDetailsModel.id
+                                      .toInt(),
+                                ).then((val) {
+                                  if (!context.mounted) return;
+                                  if (val != false && val != null) {
+                                    // open val as a link in a new window
+                                    showMsg(msg: "حذف گردید", context: context);
+                                    EasyLoading.dismiss();
+
+                                    Navigator.of(context).pop();
+                                  } else {
+                                    Navigator.of(context).pop();
+
+                                    EasyLoading.dismiss();
+                                    showMsg(
+                                        msg: "خطا",
+                                        context: context,
+                                        type: "error");
+                                  }
+                                }).then((val) {
+                                  // لیست خریدها را آپدیت کن
+                                }).whenComplete(() {
+                                  if (!context.mounted) return;
+                                  Provider.of<UserProvider>(context,
+                                          listen: false)
+                                      .setChanged(true);
+                                });
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red),
                             child: const Text('حذف')),
                         ElevatedButton(
                             onPressed: () {
+                              _fillData();
+
                               Navigator.of(context).pop();
                             },
                             child: const Text('بستن'))
@@ -348,6 +501,10 @@ class _AgentBoughtProductInfoWidgetState
   }
 
   void _fillData() async {
+    setState(() {
+      _showdata = false;
+      _hiddifyConfig = null;
+    });
     await getBoughtProductsStatusFromServerById(
             productID: widget.boughtProductDetailsModel.id.toInt())
         .then((value) {
@@ -360,6 +517,31 @@ class _AgentBoughtProductInfoWidgetState
     }).onError((e, s) {
       debugPrint(e.toString());
     });
+  }
+
+  void _showChangeProductsDialog(BuildContext context) {
+    EasyLoading.show();
+    List<String> productCategoryItemList = [];
+
+    for (var i in Provider.of<AgentProvider>(context, listen: false)
+        .agentDashboard
+        .agentProducts!) {
+      if (i.productCategories!.pannelId ==
+          widget.boughtProductDetailsModel.productCategory!.pannelId) {
+        productCategoryItemList.add(
+            "${i.productCategoriesId} - ${i.productCategories!.categoryName} - ${i.price} تومان");
+      }
+    }
+    EasyLoading.dismiss();
+
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => ChangeCurrentProductToNewOne(
+              productList: productCategoryItemList,
+              currentProdoctId: widget.boughtProductDetailsModel.id.toInt(),
+              actionType: "agent",
+            ));
   }
 }
 

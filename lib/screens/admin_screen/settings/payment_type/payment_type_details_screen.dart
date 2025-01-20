@@ -246,7 +246,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   }
                   return Responsive(
                     mobile: widgetsGridview(
-                        childAspectRatio: 2,
+                        childAspectRatio: 1.75,
                         context: context,
                         importedList: _paymentItemWidgetList),
                     tablet: widgetsGridview(

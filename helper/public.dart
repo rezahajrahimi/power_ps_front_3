@@ -1,0 +1,131 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:powerps/styles/app_theme.dart';
+import 'dart:math' as math;
+
+removeZeroChars(String number) {
+  try {
+    if (number.isNotEmpty && number != "null") {
+      double n = double.parse(number);
+      return n.toString().replaceFirst(RegExp(r'(?<=\.\d*)(0+$)|(\.0+$)'), '');
+    } else {
+      return;
+    }
+  } catch (e) {
+    return;
+  }
+}
+
+String thousandSeperatorFormatter(String price) {
+  if (price != "0.00" && price != "null" && price.isNotEmpty) {
+    // String price = "1000000000";
+    String priceInText = "";
+    int counter = 0;
+    var i = price.indexOf(".");
+    String subPrice = price;
+    String dem = "";
+    if (i != 0 && i != -1) {
+      subPrice = price.substring(0, i);
+      dem = price.substring(i, price.length);
+    }
+
+    for (int i = (subPrice.length - 1); i >= 0; i--) {
+      counter++;
+      String str = subPrice[i];
+      if ((counter % 3) != 0 && i != 0) {
+        priceInText = "$str$priceInText";
+      } else if (i == 0) {
+        priceInText = "$str$priceInText";
+      } else {
+        priceInText = ",$str$priceInText";
+      }
+    }
+    return priceInText.trim() + dem;
+  } else {
+    return price;
+  }
+}
+
+showMsg(
+    {required String msg,
+    required BuildContext context,
+    String type = "info"}) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(
+      msg,
+      textDirection: TextDirection.rtl,
+    ),
+    duration: const Duration(seconds: 2),
+    backgroundColor: type == "info" ? AppStyle.primaryColor : Colors.red,
+  ));
+}
+
+String getPannelName({required String name, String type = "main"}) {
+  String str = "دیگر";
+  if (type == "main") {
+    switch (name) {
+      case "custome":
+        str = "دیگر";
+        break;
+      case "hiddify":
+        str = "Hiddify";
+        break;
+      case "marzban":
+        str = "Marzban";
+        break;
+      default:
+        str = "دیگر";
+    }
+  } else {
+    switch (name) {
+      case "دیگر":
+        str = "custome";
+        break;
+      case "Hiddify":
+        str = "hiddify";
+        break;
+      case "Marzban":
+        str = "marzban";
+        break;
+      default:
+        str = "custome";
+    }
+  }
+  return str;
+}
+
+String getHiddifyUserUUIDbySubscriptionLInk({required String pannelLink}) {
+  pannelLink = pannelLink.substring(0, pannelLink.length - 1);
+  List<String> list = pannelLink.split("/");
+  return list[list.length - 1];
+}
+
+String getHiddifyConfigApiUrl({required String adminUrl}) {
+  return adminUrl.replaceFirst("/admin/", '');
+}
+
+String getMarzbanConfigApiUrl({required String adminUrl}) {
+  Uri ur = Uri.parse(adminUrl);
+  return ur.origin;
+}
+
+Color randomColorGenerator() {
+  final rnd = math.Random();
+
+  return Color(rnd.nextInt(0xffffffff));
+}
+
+bool checkIsGiftCardString({required String str}) {
+  if (str.startsWith("giftcard-")) {
+    return true;
+  }
+  return false;
+}
+
+String getFileSizeString({required int bytes, int decimals = 0}) {
+  const suffixes = ["b", "kb", "mb", "gb", "tb"];
+  if (bytes == 0) return '0${suffixes[0]}';
+  var i = (log(bytes) / log(1024)).floor();
+  return ((bytes / pow(1024, i)).toStringAsFixed(decimals)) + suffixes[i];
+}

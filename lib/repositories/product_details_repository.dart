@@ -5,7 +5,8 @@ import 'package:powerps/models/product_details_model.dart';
 import 'package:powerps/models/bot_user_model.dart';
 
 List<ProductDetails> productDetailsList = [];
-
+int lastPageOfUserBought = 1;
+List<ProductDetails> userBoughtProductList = [];
 String productChangedToken = "aa";
 ChangeProductController productNotifier = ChangeProductController(0);
 
@@ -152,6 +153,68 @@ Future getLastBuyersByCatIdAndCount(
         }
       }
       return userList;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
+
+Future getUserProductsHistoryByAccountIDWithPagination(
+    {required int userID, int page = 1}) async {
+  try {
+    Response response = await GenaralApi.dio.get(
+        "/api/getUserProductsHistoryByUserIDWithPagination/$userID?page=$page",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200) {
+      var data = response.data["data"];
+      lastPageOfUserBought = response.data["last_page"];
+
+      userBoughtProductList.clear();
+      for (var i in data) {
+        userBoughtProductList.add(ProductDetails.fromJson(i));
+      }
+      return userBoughtProductList;
+    } else if (response.statusCode == 201) {
+      return null;
+    } else if (response.statusCode == 401) {
+      return null;
+    } else if (response.statusCode == 500) {
+      return null;
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<bool> checkAProductHasReservedConfigByProductId(
+    {required int productID}) async {
+  try {
+    Response response = await GenaralApi.dio
+        .post("/api/checkAProductHasReservedConfigByProductId",
+            data: {"product_id": productID},
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
+
+    if (response.statusCode == 200) {
+      return true;
     } else {
       return false;
     }

@@ -337,7 +337,6 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
 
         if (val) {
           EasyLoading.dismiss();
-
           showMsg(msg: "دستیار فروش با موفقیت ویرایش شد.", context: context);
           Navigator.of(context).pop();
           return;
@@ -348,14 +347,11 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
       }).onError((e, s) {
         if (!context.mounted) return;
 
-        debugPrint(e.toString());
         EasyLoading.dismiss();
         showMsg(msg: "خطا", context: context, type: "error");
       });
     }).onError((e, s) {
       if (!context.mounted) return;
-
-      debugPrint(e.toString());
       EasyLoading.dismiss();
       showMsg(msg: "خطا", context: context, type: "error");
     });

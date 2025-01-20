@@ -3,7 +3,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
-import 'package:powerps/models/test_account_model.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/repositories/test_account_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -71,63 +70,64 @@ class _EditTestAccountDetailsScreenState
 
   void _fillData() async {
     List<Pannel> resPannel = await getPannels();
-    TestAccount? res = await getTestAccountDetails();
+    await getTestAccountDetails().then((res) async {
+      if (res != null) {
+        _infoWidgetList.clear();
+        _volTxtEdit.text = res.volume;
+        _expireDayTxtEdit.text = res.expireDay;
 
-    if (res != null) {
-      _volTxtEdit.text = res.volume;
-      _expireDayTxtEdit.text = res.expireDay;
+        setState(() {
+          _infoWidgetList.add(CustomTextFromFieldWidget(
+            controller: _volTxtEdit,
+            textDirection: TextDirection.ltr,
+            textHint: "حجم اکانت",
+            validationError: "حجم اکانت را وارد کنید.",
+          ));
+          _infoWidgetList.add(CustomTextFromFieldWidget(
+            controller: _expireDayTxtEdit,
+            textDirection: TextDirection.ltr,
+            textHint: "تعداد روز",
+            validationError: "تعداد روز را وارد کنید.",
+          ));
+          if (resPannel.isNotEmpty) {
+            setState(() {
+              _pannelNameList.clear();
+              for (var i in resPannel) {
+                if (i.type != "custom") {
+                  _pannelNameList.add(
+                      "${i.id}: ${getPannelName(name: i.type)} - ${i.location}");
+                }
 
-      setState(() {
-        _infoWidgetList.add(CustomTextFromFieldWidget(
-          controller: _volTxtEdit,
-          textDirection: TextDirection.ltr,
-          textHint: "حجم اکانت",
-          validationError: "حجم اکانت را وارد کنید.",
-        ));
-        _infoWidgetList.add(CustomTextFromFieldWidget(
-          controller: _expireDayTxtEdit,
-          textDirection: TextDirection.ltr,
-          textHint: "تعداد روز",
-          validationError: "تعداد روز را وارد کنید.",
-        ));
-        if (resPannel.isNotEmpty) {
-          setState(() {
-            _pannelNameList.clear();
-            for (var i in resPannel) {
-              if (i.type != "custom") {
-                _pannelNameList.add(
-                    "${i.id}: ${getPannelName(name: i.type)} - ${i.location}");
+                if (i.id == res.pannelId) {
+                  _selectedPannelName =
+                      "${i.id}: ${getPannelName(name: i.type)} - ${i.location}";
+                }
               }
 
-              if (i.id == res.pannelId) {
-                _selectedPannelName =
-                    "${i.id}: ${getPannelName(name: i.type)} - ${i.location}";
-              }
-            }
-
-            _infoWidgetList.add(DropdownButtonFormField(
-              isExpanded: true,
-              hint: const Text('نوع پنل'),
-              value: _selectedPannelName,
-              alignment: Alignment.centerRight,
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedPannelName = newValue.toString();
-                });
-              },
-              items: _pannelNameList.map((clType) {
-                return DropdownMenuItem(
-                  value: clType,
-                  alignment: Alignment.centerRight,
-                  child: Text(clType),
-                );
-              }).toList(),
-            ));
-          });
-        }
-        _showData = true;
-      });
-    }
+              _infoWidgetList.add(DropdownButtonFormField(
+                isExpanded: true,
+                hint: const Text('نوع پنل'),
+                value: _selectedPannelName,
+                alignment: Alignment.centerRight,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedPannelName = newValue.toString();
+                  });
+                },
+                items: _pannelNameList.map((clType) {
+                  return DropdownMenuItem(
+                    value: clType,
+                    alignment: Alignment.centerRight,
+                    child: Text(clType),
+                  );
+                }).toList(),
+              ));
+            });
+          }
+          _showData = true;
+        });
+      }
+    });
   }
 
   _content(BuildContext context) {

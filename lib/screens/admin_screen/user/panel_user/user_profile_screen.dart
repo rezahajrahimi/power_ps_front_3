@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/user_model.dart';
@@ -123,10 +122,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         validationError: "رمز عبور را وارد کنید",
         keyboardType: TextInputType.text,
         obscureText: true,
-        inputFormatters: [
-          // FilteringTextInputFormatter.allow(RegExp(r'/^09[0-9]{9}/')),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
         validatorType: "password",
       ));
       myList.add(CustomTextFromFieldWidget(
@@ -135,10 +130,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         validationError: "تکرار رمز عبور را وارد کنید",
         keyboardType: TextInputType.text,
         obscureText: true,
-        inputFormatters: [
-          // FilteringTextInputFormatter.allow(RegExp(r'/^09[0-9]{9}/')),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
         validatorType: "password",
       ));
     });
@@ -241,7 +232,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               password: _password.text)
           .then((value) {
         if (!context.mounted) return;
-
         if (value) {
           showMsg(msg: "با موفقیت انجام شد", context: context);
           return;
@@ -249,7 +239,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         showMsg(msg: "خطا", context: context, type: "error");
       });
     } else {
-      await changeAgentPassword(password: _password.text).then((value) {
+      await updateUserPassword(password: _password.text).then((value) {
+        if (!context.mounted) return;
         if (value) {
           showMsg(msg: "با موفقیت انجام شد", context: context);
           return;

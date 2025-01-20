@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_dashboard_model.dart';
+import 'package:powerps/models/bought_product_details_model.dart';
 
 class AgentProvider extends ChangeNotifier {
   bool _changed = false;
@@ -96,6 +97,11 @@ class AgentProvider extends ChangeNotifier {
 
   setNewAgentDashboardData(AgentDashboard agentDashboard) {
     _agentDashboard = agentDashboard;
+    notifyListeners();
+  }
+
+  setBougthProductsToAgent(List<BoughtProductDetailsModel> boughtProducts) {
+    _agentDashboard.boughtProducts = boughtProducts;
     notifyListeners();
   }
 }

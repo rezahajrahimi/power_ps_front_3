@@ -16,6 +16,7 @@ Future createAndEditBatchOfUserAgentProduct(
   var formData = FormData.fromMap({
     'UserID': userID,
     'minusBallance': agentPermisson.minusBallance,
+    'deleteProducts': agentPermisson.deleteProducts,
     'createProducts': agentPermisson.createProducts,
     'trafficLimitationTB': agentPermisson.trafficLimitationTB,
     'productLimitation': agentPermisson.productLimitation,
@@ -295,6 +296,36 @@ Future buyProductByAgentWithPrID(
   }
 }
 
+Future buyProductByUserWithPrID(
+    {required int productID, required String remark}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.put("/api/buyProductByUserWithPrID",
+            data: {"id": productID, "remark": remark},
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
+
+    if (response.statusCode == 200) {
+      return response.data;
+    } else if (response.statusCode == 201) {
+      return false;
+    } else if (response.statusCode == 401) {
+      return response.data;
+    } else if (response.statusCode == 500) {
+      return false;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    return e.error;
+  }
+}
+
 Future buyProductByAdmin(
     {required int productID,
     required String remark,
@@ -338,6 +369,36 @@ Future getBoughtProductsStatusFromServerById({required int productID}) async {
   try {
     Response response = await GenaralApi.dio
         .get("/api/getBoughtProductsStatusFromServerById/$productID",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
+
+    if (response.statusCode == 200) {
+      HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
+      return hiddifyConfig;
+    } else if (response.statusCode == 201) {
+      return false;
+    } else if (response.statusCode == 401) {
+      return false;
+    } else if (response.statusCode == 500) {
+      return false;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.error.toString());
+    return false;
+  }
+}
+
+Future getProductBoughtedByProductIdUserMode({required int productID}) async {
+  try {
+    Response response = await GenaralApi.dio
+        .get("/api/getProductBoughtedByProductIdUserMode/$productID",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -454,10 +515,69 @@ Future reChargeProductByAgentWithPrID({required int productID}) async {
   }
 }
 
+Future reChargeProductByUserWithPrID({required int productID}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.patch("/api/reChargeProductByUserWithPrID",
+            data: {"id": productID},
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
+
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 201) {
+      return false;
+    } else if (response.statusCode == 401) {
+      return response.data;
+    } else if (response.statusCode == 500) {
+      return false;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.error.toString());
+    return false;
+  }
+}
+
 Future softDeleteProductByAgentWithPrID({required int productID}) async {
   try {
     Response response = await GenaralApi.dio
         .delete("/api/softDeleteProductByAgentWithPrID/$productID",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
+
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 201) {
+      return false;
+    } else if (response.statusCode == 401) {
+      return false;
+    } else if (response.statusCode == 500) {
+      return false;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.error.toString());
+    return false;
+  }
+}
+
+Future softDeleteProductByUserWithPrID({required int productID}) async {
+  try {
+    Response response = await GenaralApi.dio
+        .delete("/api/softDeleteProductByUserWithPrID/$productID",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',

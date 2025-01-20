@@ -26,6 +26,7 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
 
   void _fillData() async {
     await getBotUserListByPagination().then((value) {
+      if (!mounted) return;
       if (value != false && value != null) {
         setState(() {
           _lastPage = lastPage;
@@ -33,8 +34,6 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
           _showData = true;
         });
       } else {
-        if (!mounted) return;
-
         showMsg(msg: "خطا", context: context, type: "error");
         debugPrint("error on dashboard biding $value");
       }
@@ -176,90 +175,4 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
       ],
     );
   }
-
-  // _botUserInfoTabCard(BuildContext context) {
-  //   return Container(
-  //     padding: EdgeInsets.all(AppStyle.defaultPadding),
-  //     decoration: BoxDecoration(
-  //       color: AppStyle.secondaryColor,
-  //       borderRadius: const BorderRadius.all(Radius.circular(10)),
-  //     ),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           "کاربران",
-  //           style: Theme.of(context).textTheme.titleMedium,
-  //         ),
-  //         SizedBox(height: AppStyle.defaultPadding),
-  //         SizedBox(
-  //             width: double.infinity,
-  //             child: Responsive(
-  //               mobile: widgetsGridview(
-  //                   childAspectRatio: 2.9,
-  //                   context: context,
-  //                   importedList: _botUserWidgetLIst),
-  //               tablet: widgetsGridview(
-  //                   context: context,
-  //                   childAspectRatio: 6,
-  //                   importedList: _botUserWidgetLIst),
-  //               desktop: widgetsGridview(
-  //                   importedList: _botUserWidgetLIst,
-  //                   context: context,
-  //                   childAspectRatio: 6,
-  //                   crossAxisCount: 2),
-  //             )),
-  //         Pagination(
-  //           numOfPages: _lastPage,
-  //           selectedPage: selectedPage,
-  //           pagesVisible: 4,
-  //           onPageChanged: (page) async {
-  //             setState(() {
-  //               selectedPage = page;
-  //               _showData = false;
-  //             });
-  //             await getBotUserList(page: page);
-  //             setState(() {
-  //               _lastPage = lastPage;
-
-  //               _showData = true;
-  //             });
-  //           },
-  //           nextIcon: const Icon(
-  //             Icons.arrow_forward_ios,
-  //             color: Colors.blue,
-  //             size: 14,
-  //           ),
-  //           previousIcon: const Icon(
-  //             Icons.arrow_back_ios,
-  //             color: Colors.blue,
-  //             size: 14,
-  //           ),
-  //           activeTextStyle: const TextStyle(
-  //             color: Colors.white,
-  //             fontSize: 14,
-  //             fontWeight: FontWeight.w700,
-  //           ),
-  //           activeBtnStyle: ButtonStyle(
-  //             backgroundColor: WidgetStateProperty.all(Colors.blue),
-  //             shape: WidgetStateProperty.all(
-  //               RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(38),
-  //               ),
-  //             ),
-  //           ),
-  //           inactiveBtnStyle: ButtonStyle(
-  //             shape: WidgetStateProperty.all(RoundedRectangleBorder(
-  //               borderRadius: BorderRadius.circular(38),
-  //             )),
-  //           ),
-  //           inactiveTextStyle: const TextStyle(
-  //             fontSize: 14,
-  //             fontWeight: FontWeight.w700,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 }

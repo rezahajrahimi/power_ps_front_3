@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:powerps/models/user_model.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helper/constes.dart';
 import 'package:powerps/provider/auth_provider.dart';
@@ -7,7 +8,9 @@ import 'package:powerps/repositories/authenticatiom_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.accountID = "0", this.password = "0"});
+  final String accountID;
+  final String password;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -28,6 +31,14 @@ class _LoginScreenState extends State<LoginScreen> {
       duration: const Duration(seconds: 2),
       backgroundColor: Colors.red,
     ));
+  }
+
+  @override
+  void initState() {
+    if (widget.accountID != "0") {
+      _autoLogin();
+    }
+    super.initState();
   }
 
   @override
@@ -221,11 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await logIn(accountID: accountID!, password: password!).then((value) {
-        if (value != null || value != false) {
-          debugPrint('value: $value');
-          try {
-            if (!mounted) return;
+        if (!mounted) return;
 
+        if (value.runtimeType == User) {
+          try {
             Provider.of<AuthChangeController>(context, listen: false)
                 .setUser(value);
 
@@ -272,5 +282,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
       debugPrint(e.toString());
     }
+  }
+
+  void _autoLogin() async {
+    setStateIfMounted(() {
+      accountID = widget.accountID;
+      password = widget.password;
+    });
+
+    _login();
+  }
+
+  void setStateIfMounted(f) {
+    if (mounted) setState(f);
   }
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:persian_datetimepickers/persian_datetimepickers.dart';
+import 'package:powerps/models/product_category_model.dart';
+import 'package:powerps/provider/agent/agent_provider.dart';
+import 'package:powerps/repositories/product_categoy_repository.dart';
+// import 'package:powerps/repositories/product_details_repository.dart';
+// import 'package:powerps/widgets/product_details/add_reservation_dialog_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -35,8 +40,10 @@ class _BotUserBoughtProductDetailsScreenState
     extends State<BotUserBoughtProductDetailsScreen> {
   bool _showdata = false;
   Pannel? _pannel;
+  // bool _hasReservetion = false;
   HiddifyConfig? _hiddifyInfo;
   MarzbanConfig? _marzbanConfig;
+
   String? _url;
   @override
   void initState() {
@@ -84,8 +91,8 @@ class _BotUserBoughtProductDetailsScreenState
                                     context)) // side bar mobile
                                   Column(
                                     children: [
+                                      _operationInfoCard(context),
                                       SizedBox(height: AppStyle.defaultPadding),
-                                      // _summaryCountInfoCard(context),
                                     ],
                                   ),
                               ],
@@ -98,7 +105,7 @@ class _BotUserBoughtProductDetailsScreenState
                               flex: 2,
                               child: Column(
                                 children: [
-                                  // _operationInfoCard(context),
+                                  _operationInfoCard(context),
                                   SizedBox(height: AppStyle.defaultPadding),
                                 ],
                               ),
@@ -126,13 +133,13 @@ class _BotUserBoughtProductDetailsScreenState
             await getProductBoughtedByProductId(
                     productID: widget.productDetails.id.toInt())
                 .then((value) {
+              if (!mounted) return;
+
               if (value != null && value != false) {
                 setState(() {
                   _hiddifyInfo = value;
                 });
               } else {
-                if (!mounted) return;
-
                 Navigator.pop(context);
                 showMsg(
                     msg:
@@ -157,11 +164,23 @@ class _BotUserBoughtProductDetailsScreenState
                 _marzbanConfig = value;
               });
             });
-            setState(() {
-              _showdata = true;
-            });
           }
         }
+      }).whenComplete(() async {
+        setState(() {
+          _showdata = true;
+        });
+        // await checkAProductHasReservedConfigByProductId(
+        //   productID: widget.productDetails.id.toInt(),
+        // ).then((res) {
+        //   setState(() {
+        //     _hasReservetion = res;
+        //   });
+        // }).whenComplete(() {
+        //   setState(() {
+        //     _showdata = true;
+        //   });
+        // });
       });
     } catch (e) {
       debugPrint(e.toString());
@@ -337,6 +356,44 @@ class _BotUserBoughtProductDetailsScreenState
           },
           icon: const Icon(Icons.update),
           label: const Text("ریست کردن بسته")));
+      // actionWidgetList.add(ElevatedButton.icon(
+      //     onPressed: () async {
+      //       if (!_hasReservetion) {
+      //         _showAddReservetionDialog(context);
+      //       }
+      //     },
+      //     icon: const Icon(Icons.auto_mode, color: Colors.green),
+      //     label: !_hasReservetion
+      //         ? const Text("فعال سازی تمدید خودکار")
+      //         : const Text("غیر فعال سازی تمدید خودکار")));
+      actionWidgetList.add(ElevatedButton.icon(
+          onPressed: () async {
+            EasyLoading.show();
+            await changeActivationOfHiddifyUserByAdmin(
+                    enable: !_hiddifyInfo!.isActive,
+                    productID: widget.productDetails.id.toInt())
+                .then((res) {
+              if (!context.mounted) return;
+
+              EasyLoading.dismiss();
+              if (res) {
+                showMsg(msg: "انجام شد", context: context);
+                _fillData();
+                return;
+              }
+              showMsg(msg: "خطا", context: context, type: "error");
+              return;
+            });
+            // _showDeleteDialog(context: context);
+          },
+          icon: Icon(
+              _hiddifyInfo!.isActive
+                  ? Icons.disabled_visible
+                  : Icons.visibility,
+              color: Colors.red),
+          label: Text(
+              !_hiddifyInfo!.isActive ? "فعال کردن بسته" : "غیر فعال بسته",
+              style: const TextStyle(color: Colors.red))));
       actionWidgetList.add(ElevatedButton.icon(
           onPressed: () async {
             _showDeleteDialog(context: context);
@@ -550,9 +607,8 @@ class _BotUserBoughtProductDetailsScreenState
                                 username: widget.productDetails.remark,
                                 productID: widget.productDetails.id.toInt())
                             .then((value) {
+                          if (!context.mounted) return;
                           if (value) {
-                            if (!context.mounted) return;
-
                             showMsg(
                                 msg: "با موفقیت انجام شد", context: context);
                             EasyLoading.dismiss();
@@ -562,7 +618,6 @@ class _BotUserBoughtProductDetailsScreenState
                             Navigator.pop(context);
                           } else {
                             EasyLoading.dismiss();
-                            if (!context.mounted) return;
 
                             showMsg(
                                 msg: "خطا", context: context, type: "error");
@@ -573,7 +628,6 @@ class _BotUserBoughtProductDetailsScreenState
                                 productID: widget.productDetails.id.toInt())
                             .then((value) {
                           if (!context.mounted) return;
-
                           if (value) {
                             EasyLoading.dismiss();
 
@@ -593,5 +647,290 @@ class _BotUserBoughtProductDetailsScreenState
                     })
               ]);
         });
+  }
+
+  _operationInfoCard(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+    List<Widget> operationWidgetList = [];
+    setState(() {
+      operationWidgetList = [
+        ElevatedButton.icon(
+          onPressed: () async {
+            _showChangeProductsDialog(context);
+          },
+          label: const Text("تغییر  بسته"),
+          icon: const Icon(Icons.change_circle),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+        ),
+      ];
+    });
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "عملیات",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  importedList: operationWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 6,
+                  importedList: operationWidgetList),
+              desktop: widgetsGridview(
+                  importedList: operationWidgetList,
+                  context: context,
+                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _showChangeProductsDialog(BuildContext context) async {
+    EasyLoading.show();
+    List<ProductCategory> productCategoryList = [];
+    List<String> productCategoryItemList = [];
+
+    await getAllProdctCategory().then((res) {
+      if (res != null && res != false) {
+        productCategoryList = res;
+        for (var i in productCategoryList) {
+          if (i.pannelId == widget.productDetails.productCategory!.pannelId) {
+            productCategoryItemList
+                .add("${i.id} - ${i.categoryName} - ${i.price} تومان");
+          }
+        }
+      }
+    }).whenComplete(() async {
+      EasyLoading.dismiss();
+      if (!context.mounted) return;
+      showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => ChangeCurrentProductToNewOne(
+              productList: productCategoryItemList,
+              currentProdoctId: widget.productDetails.id.toInt()));
+    }).onError((error, stackTrace) {
+      if (!context.mounted) return;
+      EasyLoading.dismiss();
+      // setStateIfMounted(() {
+      //   _showData = false;
+      // });
+      showMsg(msg: "خطا", context: context, type: "error");
+    });
+  }
+
+  // void _showAddReservetionDialog(BuildContext context) {
+  //   showDialog(
+  //       context: context,
+  //       builder: (context) => AddOrRemoveReservationProductDialog(
+  //             productId: widget.productDetails.id,
+  //             hasReserved: _hasReservetion,
+  //           ));
+  // }
+}
+
+class ChangeCurrentProductToNewOne extends StatefulWidget {
+  const ChangeCurrentProductToNewOne({
+    super.key,
+    required this.productList,
+    required this.currentProdoctId,
+    this.actionType = "admin",
+  });
+  final List<String> productList;
+  final int currentProdoctId;
+  final String actionType;
+  @override
+  State<ChangeCurrentProductToNewOne> createState() =>
+      _ChangeCurrentProductToNewOneState();
+}
+
+class _ChangeCurrentProductToNewOneState
+    extends State<ChangeCurrentProductToNewOne> {
+  String _selectedItem = "";
+  bool _recharge = true;
+  bool _changeBallance = true;
+  @override
+  void initState() {
+    _selectedItem = widget.productList[0];
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          scrollable: true,
+          contentPadding: EdgeInsets.zero,
+          title: const Text("تغییر بسته خریداری شده"),
+          content: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              child: Column(
+                children: [
+                  const Text("بسته را انتخاب کنید"),
+                  DropdownButtonFormField(
+                    isExpanded: true,
+                    hint: const Text('بسته'),
+                    value: _selectedItem,
+                    alignment: Alignment.centerRight,
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedItem = newValue.toString();
+                      });
+                    },
+                    items: widget.productList.map((clType) {
+                      return DropdownMenuItem(
+                        value: clType,
+                        alignment: Alignment.centerRight,
+                        child: Text(clType),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  Row(
+                    children: [
+                      const Text("زمان باقی و حجم مصرفی صفر شود؟"),
+                      Switch.adaptive(
+                          value: _recharge,
+                          onChanged: (val) {
+                            setState(() {
+                              _recharge = val;
+                            });
+                          })
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  if (widget.actionType == "admin")
+                    Row(
+                      children: [
+                        const Text(" تفاووت هزینه از کیف کاربر کم شود؟"),
+                        Switch.adaptive(
+                            value: _changeBallance,
+                            onChanged: (val) {
+                              setState(() {
+                                _changeBallance = val;
+                              });
+                            })
+                      ],
+                    ),
+                  if (widget.actionType == "admin")
+                    const Text(
+                        " توجه: تنها در حالتی مبلغ کم می شود که مبلغ بسته انتخابی بیشتر از بسته کنونی باشد."),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                if (widget.actionType == "admin")
+                  TextButton(
+                      onPressed: () async {
+                        EasyLoading.show();
+                        int newprcatID =
+                            int.parse(_selectedItem.split(" - ")[0]);
+                        await changeProductByAdminWithPrID(
+                                changeBallance: _changeBallance,
+                                recharge: _recharge,
+                                newPrCatID: newprcatID,
+                                id: widget.currentProdoctId)
+                            .then((val) {
+                          if (!context.mounted) return;
+                          if (val != null) {
+                            EasyLoading.dismiss();
+                            Navigator.pop(context);
+                            showMsg(
+                                context: context,
+                                msg: "تغییر با موفقیت انجام شد");
+                          } else {
+                            EasyLoading.dismiss();
+                            showMsg(
+                                context: context, msg: "خطا", type: "error");
+                          }
+                        }).onError((error, stackTrace) {
+                          if (!context.mounted) return;
+                          EasyLoading.dismiss();
+                          debugPrint(error.toString());
+                          showMsg(context: context, msg: "خطا", type: "error");
+                        });
+                      },
+                      child: const Text(
+                        "تایید",
+                      )),
+                if (widget.actionType == "agent")
+                  TextButton(
+                      onPressed: () async {
+                        EasyLoading.show();
+                        int newprcatID =
+                            int.parse(_selectedItem.split(" - ")[0]);
+                        await changeProductByAgentWithPrID(
+                                recharge: _recharge,
+                                newPrCatID: newprcatID,
+                                id: widget.currentProdoctId)
+                            .then((val) {
+                          if (!context.mounted) return;
+                          if (val == true) {
+                            EasyLoading.dismiss();
+                            Navigator.pop(context);
+                            EasyLoading.dismiss();
+
+                            showMsg(
+                                context: context,
+                                msg: "تغییر با موفقیت انجام شد");
+                          } else {
+                            EasyLoading.dismiss();
+                            showMsg(
+                                context: context, msg: "خطا", type: "error");
+                          }
+                        }).onError((error, stackTrace) {
+                          if (!context.mounted) return;
+                          EasyLoading.dismiss();
+                          debugPrint(error.toString());
+                          showMsg(context: context, msg: "خطا", type: "error");
+                        }).whenComplete(() {
+                          if (!context.mounted) return;
+                          Provider.of<AgentProvider>(context, listen: false)
+                              .setChanged(true);
+                        });
+                      },
+                      child: const Text(
+                        "تایید",
+                      )),
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("لغو")),
+              ],
+            ),
+          ],
+        ));
   }
 }

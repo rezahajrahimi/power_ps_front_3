@@ -1,8 +1,10 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:powerps/provider/user_provider.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 
 class SearchField extends StatefulWidget {
   final TextEditingController? searchController;
@@ -34,12 +36,9 @@ class _SearchFieldState extends State<SearchField> {
       readOnly: !widget.autoFocousEnable,
       onChanged: (value) {
         if (value.toString().isNotEmpty && value.toString() != "") {
-          // setState(() {
-          //   serchCubeText = value;
-          // });
-          // cubeSearch();
-
-          widget.callBack!("a");
+          Provider.of<UserProvider>(context, listen: false)
+              .setUserSerchText(value);
+          Provider.of<UserProvider>(context, listen: false).setChanged(true);
         }
       },
       onTap: () {

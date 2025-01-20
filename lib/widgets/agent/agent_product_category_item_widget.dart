@@ -50,7 +50,7 @@ class _AgentProductCategoryItemWidgetState
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           borderRadius: BorderRadius.all(
             Radius.circular(AppStyle.defaultPadding),
           ),
@@ -171,9 +171,8 @@ class _AgentProductCategoryItemWidgetState
                       await buyProductByAgentWithPrID(
                               productID: widget.item.id, remark: remark)
                           .then((val) {
+                        if (!context.mounted) return;
                         if (val != false && val != null) {
-                          if (!context.mounted) return;
-
                           // open val as a link in a new window
                           if (val.contains("https://") ||
                               val.contains("http://")) {
@@ -190,8 +189,6 @@ class _AgentProductCategoryItemWidgetState
                                 msg: "$val", context: context, type: "error");
                           }
                         } else {
-                          if (!context.mounted) return;
-
                           EasyLoading.dismiss();
                           showMsg(
                               msg: "خطا در برقراری ارتباط با سرور",
@@ -203,7 +200,6 @@ class _AgentProductCategoryItemWidgetState
                         // لیست خریدها را آپدیت کن
                       }).whenComplete(() {
                         if (!context.mounted) return;
-
                         Provider.of<AgentProvider>(context, listen: false)
                             .setChanged(true);
                       });

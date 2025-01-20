@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/details_info.dart';
 
 import 'package:powerps/models/transaction_model.dart';
 import 'package:powerps/repositories/payment_type_repository.dart';
-import 'package:powerps/repositories/transaction_image_repository.dart';
 import 'package:powerps/repositories/transaction_repositopry.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -80,18 +80,20 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   void _fillData() async {
     if (mounted) {
       await getAllActiveOfflinePaymentTypes().then((value) {
-        setState(() {
-          _paymentTypeList.clear();
-          for (var i in paymentTypesList) {
-            _paymentTypeList.add("${i.id}: ${i.name}");
-          }
+        if (value != null) {
+          setState(() {
+            _paymentTypeList.clear();
+            for (var i in paymentTypesList) {
+              _paymentTypeList.add("${i.id}: ${i.name}");
+            }
 
-          _selectedPaymentType =
-              "${widget.item.paymentType!.id}: ${widget.item.paymentType!.name}";
-          widget.item.confirmed == true
-              ? _selectedTransactionStatus = "تایید شده"
-              : _selectedTransactionStatus = "تایید نشده";
-        });
+            _selectedPaymentType =
+                "${widget.item.paymentType!.id}: ${widget.item.paymentType!.name}";
+            widget.item.confirmed == true
+                ? _selectedTransactionStatus = "تایید شده"
+                : _selectedTransactionStatus = "تایید نشده";
+          });
+        }
       });
       setState(() {
         _mainInfoWidgetList.clear();
@@ -124,7 +126,8 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
           padding: EdgeInsets.all(AppStyle.defaultPadding),
           decoration: BoxDecoration(
             border: Border.all(
-                width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+                width: 2,
+                color: AppStyle.primaryColor..withValues(alpha: 0.15)),
             borderRadius: BorderRadius.all(
               Radius.circular(AppStyle.defaultPadding),
             ),
@@ -170,7 +173,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 decoration: BoxDecoration(
                   border: Border.all(
                       width: 2,
-                      color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+                      color: AppStyle.primaryColor..withValues(alpha: 0.15)),
                   borderRadius: BorderRadius.all(
                     Radius.circular(AppStyle.defaultPadding),
                   ),
@@ -232,16 +235,23 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 validationError: "کد پیگیری رسید واریزی را وارد کنید"));
         _showData = true;
       });
+      // debugPrint("aaaaasssssssssssaa=>${widget.item.image!.imgSrc}");
+
       if (widget.item.image != null) {
-        await getImageSrcFromTelegram(botfile: widget.item.image!.imgSrc)
-            .then((value) {
-          if (value != null && value.toString().isNotEmpty) {
-            setState(() {
-              _imageSrc = value;
-              _showImage = true;
-            });
-          }
+        setState(() {
+          _imageSrc = "$imageURL${widget.item.image!.imgSrc}";
+          _showImage = true;
         });
+        // debugPrint("aaaaaaa=>$_imageSrc");
+        // await getImageSrcFromTelegram(botfile: widget.item.image!.imgSrc)
+        //     .then((value) {
+        //   if (value != null && value.toString().isNotEmpty) {
+        //     setState(() {
+        //       _imageSrc = value;
+        //       _showImage = true;
+        //     });
+        //   }
+        // });
       }
     }
   }
@@ -257,7 +267,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                 child: Column(
                   children: [
                     if (Responsive.isMobile(context)) // side bar mobile
-                      _imageCard(context),
+                      if (_showImage) _imageCard(context),
                     _mainInfoItemCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     // _channelLockListCard(context),
@@ -356,13 +366,14 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             await removeUnconfirmedTransaction(
                     transactionId: widget.item.id.toInt())
                 .then((value) async {
-              if (value) {
-                if (!context.mounted) return;
-                showMsg(msg: "تراکنش حذف گردید.", context: context);
-                Navigator.pop(context);
-              } else {
-                if (!context.mounted) return;
+              if (!context.mounted) return;
 
+              if (value) {
+                if (context.mounted) {
+                  showMsg(msg: "تراکنش حذف گردید.", context: context);
+                  Navigator.pop(context);
+                }
+              } else {
                 showMsg(msg: "خطا", context: context, type: "error");
               }
             });
@@ -473,7 +484,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
             imageSrc: _imageSrc,
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          widget.item.image!.userText != null
+          widget.item.image != null
               ? Text.rich(TextSpan(children: [
                   TextSpan(
                     text: "پیام کاربر:\n\r${widget.item.image!.userText}",

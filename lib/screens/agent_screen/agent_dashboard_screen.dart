@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:pagination_flutter/pagination.dart';
+import 'package:powerps/widgets/agent/agent_bougth_products_list_info_card_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/product_category_model.dart';
@@ -9,7 +11,6 @@ import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/widgets/agent/agent_ballance_widget_info_card_widget.dart';
-import 'package:powerps/widgets/agent/agent_bought_product_info_widget.dart';
 import 'package:powerps/widgets/agent/agent_product_category_item_widget.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -25,6 +26,9 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   bool _showdata = false;
   Timer? _retriveDataTimer;
 
+  int _lastPageBougthProduct = 1;
+  int selectedPageBougthProduct = 1;
+  bool _showBougthProductData = false;
   // AgentDashboard? _dashboard;
   @override
   void initState() {
@@ -154,6 +158,26 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
       });
       debugPrint(error.toString());
     });
+
+    await getAgentSelledProductsByPagination().then((value) {
+      if (value.isNotEmpty) {
+        setState(() {
+          _lastPageBougthProduct = lastPageBougthProduct;
+        });
+      } else {
+        // showMsg(msg: "خطا", context: context, type: "error");
+        debugPrint("error on dashboard biding $value");
+      }
+    }).whenComplete(() {
+      setState(() {
+        _showBougthProductData = true;
+      });
+    }).onError((error, stackTrace) {
+      setState(() {
+        _showdata = true;
+      });
+      debugPrint(error.toString());
+    });
   }
 
   _agentProductsInfoTabCard(BuildContext context) {
@@ -214,48 +238,71 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   }
 
   _agentBoughtProductsInfoTabCard(BuildContext context) {
-    List<Widget> botUserWidgetLIst = [];
-    // todo
-    // create a specefic widget
-    for (var i in Provider.of<AgentProvider>(context, listen: false)
-        .agentDashboard
-        .boughtProducts!) {
-      botUserWidgetLIst
-          .add(AgentBoughtProductInfoWidget(boughtProductDetailsModel: i));
-    }
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "خریدهای شما",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                    childAspectRatio: 2.9,
-                    context: context,
-                    importedList: botUserWidgetLIst),
-                tablet: widgetsGridview(
-                    context: context,
-                    childAspectRatio: 4.5,
-                    importedList: botUserWidgetLIst),
-                desktop: widgetsGridview(
-                    importedList: botUserWidgetLIst,
-                    context: context,
-                    childAspectRatio: 4,
-                    crossAxisCount: 2),
-              )),
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+            flex: 5,
+            child: Column(children: [
+              _showBougthProductData
+                  ? AgentBougthProductsListInfoCardWidget(
+                      title: "خریدهای شما",
+                      products: boughtProducts,
+                      lggedUSerRole: "agent",
+                    )
+                  : const SizedBox(),
+              SizedBox(height: AppStyle.defaultPadding),
+              Pagination(
+                numOfPages: _lastPageBougthProduct,
+                selectedPage: selectedPageBougthProduct,
+                pagesVisible: 4,
+                onPageChanged: (page) async {
+                  setState(() {
+                    selectedPageBougthProduct = page;
+                    _showBougthProductData = false;
+                  });
+                  await getAgentSelledProductsByPagination(page: page);
+                  setState(() {
+                    _lastPageBougthProduct = lastPageBougthProduct;
+
+                    _showBougthProductData = true;
+                  });
+                },
+                nextIcon: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.blue,
+                  size: 14,
+                ),
+                previousIcon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.blue,
+                  size: 14,
+                ),
+                activeTextStyle: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+                activeBtnStyle: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(Colors.blue),
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
+                    ),
+                  ),
+                ),
+                inactiveBtnStyle: ButtonStyle(
+                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(38),
+                  )),
+                ),
+                inactiveTextStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              )
+            ])),
+      ],
     );
   }
 }

@@ -74,7 +74,7 @@ class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
 
   void _fillData() {
     if (mounted) {
-      setState(() {
+      setStateIfMounted(() {
         for (var i in widget.botUsers) {
           _botUserItemList.add(BotUserInfoItemCardWidget(
             item: i,
@@ -82,5 +82,9 @@ class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
         }
       });
     }
+  }
+
+  void setStateIfMounted(f) {
+    if (mounted) setState(f);
   }
 }

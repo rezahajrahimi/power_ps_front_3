@@ -12,6 +12,7 @@ import 'package:powerps/screens/admin_screen/transaction/transaction_list_screen
 import 'package:powerps/screens/admin_screen/user/bot_users_screen.dart';
 import 'package:powerps/repositories/authenticatiom_repository.dart';
 import 'package:powerps/screens/agent_screen/agent_dashboard_screen.dart';
+import 'package:powerps/screens/user_screens/user_dashboard_screen.dart';
 import 'package:powerps/widgets/public/header_widget.dart';
 import 'package:powerps/widgets/public/side_menu.dart';
 import 'package:flutter/material.dart';
@@ -37,10 +38,14 @@ class _HomeScreenState extends State<HomeScreen> {
     const TransactionListScreen(),
     const BotUsersScreen(),
     const LogsListScreen(),
+    // const ReportScreen(),
   ];
 
   static final List<Widget> _agentPages = <Widget>[
     const AgentDashboardScreen(),
+  ];
+  static final List<Widget> _userPages = <Widget>[
+    const USerDasboardScreen(),
   ];
   @override
   void initState() {
@@ -59,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
   _selectDrawer(BuildContext context) {
     if (loggedUSer.role == "admin") {
       return _adminItems(context);
-    } else if (loggedUSer.role == "agent") {
+    } else if (loggedUSer.role == "agent" || loggedUSer.role == "user") {
       return _agentItems(context);
     } else {
       return Container();
@@ -110,6 +115,12 @@ class _HomeScreenState extends State<HomeScreen> {
               _currentPageName = "رخدادها";
             });
           }
+          // if (val == "reports") {
+          //   _onItemTapped(6);
+          //   setState(() {
+          //     _currentPageName = "گزارشگیری";
+          //   });
+          // }
 
           context
               .read<MenuAppController>()
@@ -167,6 +178,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         _currentPageName = "رخدادها";
                       });
                     }
+                    // if (val == "reports") {
+                    //   _onItemTapped(6);
+                    //   setState(() {
+                    //     _currentPageName = "گزارشگیری";
+                    //   });
+                    // }
                   },
                 ),
               ),
@@ -195,18 +212,6 @@ class _HomeScreenState extends State<HomeScreen> {
               _currentPageName = "داشبورد";
             });
           }
-          // if (val == "configs") {
-          //   _onItemTapped(2);
-          //   setState(() {
-          //     _currentPageName = "کانفیگ ها";
-          //   });
-          // }
-          // if (val == "logs") {
-          //   _onItemTapped(5);
-          //   setState(() {
-          //     _currentPageName = "رخدادها";
-          //   });
-          // }
 
           context
               .read<MenuAppController>()
@@ -234,25 +239,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         _currentPageName = "داشبورد";
                       });
                     }
-                    // if (val == "configs") {
-                    //   _onItemTapped(2);
-                    //   setState(() {
-                    //     _currentPageName = "کانفیگ ها";
-                    //   });
-                    // }
-                    // if (val == "logs") {
-                    //   _onItemTapped(5);
-                    //   setState(() {
-                    //     _currentPageName = "رخدادها";
-                    //   });
-                    // }
                   },
                 ),
               ),
             Expanded(
               // It takes 5/6 part of the screen
               flex: 5,
-              child: _agentPages[_selectedIndex],
+              child: loggedUSer.role == "agent"
+                  ? _agentPages[_selectedIndex]
+                  : _userPages[_selectedIndex],
             ),
           ],
         ),
@@ -278,27 +273,18 @@ class _HomeScreenState extends State<HomeScreen> {
     await getlogedUserData().then((onValue) {
       if (onValue != false) {
         // when a have a user page, wee have to remove if statement
-        if (loggedUSer.role == "user") {
-          clearSharedPrfrence();
-          if (!mounted) return;
 
-          Navigator.pushReplacementNamed(context, '/login');
-        } else {
-          setState(() {
-            Provider.of<AuthChangeController>(context, listen: false)
-                .setUser(onValue);
-            loggedUSer =
-                Provider.of<AuthChangeController>(context, listen: false)
-                    .getUser();
-          });
-        }
+        setState(() {
+          Provider.of<AuthChangeController>(context, listen: false)
+              .setUser(onValue);
+          loggedUSer = Provider.of<AuthChangeController>(context, listen: false)
+              .getUser();
+        });
       } else {
         logOut().then((value) {
           if (!mounted) return;
-
           if (value == true) {
             clearSharedPrfrence();
-
             Navigator.pushReplacementNamed(context, '/login');
           } else {
             Navigator.pushReplacementNamed(context, '/login');

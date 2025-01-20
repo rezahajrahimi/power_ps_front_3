@@ -558,9 +558,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
           SizedBox(
             height: AppStyle.defaultPadding,
           ),
-          Divider(
-              thickness: 5,
-              color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+          Divider(thickness: 5, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -598,9 +596,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
-          Divider(
-              thickness: 5,
-              color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+          Divider(thickness: 5, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -638,9 +634,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
-          Divider(
-              thickness: 5,
-              color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+          Divider(thickness: 5, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -867,12 +861,12 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         validationError: "کشوری که سرور در آن قرار گرفته است را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
-      // _hiddifyWidgetList.add(CustomTextFromFieldWidget(
-      //   controller: _capacityEditTxt,
-      //   textHint: "ظرفیت سرور",
-      //   validationError: "مقدار کاربری که می توانند از این سرور استفاده کنند.",
-      //   keyboardType: TextInputType.text,
-      // ));
+      _hiddifyWidgetList.add(CustomTextFromFieldWidget(
+          controller: _capacityEditTxt,
+          textHint: "ظرفیت سرور",
+          validationError:
+              "مقدار کاربری که می توانند از این سرور استفاده کنند.",
+          keyboardType: TextInputType.number));
 
       _showData = true;
     });
@@ -921,6 +915,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
           location: _locationEditTxt.text,
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
           secretCode: _secretCodeEditTxt.text,
+          capacity: int.parse(_capacityEditTxt.text),
           userLink: _userLinkEditTxt.text),
     );
     if (res) {

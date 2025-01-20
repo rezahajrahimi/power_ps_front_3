@@ -34,7 +34,7 @@ class _AgentInfoWidgetState extends State<AgentInfoWidget> {
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           borderRadius: BorderRadius.all(
             Radius.circular(AppStyle.defaultPadding),
           ),
@@ -134,7 +134,6 @@ class _AgentInfoWidgetState extends State<AgentInfoWidget> {
                 EasyLoading.show();
                 await removeAgent(userID: widget.agent.accountId).then((val) {
                   if (!context.mounted) return;
-
                   if (val != null && val == true) {
                     showMsg(msg: "با موفقیت حذف شد", context: context);
                     EasyLoading.dismiss();

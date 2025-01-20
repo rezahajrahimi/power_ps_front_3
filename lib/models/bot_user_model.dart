@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:powerps/models/ballance_model.dart';
 import 'package:powerps/models/log_model.dart';
 import 'package:powerps/models/product_details_model.dart';
+import 'package:powerps/models/referral_wallet_model.dart';
 import 'package:powerps/models/transaction_model.dart';
 
 class BotUser {
@@ -17,6 +18,7 @@ class BotUser {
   List<ProductDetails>? products = [];
   List<Transaction>? transactions = [];
   Ballance? ballance;
+  ReferralWalletModel? referralWallet;
   BotUser(
       {required this.id,
       required this.accountId,
@@ -27,6 +29,7 @@ class BotUser {
       required this.updatedAt,
       this.logs,
       this.ballance,
+      this.referralWallet,
       this.transactions,
       this.products});
   // List<Log> itemsList = List<Log>.from(json['logs'].map<Log>((dynamic i) => Log.fromJson(i)));
@@ -43,6 +46,10 @@ class BotUser {
       updatedAt: json['updated_at'].toString(),
       ballance:
           json['ballance'] != null ? Ballance.fromJson(json['ballance']) : null,
+      referralWallet:
+          json['user'] != null && json['user']['referral_wallet'] != null
+              ? ReferralWalletModel.fromJson(json['user']['referral_wallet'])
+              : null,
       logs: json['logs'] != null
           ? List<Log>.from(
               json['logs'].map<Log>((dynamic i) => Log.fromJson(i)))

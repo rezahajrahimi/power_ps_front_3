@@ -65,7 +65,7 @@ class _PannelScreenState extends State<PannelScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           Flexible(
-            flex: 1,
+            flex: 0,
             child: ElevatedButton(
               onPressed: () async {
                 Navigator.push(
@@ -93,6 +93,33 @@ class _PannelScreenState extends State<PannelScreen> {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const ObtainExistPanelUsersToAgentsScreen(),
+                  )).then((value) => {_fillData()});
+            },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppStyle.secondaryColor),
+            child: const Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(FontAwesomeIcons.indent),
+                  SizedBox(
+                    width: 4.0,
+                  ),
+                  Text(
+                    "ورود کانفیگهای موجود",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
               ),
             ),
           ),

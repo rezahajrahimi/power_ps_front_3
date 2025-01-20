@@ -28,17 +28,17 @@ Future logIn({
       LoggingPreference().setToken(token: token);
       return user;
     } else if (response.statusCode == 201) {
-      return false;
+      return null;
     } else if (response.statusCode == 401) {
-      return false;
+      return null;
     } else if (response.statusCode == 500) {
-      return false;
+      return null;
     } else {
-      return false;
+      return null;
     }
   } on DioException catch (e) {
     debugPrint(e.message);
-    return false;
+    return null;
   }
 }
 

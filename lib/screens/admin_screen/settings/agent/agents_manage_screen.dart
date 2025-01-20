@@ -77,7 +77,7 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         border: Border.all(
-            width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
         borderRadius: BorderRadius.all(
           Radius.circular(AppStyle.defaultPadding),
         ),
@@ -181,19 +181,16 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
               child: const Text('حذف'),
               onPressed: () async {
                 EasyLoading.show();
-
                 await removeAgent(userID: agent.accountId).then((val) {
-                  if (val != null && val == true) {
-                    if (!context.mounted) return;
+                        if (!context.mounted) return;
 
+                  if (val != null && val == true) {
                     showMsg(msg: "با موفقیت حذف شد", context: context);
                     EasyLoading.dismiss();
 
                     Navigator.of(context).pop();
                     _fillData();
                   } else {
-                    if (!context.mounted) return;
-
                     showMsg(msg: "خطا", context: context, type: "error");
                     EasyLoading.dismiss();
                   }
@@ -378,11 +375,6 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
           Text(
             "لیست دستیاران فروش",
             style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          Text(
-            "برای این عملیات می بایست ربات به عنوان Admin در این کانال ها عضو شده باشد.",
-            style: TextStyle(color: AppStyle.deactiveStatus),
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(

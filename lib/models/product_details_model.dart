@@ -12,6 +12,7 @@ class ProductDetails {
   String subscriptionLink;
   String panelLink;
   bool? isActive;
+  bool? deactiveByAdmin;
   String createdAt;
   String updatedAt;
   BotUser? botUser;
@@ -28,6 +29,7 @@ class ProductDetails {
       required this.subscriptionLink,
       required this.panelLink,
       this.isActive,
+      this.deactiveByAdmin,
       required this.createdAt,
       required this.updatedAt,
       this.botUser,
@@ -44,6 +46,10 @@ class ProductDetails {
       panelLink: json['panel_link'].toString(),
       isActive: int.parse(json['isActive'].toString()) == 1 ||
               json['isActive'].toString() == "true"
+          ? true
+          : false,
+      deactiveByAdmin: int.parse(json['deactive_by_admin'].toString()) == 1 ||
+              json['deactive_by_admin'].toString() == "true"
           ? true
           : false,
       createdAt: json['created_at'].toString(),
@@ -69,6 +75,7 @@ class ProductDetails {
       'updatedAt': updatedAt,
       'botUser': botUser?.toMap(),
       'productCategory': productCategory?.toMap(),
+      'deactiveByAdmin': deactiveByAdmin
     };
   }
 

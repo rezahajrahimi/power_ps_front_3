@@ -35,10 +35,8 @@ class _SideMenuState extends State<SideMenu> {
   _selectDrawer(BuildContext context) {
     if (widget.logedUser.role == "admin") {
       return _sliderItemsTypeAdmin(context);
-    } else if (widget.logedUser.role == "agent") {
-      return _sliderItemsTypeAgent(context);
     } else {
-      return Container();
+      return _sliderItemsTypeAgent(context);
     }
   }
 
@@ -105,14 +103,14 @@ class _SideMenuState extends State<SideMenu> {
               _callBack("transactions");
             },
           ),
-          DrawerListTileV4(
-            title: "گزارشگیری",
-            icon: Icons.list,
-            isSelected: widget.currentPage == "گزارشگیری" ? true : false,
-            press: () {
-              _callBack("reports");
-            },
-          ),
+          // DrawerListTileV4(
+          //   title: "گزارشگیری",
+          //   icon: Icons.list,
+          //   isSelected: widget.currentPage == "گزارشگیری" ? true : false,
+          //   press: () {
+          //     _callBack("reports");
+          //   },
+          // ),
           DrawerListTileV4(
             title: "رخدادها",
             icon: Icons.event,
@@ -187,7 +185,7 @@ class _SideMenuState extends State<SideMenu> {
 
   Drawer _sliderItemsTypeAgent(BuildContext context) {
     return Drawer(
-      child: ListView(
+      child: Column(
         children: [
           Center(
             child: Padding(
@@ -214,6 +212,8 @@ class _SideMenuState extends State<SideMenu> {
               ),
             ),
           ),
+          const Divider(),
+
           DrawerListTileV4(
             title: "داشبورد",
             icon: Icons.dashboard,
@@ -244,7 +244,6 @@ class _SideMenuState extends State<SideMenu> {
                 if (widget.currentPage != "Sign Up") {
                   logOut().then((value) {
                     if (!context.mounted) return;
-
                     if (value == true) {
                       clearSharedPrfrence();
                       Navigator.pushReplacementNamed(context, '/login');
@@ -256,6 +255,41 @@ class _SideMenuState extends State<SideMenu> {
               },
               title: "خروج",
               isSelected: widget.currentPage == "Sign Up" ? true : false),
+          const Spacer(),
+          const Divider(),
+
+          Expanded(
+            // flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton.filled(
+                      color: AppStyle.webBackgroundColor,
+                      onPressed: () {
+                        launchUrl(
+                            Uri.parse("https://t.me/powerproxysellerchat"));
+                      },
+                      icon: const Icon(FontAwesomeIcons.telegram)),
+                  IconButton.filled(
+                      color: AppStyle.webBackgroundColor,
+                      onPressed: () {
+                        launchUrl(
+                            Uri.parse("https://t.me/powerproxysellersupport"));
+                      },
+                      icon: const Icon(Icons.support_agent)),
+                  IconButton.filled(
+                      color: AppStyle.webBackgroundColor,
+                      onPressed: () {
+                        launchUrl(Uri.parse(
+                            "https://www.youtube.com/@powerproxyseller"));
+                      },
+                      icon: const Icon(FontAwesomeIcons.youtube)),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

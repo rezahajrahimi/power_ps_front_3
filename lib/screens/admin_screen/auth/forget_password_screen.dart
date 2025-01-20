@@ -206,6 +206,8 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       await forgetPassword(accountID: int.parse(accountId!)).then((response) {
         if (response) {
           if (!mounted) return;
+
+          // ignore: use_build_context_synchronously
           showMsg(
               context: context, msg: 'رمز عبور جدید در تلگرام ارسال گردید.');
           Navigator.push(
@@ -252,21 +254,17 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   void _login() async {
     try {
       await logIn(accountID: accountId!, password: password!).then((value) {
+        if (!mounted) return;
+
         if (value) {
           try {
-            if (!mounted) return;
-
             Navigator.of(context)
                 .pushReplacementNamed('/home'); // replaces the current screen
           } catch (e) {
-            if (!mounted) return;
-
             Navigator.of(context).pop();
             Navigator.of(context).pushReplacementNamed('/home');
           }
         } else {
-          if (!mounted) return;
-
           showMsg(context: context, msg: 'خطا');
         }
       });

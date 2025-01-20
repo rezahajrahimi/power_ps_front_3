@@ -26,7 +26,7 @@ Future checkIsMarzbanUrl(
     if (response.statusCode == 200 && response.data != null) {
       try {
         var s =
-            "${response.data["token_type"]}  ${response.data["access_token"]}";
+            " ${response.data["token_type"]} ${response.data["access_token"]}";
         return s;
       } catch (e) {
         return null;

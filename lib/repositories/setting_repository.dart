@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
+import 'package:powerps/models/advanced_setting_model.dart';
 import 'package:powerps/models/setting_model.dart';
 
 String botToken = "";
@@ -71,6 +72,17 @@ Future getBotToken() async {
 
 Future<bool> updateBotSetting({required Setting setting}) async {
   try {
+    // be sure settings.pannelAddress is not empty and is valid url
+    if (setting.panelAddress == "" ||
+        !Uri.parse(setting.panelAddress).isAbsolute) {
+      return false;
+    }
+    // be sure settings.panelAddress has not ended with /
+    if (setting.panelAddress.endsWith("/")) {
+      setting.panelAddress =
+          setting.panelAddress.substring(0, setting.panelAddress.length - 1);
+    }
+
     Response response = await GenaralApi.dio.post("/api/updateBotSetting",
         data: {
           "bot_name": setting.botName,
@@ -102,6 +114,82 @@ Future<bool> updateBotSetting({required Setting setting}) async {
     }
   } on DioException catch (e) {
     debugPrint(e.message.toString());
+    return false;
+  }
+}
+
+Future getBotAdvancedSetting() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/advancedSetting",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data != null) {
+      AdvancedSettingModel advancedSettingModel =
+          AdvancedSettingModel.fromMap(response.data);
+      return advancedSettingModel;
+    } else if (response.statusCode == 201) {
+      return null;
+    } else if (response.statusCode == 401) {
+      return null;
+    } else if (response.statusCode == 500) {
+      return null;
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/*************  ✨ Codeium Command ⭐  *************/
+/// Change advanced setting of the bot.
+///
+/// `name` is the name of the advanced setting to be changed.
+/// `value` is the new value of the advanced setting.
+///
+/// Returns true if the operation is successful, false otherwise.
+///
+/// Throws [DioException] if the request fails.
+/// ****  a7d96d50-6115-4c3e-b14a-5c4c13311c5d  ******
+Future<bool> changeAdvancedSetting({
+  required String name,
+  required bool value,
+}) async {
+  try {
+    Response response = await GenaralApi.dio.patch("/api/advancedSetting",
+        data: {"key": name, "value": value},
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data != null) {
+      return true;
+    } else if (response.statusCode == 201) {
+      return false;
+    } else if (response.statusCode == 401) {
+      return false;
+    } else if (response.statusCode == 500) {
+      return false;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  } catch (e) {
     return false;
   }
 }

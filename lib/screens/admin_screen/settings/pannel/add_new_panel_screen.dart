@@ -603,7 +603,7 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
           ),
           Divider(
               thickness: 5,
-              color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+              color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -643,7 +643,7 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
           SizedBox(height: AppStyle.defaultPadding),
           Divider(
               thickness: 5,
-              color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+              color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -683,7 +683,7 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
           SizedBox(height: AppStyle.defaultPadding),
           Divider(
               thickness: 5,
-              color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+              color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -730,7 +730,7 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           borderRadius: BorderRadius.all(
             Radius.circular(AppStyle.defaultPadding),
           ),
@@ -786,12 +786,12 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
         validationError: "کشوری که سرور در آن قرار گرفته است را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
-      // _otherWidgetList.add(CustomTextFromFieldWidget(
-      //   controller: _capacityEditTxt,
-      //   textHint: "ظرفیت سرور",
-      //   validationError: "مقدار کاربری که می توانند از این سرور استفاده کنند.",
-      //   keyboardType: TextInputType.text,
-      // ));
+      _otherWidgetList.add(CustomTextFromFieldWidget(
+        controller: _capacityEditTxt,
+        textHint: "ظرفیت سرور",
+        validationError: "مقدار کاربری که می توانند از این سرور استفاده کنند.",
+        keyboardType: TextInputType.text,
+      ));
       _marzbanWidgetList.add(CustomTextFromFieldWidget(
         controller: _urlPortEditTxt,
         textHint: "url و port صفحه لاگین",
@@ -857,13 +857,13 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
         validationError: "کشوری که سرور در آن قرار گرفته است را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
-      // _hiddifyWidgetList.add(CustomTextFromFieldWidget(
-      //   controller: _capacityEditTxt,
-      //   textHint: "ظرفیت سرور",
-      //   textDirection: TextDirection.ltr,
-      //   validationError: "مقدار کاربری که می توانند از این سرور استفاده کنند.",
-      //   keyboardType: TextInputType.text,
-      // ));
+      _hiddifyWidgetList.add(CustomTextFromFieldWidget(
+        controller: _capacityEditTxt,
+        textHint: "ظرفیت سرور",
+        textDirection: TextDirection.ltr,
+        validationError: "مقدار کاربری که می توانند از این سرور استفاده کنند.",
+        keyboardType: TextInputType.number,
+      ));
 
       _showData = true;
     });
@@ -912,7 +912,8 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
           location: _locationEditTxt.text,
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
           secretCode: _secretCodeEditTxt.text,
-          userLink: _userLinkEditTxt.text),
+          userLink: _userLinkEditTxt.text,
+          capacity: int.parse(_capacityEditTxt.text)),
     ).then((res) {
       if (!context.mounted) return;
 
@@ -936,11 +937,9 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
 
       EasyLoading.dismiss();
     }).onError((e, s) {
-      if (!context.mounted) return;
-
       EasyLoading.dismiss();
 
-      debugPrint(e.toString());
+      if (!context.mounted) return;
       showMsg(msg: "خطا", context: context, type: "error");
     });
   }

@@ -17,6 +17,7 @@ class CustomTextFromFieldWidget extends StatefulWidget {
       this.labelText,
       this.textDirection,
       this.enable = true,
+      this.formKey,
       this.callback});
 
   final TextEditingController controller;
@@ -30,6 +31,7 @@ class CustomTextFromFieldWidget extends StatefulWidget {
   final TextDirection? textDirection;
   final Function(bool)? callback;
   final bool enable;
+  final GlobalKey<FormState>? formKey;
 
   @override
   State<CustomTextFromFieldWidget> createState() =>
@@ -44,7 +46,7 @@ class _CustomTextFromFieldWidgetState extends State<CustomTextFromFieldWidget> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         border: Border.all(
-            width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
+            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
         borderRadius: BorderRadius.all(
           Radius.circular(AppStyle.defaultPadding),
         ),
@@ -80,6 +82,7 @@ class _CustomTextFromFieldWidgetState extends State<CustomTextFromFieldWidget> {
         onTap: () async {
           // widget.callback!(true);
         },
+        key: widget.formKey,
         validator: (String? value) {
           if (widget.validatorType == "tel") {
             if (value!.length != 11) {
@@ -94,6 +97,12 @@ class _CustomTextFromFieldWidgetState extends State<CustomTextFromFieldWidget> {
               return "رمز عبور نمی تواند کمتر از 6 حرف باشد.";
             } else if (value.isEmpty) {
               return 'رمز عبور را وارد کنید.';
+            } else {
+              return null;
+            }
+          } else if (widget.validatorType == "text") {
+            if (value!.isEmpty) {
+              return 'متن را وارد کنید.';
             } else {
               return null;
             }

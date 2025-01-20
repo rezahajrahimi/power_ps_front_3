@@ -23,17 +23,12 @@ Future getAllProdctCategory() async {
       }
 
       return productCategoryList;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
     } else {
       return false;
     }
   } on DioException catch (e) {
-    return e.error;
+    debugPrint(e.message);
+    return false;
   }
 }
 

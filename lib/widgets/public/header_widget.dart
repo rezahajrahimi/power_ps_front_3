@@ -1,8 +1,10 @@
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/provider/menu_provider.dart';
+import 'package:powerps/screens/admin_screen/search/search_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/profile_card_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:powerps/widgets/public/search_field_widget.dart';
 import 'package:provider/provider.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {
@@ -37,17 +39,21 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
             ),
           // if (!Responsive.isMobile(context))
           //   Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
-          // Expanded(
-          //     child: SearchField(
-          //   autoFocousEnable: false,
-          //   callBack: (val) {
-          //     // Navigator.push(
-          //     //     context,
-          //     //     MaterialPageRoute(
-          //     //       builder: (context) => const SearchScreen(),
-          //     //     ));
-          //   },
-          // )),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 20),
+              child: SearchField(
+                autoFocousEnable: false,
+                callBack: (val) {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ));
+                },
+              ),
+            ),
+          ),
           SizedBox(
             width: AppStyle.defaultPadding,
           ),

@@ -94,7 +94,6 @@ class _AgentBallanceInfoItemCardWidgetState
         // await _showAddBallanceDialog(context);
         await getAgentPaymentWays().then((res) {
           if (!mounted) return;
-
           if (res != null) {
             _showAddBallanceDialog(context, res);
           } else {

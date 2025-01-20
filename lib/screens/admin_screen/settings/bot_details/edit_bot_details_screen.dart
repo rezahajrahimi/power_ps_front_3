@@ -124,7 +124,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
             CustomTextFromFieldWidget(
               controller: _panelAddressTxtEdit,
               textDirection: TextDirection.ltr,
-              textHint: "آدرس پنل را وارد کنید.",
+              textHint: "آدرس هسته ربات را وارد کنید.",
               keyboardType: TextInputType.url,
               validationError: " را وارد کنید را وارد کنید.",
             ),

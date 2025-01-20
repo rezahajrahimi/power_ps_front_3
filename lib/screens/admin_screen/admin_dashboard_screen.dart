@@ -194,9 +194,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "آخرین کاربران",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "آخرین کاربران",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              IconButton(
+                  onPressed: () {
+                    _bindAdminDashboardScreenData();
+                  },
+                  icon: const Icon(Icons.refresh))
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(

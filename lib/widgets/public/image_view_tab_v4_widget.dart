@@ -1,13 +1,9 @@
-import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/widgets/public/full_screen_image.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CustomImageView extends StatefulWidget {
   const CustomImageView({super.key, required this.imageSrc});
@@ -39,9 +35,9 @@ class _CustomImageViewState extends State<CustomImageView> {
               SizedBox(
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    // launchUrl(Uri.parse(widget.imageSrc));
+                    launchUrl(Uri.parse(widget.imageSrc));
                     // Download image
-                    _downloadImage();
+                    // _downloadImage();
                   },
                   icon: const Icon(Icons.download),
                   label: const Text("دانلود رسید"),
@@ -79,6 +75,14 @@ class _CustomImageViewState extends State<CustomImageView> {
           _myList.clear();
           _myList.add(GestureDetector(
             child: CachedNetworkImage(
+              // add cross origin to image
+              httpHeaders: const {
+                "Connection": "keep-alive",
+                // add cross origin to image
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "*",
+              },
               imageUrl: widget.imageSrc,
               progressIndicatorBuilder: (context, url, downloadProgress) =>
                   CircularProgressIndicator(value: downloadProgress.progress),
@@ -100,20 +104,20 @@ class _CustomImageViewState extends State<CustomImageView> {
     }
   }
 
-  Future<File> _downloadImage() async {
-    var httpClient = HttpClient();
-    var request = await httpClient.getUrl(Uri.parse(widget.imageSrc));
-    var response = await request.close();
-    var bytes = await consolidateHttpClientResponseBytes(response);
-    String dir = (await getApplicationDocumentsDirectory()).path;
-    File file = File('$dir/image.jpg');
-    await file.writeAsBytes(bytes);
-    httpClient.close();
-    if (mounted) {
-      showMsg(
-          msg: "تصویر رسید در مسیر ${file.path} دانلود شد", context: context);
-    }
+  // Future<File> _downloadImage() async {
+  //   var httpClient = HttpClient();
+  //   var request = await httpClient.getUrl(Uri.parse(widget.imageSrc));
+  //   var response = await request.close();
+  //   var bytes = await consolidateHttpClientResponseBytes(response);
+  //   String dir = (await getApplicationDocumentsDirectory()).path;
+  //   File file = File('$dir/image.jpg');
+  //   await file.writeAsBytes(bytes);
+  //   httpClient.close();
+  //   if (mounted) {
+  //     showMsg(
+  //         msg: "تصویر رسید در مسیر ${file.path} دانلود شد", context: context);
+  //   }
 
-    return file;
-  }
+  //   return file;
+  // }
 }

@@ -585,9 +585,9 @@ class _ObtainExistPanelUsersToAgentsScreenState
                 Provider.of<PannelChangeController>(context, listen: false)
                     .obtinedConfigList)
         .then((value) {
-      if (value) {
-        if (!context.mounted) return;
+                                  if(!context.mounted) return;
 
+      if (value) {
         Provider.of<PannelChangeController>(context, listen: false)
             .clearConfigList();
         EasyLoading.dismiss();
@@ -595,15 +595,11 @@ class _ObtainExistPanelUsersToAgentsScreenState
         return;
       }
       EasyLoading.dismiss();
-      if (!context.mounted) return;
-
       showMsg(msg: "خطا", context: context, type: "error");
       return;
     }).onError((e, s) {
-      debugPrint(e.toString());
-      EasyLoading.dismiss();
       if (!context.mounted) return;
-
+      EasyLoading.dismiss();
       showMsg(msg: "خطا", context: context, type: "error");
     });
   }
@@ -623,7 +619,7 @@ class EmptyView extends StatelessWidget {
           Icons.error,
           color: Colors.red,
         ),
-        Text("کانفیگی پیدا نشد."),
+        Text("گزینه‌ای پیدا نشد."),
       ],
     );
   }

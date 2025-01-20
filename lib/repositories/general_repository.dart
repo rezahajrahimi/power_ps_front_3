@@ -9,9 +9,13 @@ import 'package:powerps/models/bought_product_details_model.dart';
 import 'package:powerps/models/dashboard_model.dart';
 import 'package:powerps/models/details_info.dart';
 import 'package:powerps/models/log_model.dart';
+import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/models/product_details_model.dart';
 import 'package:powerps/models/transaction_model.dart';
+import 'package:powerps/models/user_dashboard_model.dart';
 
+List<BoughtProductDetailsModel> boughtProducts = [];
+int lastPageBougthProduct = 1;
 Future<Dashboard?> getDashboardAnalytics() async {
   try {
     Response response = await GenaralApi.dio.get("/api/getDashboardAnalytics",
@@ -91,15 +95,15 @@ Future<AgentDashboard?> getAgentDashboardData() async {
   if (response.statusCode == 200 && response.data != null) {
     final agentBallance = Ballance.fromJson(response.data["accBallance"]);
     List<AgentAddCategoriyModel> agentAddCategories = [];
-    List<BoughtProductDetailsModel> boughtProducts = [];
+    // List<BoughtProductDetailsModel> boughtProducts = [];
     List<Log> logs = [];
 
     for (var i in response.data["products"]) {
       agentAddCategories.add(AgentAddCategoriyModel.fromMap(i));
     }
-    for (var i in response.data["boughtProducts"]) {
-      boughtProducts.add(BoughtProductDetailsModel.fromJson(i));
-    }
+    // for (var i in response.data["boughtProducts"]) {
+    //   boughtProducts.add(BoughtProductDetailsModel.fromJson(i));
+    // }
     for (var i in response.data["Last20Logs"]) {
       logs.add(Log.fromJson(i));
     }
@@ -107,7 +111,7 @@ Future<AgentDashboard?> getAgentDashboardData() async {
     final agentDashboard = AgentDashboard(
         ballance: agentBallance,
         agentProducts: agentAddCategories,
-        boughtProducts: boughtProducts,
+        boughtProducts: null,
         logs: logs);
     return agentDashboard;
   }
@@ -118,6 +122,99 @@ Future<AgentDashboard?> getAgentDashboardData() async {
   //   debugPrint(e.toString());
   //   return null;
   // }
+}
+
+Future<UserDashboard?> getUserDashboardAnalytics() async {
+  // try {
+  Response response = await GenaralApi.dio.get("/api/getUserDashboardAnalytics",
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        "Content-Type": "application/json;charset=UTF-8",
+        "Charset": "utf-8",
+        'Access-Control-Allow-Origin': '*',
+      }));
+  if (response.statusCode == 200 && response.data != null) {
+    final agentBallance = Ballance.fromJson(response.data["accBallance"]);
+    List<ProductCategory> products = [];
+    // List<BoughtProductDetailsModel> boughtProducts = [];
+    List<Log> logs = [];
+
+    for (var i in response.data["products"]) {
+      products.add(ProductCategory.fromMap(i));
+    }
+    // for (var i in response.data["boughtProducts"]) {
+    //   boughtProducts.add(BoughtProductDetailsModel.fromJson(i));
+    // }
+    for (var i in response.data["Last20Logs"]) {
+      logs.add(Log.fromJson(i));
+    }
+
+    final userDashboard =
+        UserDashboard(ballance: agentBallance, prdoducts: products, logs: logs);
+    return userDashboard;
+  }
+  return null;
+  // } catch (e) {
+  //   debugPrint(e.toString());
+  //   return null;
+  // }
+}
+
+Future<List<BoughtProductDetailsModel>> getAgentSelledProductsByPagination(
+    {int page = 1}) async {
+  try {
+    Response response = await GenaralApi.dio
+        .get("/api/getAgentSelledProductsByPagination?page=$page",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*',
+            }));
+    if (response.statusCode == 200 && response.data != null) {
+      var data = response.data["data"];
+      lastPageBougthProduct = response.data["last_page"];
+      boughtProducts.clear();
+      for (var i in data) {
+        boughtProducts.add(BoughtProductDetailsModel.fromJson(i));
+      }
+      return boughtProducts;
+    }
+    return boughtProducts;
+  } catch (e) {
+    debugPrint(e.toString());
+    return boughtProducts;
+  }
+}
+
+Future<List<BoughtProductDetailsModel>> getUserSelledProductsByPagination(
+    {int page = 1}) async {
+  try {
+    Response response = await GenaralApi.dio
+        .get("/api/getUserSelledProductsByPagination?page=$page",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*',
+            }));
+    if (response.statusCode == 200 && response.data != null) {
+      var data = response.data["data"];
+      lastPageBougthProduct = response.data["last_page"];
+      boughtProducts.clear();
+      for (var i in data) {
+        boughtProducts.add(BoughtProductDetailsModel.fromJson(i));
+      }
+      return boughtProducts;
+    }
+    return boughtProducts;
+  } catch (e) {
+    debugPrint(e.toString());
+    return boughtProducts;
+  }
 }
 
 Future getAgentPaymentWays() async {

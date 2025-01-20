@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:pagination_flutter/pagination.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
+import 'package:powerps/repositories/product_details_repository.dart';
+import 'package:powerps/repositories/referral_setting_repository.dart';
+import 'package:powerps/widgets/product_details/user_bougth_products_info_card_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -13,7 +18,6 @@ import 'package:powerps/repositories/account_ballance_repository.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
-import 'package:powerps/widgets/product_details/config_details_with_category_info_item_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
@@ -30,6 +34,10 @@ class BotUserDetailsScreen extends StatefulWidget {
 class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   BotUser? _botUser;
   bool _showData = false;
+  bool _showBoughtProduct = false;
+  int _lastPageOfUserBought = 1;
+  int selectedPageOfUserBought = 1;
+
   final _ballanceController = TextEditingController();
 
   @override
@@ -79,10 +87,24 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         });
       }
     }).onError((e, s) {
-      debugPrint(e.toString());
       if (!mounted) return;
-
+      showMsg(msg: "خطا", context: context, type: "error");
       Navigator.of(context).pop();
+    });
+    await getUserProductsHistoryByAccountIDWithPagination(
+            userID: widget.id.toInt())
+        .then((value) {
+      if (!mounted) return;
+      if (value != false && value != null) {
+        setState(() {
+          _lastPageOfUserBought = lastPageOfUserBought;
+
+          _showBoughtProduct = true;
+        });
+      } else {
+        showMsg(msg: "خطا", context: context, type: "error");
+        debugPrint("error on dashboard biding $value");
+      }
     });
   }
 
@@ -91,8 +113,10 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   }
 
   _content(BuildContext context) {
-    Provider.of<ProductProvider>(context, listen: false);
-    _fillData();
+    bool changed = context.watch<ProductProvider>().changed;
+    if (changed) {
+      _fillData();
+    }
     return Column(
       children: [
         Row(
@@ -107,8 +131,12 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     if (Responsive.isMobile(context))
                       _accountBallanceInfoCard(context),
                     if (Responsive.isMobile(context))
+                      _referralBallanceInfoCard(context),
+                    if (Responsive.isMobile(context))
                       SizedBox(height: AppStyle.defaultPadding),
-                    _productInfoItemCard(context),
+                    _showBoughtProduct
+                        ? _productInfoItemCard(context)
+                        : Container(),
                     if (Responsive.isMobile(context))
                       SizedBox(height: AppStyle.defaultPadding),
                     if (Responsive.isMobile(context))
@@ -130,6 +158,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     _operationInfoCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     _accountBallanceInfoCard(context),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    _referralBallanceInfoCard(context),
                   ],
                 ),
               ),
@@ -230,9 +260,19 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "مشخصات کاربر",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "مشخصات کاربر",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              IconButton(
+                  onPressed: () {
+                    _fillData();
+                  },
+                  icon: const Icon(Icons.refresh))
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
@@ -259,48 +299,72 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   }
 
   _productInfoItemCard(BuildContext context) {
-    List<Widget> mainInfoWidgetList = [];
-    setState(() {
-      for (var i in _botUser!.products!) {
-        mainInfoWidgetList.add(ConfigDetailsWithCatInfoItemWidget(
-          item: i,
-        ));
-      }
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "کانفیگ های خریداری شده",
-            style: Theme.of(context).textTheme.titleMedium,
+    return Column(
+      children: [
+        UserBougthProductsInfoCardWidget(
+          title: "کانفیگ‌های خریداری شده",
+          products: userBoughtProductList,
+        ),
+        SizedBox(height: AppStyle.defaultPadding),
+        Pagination(
+          numOfPages: _lastPageOfUserBought,
+          selectedPage: selectedPageOfUserBought,
+          pagesVisible: 4,
+          onPageChanged: (page) async {
+            setState(() {
+              selectedPageOfUserBought = page;
+              _showBoughtProduct = false;
+            });
+            await getUserProductsHistoryByAccountIDWithPagination(
+                page: page, userID: widget.id.toInt());
+            setState(() {
+              _lastPageOfUserBought = lastPageOfUserBought;
+
+              _showBoughtProduct = true;
+            });
+          },
+          nextIcon: const Icon(
+            Icons.arrow_forward_ios,
+            color: Colors.blue,
+            size: 14,
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: mainInfoWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  importedList: mainInfoWidgetList),
-              desktop: widgetsGridview(
-                  importedList: mainInfoWidgetList,
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 2),
+          previousIcon: const Icon(
+            Icons.arrow_back_ios,
+            color: Colors.blue,
+            size: 14,
+          ),
+          activeTextStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          activeBtnStyle: ButtonStyle(
+            backgroundColor: WidgetStateProperty.all(Colors.blue),
+            shape: WidgetStateProperty.all(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(38),
+              ),
             ),
           ),
-        ],
-      ),
+          inactiveBtnStyle: ButtonStyle(
+            shape: WidgetStateProperty.all(RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(38),
+            )),
+          ),
+          inactiveTextStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (Responsive.isMobile(context))
+          SizedBox(height: AppStyle.defaultPadding),
+        if (Responsive.isMobile(context)) // side bar mobile
+          Column(
+            children: [
+              SizedBox(height: AppStyle.defaultPadding),
+            ],
+          ),
+      ],
     );
   }
 
@@ -385,6 +449,62 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         icon: const Icon(Icons.edit),
         label: const Text("ویرایش موجودی دلاری کیف"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _incAccuntBallanceDialog(context, type: "toman");
+        },
+        icon: const Icon(FontAwesomeIcons.plus),
+        label: const Text("افزایش موجودی تومان"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _decAccuntBallanceDialog(context, type: "toman");
+        },
+        icon: const Icon(FontAwesomeIcons.minus),
+        label: const Text("کاهش موجودی تومان"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _incAccuntBallanceDialog(context, type: "dollar");
+        },
+        icon: const Icon(FontAwesomeIcons.plus),
+        label: const Text("افزایش موجودی دلاری"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _decAccuntBallanceDialog(context, type: "dollar");
+        },
+        icon: const Icon(FontAwesomeIcons.minus),
+        label: const Text("کاهش موجودی دلاری"),
+      ));
       mainWidgetList.add(DetailsInfoItemWidget(
           item: DetailsInfoItem(
         icon: const Icon(Icons.wallet),
@@ -413,6 +533,114 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         children: [
           Text(
             "کیف پول کاربر",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  crossAxisCount: 1,
+                  importedList: mainWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1,
+                  importedList: mainWidgetList),
+              desktop: widgetsGridview(
+                  importedList: mainWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1),
+            ),
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 5,
+                  context: context,
+                  crossAxisCount: 1,
+                  importedList: actionsWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 1,
+                  importedList: actionsWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionsWidgetList,
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _referralBallanceInfoCard(BuildContext context) {
+    List<Widget> mainWidgetList = [];
+    List<Widget> actionsWidgetList = [];
+
+    setState(() {
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _editReferralBallanceDialog(context);
+        },
+        icon: const Icon(Icons.edit),
+        label: const Text("ویرایش موجودی کیف پول همکاری"),
+      ));
+
+      // actionsWidgetList.add(ElevatedButton.icon(
+      //   style: TextButton.styleFrom(
+      //     padding: EdgeInsets.symmetric(
+      //       horizontal: AppStyle.defaultPadding * 1.5,
+      //       vertical: AppStyle.defaultPadding /
+      //           (Responsive.isMobile(context) ? 2 : 1),
+      //     ),
+      //   ),
+      //   onPressed: () async {
+      //     Navigator.push(
+      //         context,
+      //         MaterialPageRoute(
+      //             builder: (context) => ReferralReportScreen(
+      //                   accountId: _botUser!.accountId,
+      //                 )));
+      //   },
+      //   icon: const Icon(Icons.report),
+      //   label: const Text("گزارش کیف پول همکاری"),
+      // ));
+      mainWidgetList.add(DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        icon: const Icon(Icons.wallet),
+        itemName: "موجودی کیف پول همکاری",
+        itemValue: _botUser!.referralWallet != null
+            ? "${thousandSeperatorFormatter(_botUser!.referralWallet!.amount.toString())} تومان "
+            : "0 تومان",
+      )));
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "کیف پول همکاری",
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: AppStyle.defaultPadding),
@@ -493,25 +721,224 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
+                    EasyLoading.show();
                     await setNewAccountBallance(
                             ballance: int.parse(_ballanceController.text),
                             userID: _botUser!.accountId.toInt())
                         .then((value) {
+                      if (!context.mounted) return;
                       if (value) {
-                        if (!context.mounted) return;
-
                         setState(() {
                           _botUser!.ballance!.ballance =
                               BigInt.from(int.parse(_ballanceController.text));
                         });
+                        EasyLoading.dismiss();
+                        showMsg(
+                            context: context,
+                            msg: "موجودی با موفقیت ویرایش شد");
+                        _ballanceController.clear();
+
+                        Navigator.pop(context);
+                        _fillData();
+                      } else {
+                        EasyLoading.dismiss();
+                        showMsg(context: context, msg: "خطا", type: "error");
+                      }
+                    });
+                  },
+                  child: const Text("تایید"),
+                )
+              ],
+            ))));
+  }
+
+  _editReferralBallanceDialog(BuildContext context) async {
+    showDialog(
+        context: context,
+        builder: (context) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: SingleChildScrollView(
+                child: AlertDialog(
+              title: const Text("ویرایش موجودی کیف پول همکاری"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("لطفا مبلغ مورد نظر خود را وارد کنید"),
+                  SizedBox(height: AppStyle.defaultPadding),
+                  CustomTextFromFieldWidget(
+                    controller: _ballanceController,
+                    textHint: "میزان موجودی",
+                    validationError: "میزان موجودی را وارد کنید",
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("انصراف"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    EasyLoading.show();
+                    await setNewReferralBallance(
+                            ballance: int.parse(_ballanceController.text),
+                            userID: _botUser!.accountId.toInt())
+                        .then((value) {
+                      if (!context.mounted) return;
+                      if (value) {
+                        setState(() {
+                          _botUser!.ballance!.ballance =
+                              BigInt.from(int.parse(_ballanceController.text));
+                        });
+                        EasyLoading.dismiss();
                         showMsg(
                             context: context,
                             msg: "موجودی با موفقیت ویرایش شد");
                         Navigator.pop(context);
+                        _ballanceController.clear();
                         _fillData();
                       } else {
-                        if (!context.mounted) return;
+                        EasyLoading.dismiss();
+                        showMsg(context: context, msg: "خطا", type: "error");
+                      }
+                    });
+                  },
+                  child: const Text("تایید"),
+                )
+              ],
+            ))));
+  }
 
+  _incAccuntBallanceDialog(BuildContext context, {required String type}) async {
+    showDialog(
+        context: context,
+        builder: (context) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: SingleChildScrollView(
+                child: AlertDialog(
+              title: const Text("افزایش موجودی کیف پول"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("لطفا مقدار مورد نظر خود را وارد کنید"),
+                  SizedBox(height: AppStyle.defaultPadding),
+                  CustomTextFromFieldWidget(
+                    controller: _ballanceController,
+                    textHint: "مقدار مورد نظر",
+                    validationError: "مقدار مورد نظر را وارد کنید",
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("انصراف"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    EasyLoading.show();
+                    await increaseUserAccuntBalanceByUserID(
+                            ballance: double.parse(_ballanceController.text),
+                            userID: _botUser!.id.toInt(),
+                            type: type)
+                        .then((value) {
+                      if (!context.mounted) return;
+                      if (value.toString() != "false") {
+                        setState(() {
+                          if (type == "toman") {
+                            _botUser!.ballance!.ballance =
+                                BigInt.from(int.parse(value));
+                          } else {
+                            _botUser!.ballance!.accountBallanceIndollar =
+                                double.parse(value);
+                          }
+                        });
+                        EasyLoading.dismiss();
+                        showMsg(
+                            context: context,
+                            msg: "موجودی با موفقیت ویرایش شد");
+                        _ballanceController.clear();
+
+                        Navigator.pop(context);
+                        _fillData();
+                      } else {
+                        EasyLoading.dismiss();
+                        showMsg(context: context, msg: "خطا", type: "error");
+                      }
+                    });
+                  },
+                  child: const Text("تایید"),
+                )
+              ],
+            ))));
+  }
+
+  _decAccuntBallanceDialog(BuildContext context, {required String type}) async {
+    showDialog(
+        context: context,
+        builder: (context) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: SingleChildScrollView(
+                child: AlertDialog(
+              title: const Text("کاهش موجودی کیف پول"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("لطفا مقدار مورد نظر خود را وارد کنید"),
+                  SizedBox(height: AppStyle.defaultPadding),
+                  CustomTextFromFieldWidget(
+                    controller: _ballanceController,
+                    textHint: "مقدار مورد نظر",
+                    validationError: "مقدار مورد نظر را وارد کنید",
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("انصراف"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    EasyLoading.show();
+                    await decreaseUserAccuntBalanceByUserID(
+                            ballance: double.parse(_ballanceController.text),
+                            userID: _botUser!.id.toInt(),
+                            type: type)
+                        .then((value) {
+                      if (!context.mounted) return;
+                      if (value.toString() != "false") {
+                        setState(() {
+                          if (type == "toman") {
+                            _botUser!.ballance!.ballance =
+                                BigInt.from(int.parse(value));
+                          } else {
+                            _botUser!.ballance!.accountBallanceIndollar =
+                                double.parse(value);
+                          }
+                        });
+                        EasyLoading.dismiss();
+                        showMsg(
+                            context: context,
+                            msg: "موجودی با موفقیت ویرایش شد");
+                        _ballanceController.clear();
+
+                        Navigator.pop(context);
+                        _fillData();
+                      } else {
+                        EasyLoading.dismiss();
                         showMsg(context: context, msg: "خطا", type: "error");
                       }
                     });
@@ -553,25 +980,27 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
+                    EasyLoading.show();
                     await setNewDollarAccountBallance(
                             ballance: double.parse(_ballanceController.text),
                             userID: _botUser!.accountId.toInt())
                         .then((value) {
+                      if (!context.mounted) return;
                       if (value) {
-                        if (!context.mounted) return;
-
                         setState(() {
                           _botUser!.ballance!.accountBallanceIndollar =
                               double.parse(_ballanceController.text);
                         });
+                        EasyLoading.dismiss();
                         showMsg(
                             context: context,
                             msg: "موجودی با موفقیت ویرایش شد");
+                        _ballanceController.clear();
+
                         Navigator.pop(context);
                         _fillData();
                       } else {
-                        if (!context.mounted) return;
-
+                        EasyLoading.dismiss();
                         showMsg(context: context, msg: "خطا", type: "error");
                       }
                     });
@@ -598,8 +1027,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         selectedItem = productCategoryItemList[0];
       }
     }).whenComplete(() async {
-      EasyLoading.dismiss();
       if (!context.mounted) return;
+      EasyLoading.dismiss();
 
       showDialog(
           context: context,
@@ -666,7 +1095,6 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                               accountId: _botUser!.accountId.toInt(),
                             ).then((val) {
                               if (!context.mounted) return;
-
                               if (val != null) {
                                 EasyLoading.dismiss();
                                 Navigator.pop(context);
@@ -683,7 +1111,6 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                               }
                             }).onError((error, stackTrace) {
                               if (!context.mounted) return;
-
                               EasyLoading.dismiss();
                               debugPrint(error.toString());
                               showMsg(
@@ -702,13 +1129,11 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               )));
     }).onError((error, stackTrace) {
       EasyLoading.dismiss();
-      debugPrint(error.toString());
-      if (context.mounted) {
-        // setStateIfMounted(() {
-        //   _showData = false;
-        // });
-        showMsg(msg: "خطا", context: context, type: "error");
-      }
+      if (!context.mounted) return;
+      // setStateIfMounted(() {
+      //   _showData = false;
+      // });
+      showMsg(msg: "خطا", context: context, type: "error");
     });
   }
 }

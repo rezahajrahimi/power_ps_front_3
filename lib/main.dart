@@ -9,16 +9,23 @@ import 'package:powerps/provider/menu_provider.dart';
 import 'package:powerps/provider/prodct_provider.dart';
 import 'package:powerps/provider/product_category_provider.dart';
 import 'package:powerps/provider/transaction_provider.dart';
+import 'package:powerps/provider/user_admin_provider.dart';
+import 'package:powerps/provider/user_provider.dart';
 import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
 import 'package:powerps/screens/home_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+Future main() async {
+  // await dotenv.load(fileName: ".env");
+  runApp(const MyApp());
+}
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> stateKey = GlobalKey<NavigatorState>();
 
@@ -47,6 +54,9 @@ class MyApp extends StatelessWidget {
             create: (context) => AgentProvider(),
           ),
           ChangeNotifierProvider(
+            create: (context) => UserProvider(),
+          ),
+          ChangeNotifierProvider(
             create: (context) => AgentBallanceProvider(),
           ),
           ChangeNotifierProvider(
@@ -55,10 +65,30 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(
             create: (context) => ProductCategoryProvider(),
           ),
+          ChangeNotifierProvider(
+            create: (context) => UserAdminProvider(),
+          ),
         ],
         child: MaterialApp(
             builder: EasyLoading.init(),
             title: projectName,
+            onGenerateRoute: (setting) {
+              if (setting.name!.contains("/login/")) {
+                String url =
+                    setting.name!.substring(setting.name!.indexOf("login/"));
+                var inputs = url.split("/");
+                // print(inputs);
+
+                // print("acc: ${inputs[1].trim()} pass: ${inputs[2].trim()}");
+                return MaterialPageRoute(
+                    builder: (_) => LoginScreen(
+                          accountID: inputs[1],
+                          password: inputs[2],
+                        ));
+              }
+
+              return null;
+            },
             theme: ThemeData.dark().copyWith(
               scaffoldBackgroundColor: AppStyle.bgColor,
               textTheme:
@@ -67,6 +97,9 @@ class MyApp extends StatelessWidget {
               canvasColor: AppStyle.secondaryColor,
             ),
             routes: {
+              // '/': (context) => const HomeScreen(
+              //       selectedPage: 0,
+              //     ),
               '/home': (context) => const HomeScreen(
                     selectedPage: 0,
                   ),
