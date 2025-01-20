@@ -5,12 +5,14 @@ import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/crypto_payment_gateway_model.dart';
 import 'package:powerps/models/payment_type_model.dart';
 import 'package:powerps/models/sub_menu_item_model.dart';
+import 'package:powerps/provider/paymeny_provider.dart';
 import 'package:powerps/repositories/payment_type_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/payment_type_info_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:provider/provider.dart';
 
 class PaymentTypeScreen extends StatefulWidget {
   const PaymentTypeScreen({super.key});
@@ -22,6 +24,7 @@ class PaymentTypeScreen extends StatefulWidget {
 class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   bool _showData = false;
   bool _hasDollarePayment = false;
+  // bool _showOfflinePayment = false;
   List<PaymentType> _paymentTypeList = [];
   List<SubMenuItem> subList = [];
   PaymentType? _zarinPal;
@@ -75,6 +78,30 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     );
   }
 
+  _rebuildOfflinePayment() async {
+    await getAllOfflinePayments().then((res) {
+      if (res != null && res != false) {
+        setState(() {
+          _paymentTypeList = res;
+
+          _paymentItemWidgetList.clear();
+          for (var i in _paymentTypeList) {
+            _paymentItemWidgetList.add(PaymentTypeItemInfoWidget(
+              paymentType: PaymentType(
+                  id: i.id,
+                  name: i.name,
+                  merchantId: i.merchantId,
+                  isActive: i.isActive,
+                  type: i.type),
+            ));
+          }
+        });
+      }
+    }).onError((e, s) {
+      debugPrint(e.toString());
+    });
+  }
+
   void _fillData() async {
     if (context.mounted) {
       var res = await getAllOfflinePayments();
@@ -125,6 +152,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           _nowPaymentPasswordTxtEdit.text = _nowPayment!.password;
           _nowPaymentIsActive = _nowPayment!.isActive;
           _nowPaymentIsFeePaidByUser = _nowPayment!.isFeePaidByUser;
+          // _showOfflinePayment = true;
           _showData = true;
         });
       }
@@ -172,13 +200,6 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     );
   }
 
-  void _retryPaymentTypeData() {
-    paymentTypeChangedToken = "aaa";
-
-    _fillData();
-    paymentTypeotifier.changedPaymentTypeData();
-  }
-
   _content(BuildContext context) {
     return Column(
       children: [
@@ -220,50 +241,48 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   }
 
   _offlinePaymentTypeCard(BuildContext context) {
-    var size = MediaQuery.of(context).size.width;
+    return Consumer<PaymentProvider>(
+        builder: (context, paymentProvider, child) {
+      if (paymentProvider.changed) {
+        Future.microtask(() => _rebuildOfflinePayment());
+      }
 
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "پرداخت های آفلاین",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: ValueListenableBuilder(
-                valueListenable: paymentTypeotifier,
-                builder: (BuildContext context, dynamic value, Widget? child) {
-                  if (value == "paymentTypeChanged") {
-                    _retryPaymentTypeData();
-                  }
-                  return Responsive(
-                    mobile: widgetsGridview(
-                        childAspectRatio: 1.75,
-                        context: context,
-                        importedList: _paymentItemWidgetList),
-                    tablet: widgetsGridview(
-                        context: context,
-                        childAspectRatio: 4.5,
-                        importedList: _paymentItemWidgetList),
-                    desktop: widgetsGridview(
-                        importedList: _paymentItemWidgetList,
-                        context: context,
-                        childAspectRatio: size > 1550 ? 4.5 : 3,
-                        crossAxisCount: 2),
-                  );
-                }),
-          ),
-        ],
-      ),
-    );
+      return Container(
+        padding: EdgeInsets.all(AppStyle.defaultPadding),
+        decoration: BoxDecoration(
+          color: AppStyle.secondaryColor,
+          borderRadius: const BorderRadius.all(Radius.circular(10)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "پرداخت های آفلاین",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: AppStyle.defaultPadding),
+            SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 1.75,
+                    context: context,
+                    importedList: _paymentItemWidgetList),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4.5,
+                    importedList: _paymentItemWidgetList),
+                desktop: widgetsGridview(
+                    importedList: _paymentItemWidgetList,
+                    context: context,
+                    childAspectRatio: 3,
+                    crossAxisCount: 2),
+              ),
+            )
+          ],
+        ),
+      );
+    });
   }
 
   _menuItemTextTypeCard(BuildContext context) {
@@ -819,7 +838,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Text(
-              "قابلیت پرداخت از درگاه NOWPAYMENT",
+              "قابلیت پرداخت از درگاه NOWPAYMENTS",
               style: TextStyle(color: AppStyle.deactiveStatus),
             ),
           ),

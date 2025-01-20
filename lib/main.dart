@@ -6,6 +6,7 @@ import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/provider/auth_provider.dart';
 import 'package:powerps/provider/panel_controller.dart';
 import 'package:powerps/provider/menu_provider.dart';
+import 'package:powerps/provider/paymeny_provider.dart';
 import 'package:powerps/provider/prodct_provider.dart';
 import 'package:powerps/provider/product_category_provider.dart';
 import 'package:powerps/provider/transaction_provider.dart';
@@ -67,6 +68,9 @@ class MyApp extends StatelessWidget {
           ),
           ChangeNotifierProvider(
             create: (context) => UserAdminProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => PaymentProvider(),
           ),
         ],
         child: MaterialApp(

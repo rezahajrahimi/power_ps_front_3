@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/payment_type_model.dart';
+import 'package:powerps/provider/paymeny_provider.dart';
 import 'package:powerps/repositories/payment_type_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
+import 'package:provider/provider.dart';
 
 class PaymentTypeItemInfoWidget extends StatefulWidget {
   const PaymentTypeItemInfoWidget({
@@ -18,7 +20,8 @@ class PaymentTypeItemInfoWidget extends StatefulWidget {
 }
 
 class _PaymentTypeItemInfoWidgetState extends State<PaymentTypeItemInfoWidget> {
-  final _newAliasnNameEditText = TextEditingController();
+  final _valueAliasnNameEditText = TextEditingController();
+  final _nameAliasnNameEditText = TextEditingController();
   bool _newState = false;
   @override
   void initState() {
@@ -131,40 +134,40 @@ class _PaymentTypeItemInfoWidgetState extends State<PaymentTypeItemInfoWidget> {
   }
 
   _openAddNewAdditionDialog({required BuildContext context}) {
+    _nameAliasnNameEditText.text = widget.paymentType.name;
+    _valueAliasnNameEditText.text = widget.paymentType.merchantId;
     showDialog(
         context: context,
         builder: (context) => Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
               contentPadding: EdgeInsets.zero,
-              title: Text("ویرایش ${widget.paymentType.merchantId}"),
+              title: Text("ویرایش ${widget.paymentType.name}"),
               content: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: SizedBox(
                   height: 200,
                   child: Column(
+                    spacing: 8.0,
                     children: [
-                      const Text("متن جدید را وارد کنید"),
+                      const Text("نام جدید را وارد کنید"),
                       TextFormField(
-                        controller: _newAliasnNameEditText,
+                        controller: _nameAliasnNameEditText,
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         maxLines: null,
                         decoration:
                             const InputDecoration(labelText: "متن جدید"),
                       ),
-                      const SizedBox(
-                        height: 8,
+                      const Text("عبارت جدید را وارد کنید"),
+                      TextFormField(
+                        controller: _valueAliasnNameEditText,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        maxLines: null,
+                        decoration:
+                            const InputDecoration(labelText: "متن جدید"),
                       ),
-                      // const Text("واحد ردیف جدید را وارد کنید."),
-                      // TextFormField(
-                      //   controller: _newAdditionUnitEditText,
-                      //   keyboardType: TextInputType.text,
-                      //   textInputAction: TextInputAction.next,
-                      //   maxLines: null,
-                      //   decoration:
-                      //       const InputDecoration(labelText: "واحد ردیف جدید"),
-                      // ),
                     ],
                   ),
                 ),
@@ -176,24 +179,31 @@ class _PaymentTypeItemInfoWidgetState extends State<PaymentTypeItemInfoWidget> {
                     TextButton(
                         onPressed: () async {
                           EasyLoading.show();
-                          if (_newAliasnNameEditText.text.isNotEmpty) {
+                          if (_valueAliasnNameEditText.text.isNotEmpty &&
+                              _nameAliasnNameEditText.text.isNotEmpty) {
                             bool res = false;
-                            res = await chanegeMerChantIdByPaymentTypeName(
-                                merchantId: _newAliasnNameEditText.text,
-                                name: widget.paymentType.name);
+                            res = await updateOfflinePaymentType(
+                                id: int.parse(widget.paymentType.id),
+                                merchantId: _valueAliasnNameEditText.text,
+                                name: _nameAliasnNameEditText.text);
 
                             if (res) {
                               setState(() {
-                                _newAliasnNameEditText.text = "";
+                                _valueAliasnNameEditText.text = "";
+                                _nameAliasnNameEditText.text = "";
                                 paymentTypeChangedToken = "paymentTypeChanged";
                               });
 
                               if (context.mounted) {
                                 showMsg(msg: "ویرایش شد.", context: context);
+                                if (!context.mounted) return;
+                                context
+                                    .read<PaymentProvider>()
+                                    .setChanged(true);
 
                                 Navigator.pop(context);
                               }
-                              paymentTypeotifier.changedPaymentTypeData();
+                              // call payment provider and set it changed
                             }
                           } else {
                             // showToast(
@@ -204,7 +214,7 @@ class _PaymentTypeItemInfoWidgetState extends State<PaymentTypeItemInfoWidget> {
                                   msg: "خطا.", context: context, type: "error");
                             }
 
-                            paymentTypeotifier.changedPaymentTypeData();
+                            // paymentTypeotifier.changedPaymentTypeData();
                           }
                           EasyLoading.dismiss();
                         },
