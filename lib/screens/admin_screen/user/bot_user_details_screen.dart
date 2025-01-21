@@ -317,7 +317,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             });
             await getUserProductsHistoryByAccountIDWithPagination(
                 page: page, userID: widget.id.toInt());
-            setState(() {
+
+            setStateIfMounted(() {
               _lastPageOfUserBought = lastPageOfUserBought;
 
               _showBoughtProduct = true;
