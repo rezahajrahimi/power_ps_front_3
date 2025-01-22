@@ -25,6 +25,8 @@ import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/setting/advanced_setting_info_widget.dart';
 
+import 'backup/backup_screen.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -492,6 +494,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: const Icon(Icons.supervised_user_circle),
         label: const Text("دستیاران فروش"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const BackupScreen(),
+              )).then((value) => {});
+        },
+        icon: const Icon(Icons.backup),
+        label: const Text("پشتیبان‌گیری و بازیابی"),
+      ));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -679,6 +699,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           )).then((value) => {});
                     },
                     trailingIcon: const Icon(Icons.admin_panel_settings)),
+                FocusedMenuItem(
+                    backgroundColor: AppStyle.primaryColor,
+                    title: const Text("پشتیبان‌گیری و بازیابی"),
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BackupScreen(),
+                          )).then((value) => {});
+                    },
+                    trailingIcon: const Icon(Icons.backup)),
               ],
               menuOffset: 50,
               duration: const Duration(milliseconds: 2),
