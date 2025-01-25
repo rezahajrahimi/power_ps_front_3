@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -144,11 +148,7 @@ class _BackupScreenState extends State<BackupScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isLoading
-                        ? null
-                        : () async {
-                            // TODO: اضافه کردن منطق انتخاب فایل
-                          },
+                    onPressed: _isLoading ? null : _uploadBackup,
                     icon: const Icon(Icons.file_upload),
                     label: const Text('انتخاب فایل'),
                     style: OutlinedButton.styleFrom(
@@ -187,6 +187,33 @@ class _BackupScreenState extends State<BackupScreen> {
         ),
       ),
     );
+  }
+
+  _uploadBackup() async {
+    // select file from storage witch extension is .sql
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null) {
+      File file = File(result.files.single.path!);
+      debugPrint("file=>${file.path}");
+      // upload file to server
+      // create a form data
+      FormData formData = FormData.fromMap({
+        "backup_file": await MultipartFile.fromFile(file.path,
+            filename: file.path.split('/').last),
+      });
+      setState(() => _isLoading = true);
+
+      // upload file to server
+      restoreBackup(formData: formData).then((val) {
+        if (!mounted) return;
+        if (val != false) {
+          showMsg(msg: "بازیابی انجام شد", context: context);
+        } else {
+          showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+        }
+      });
+    }
+    setState(() => _isLoading = false);
   }
 
   @override
