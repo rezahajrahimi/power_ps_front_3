@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 
-Future<bool?> createBackup() async {
+Future<String?> createBackup() async {
   try {
     Response response = await GenaralApi.dio.get("/api/createBackup",
         options: Options(headers: {
