@@ -120,7 +120,7 @@ Future<bool> updateBotSetting({required Setting setting}) async {
 
 Future getBotAdvancedSetting() async {
   try {
-    Response response = await GenaralApi.dio.get("/api/advancedSetting",
+    Response response = await GenaralApi.dio.get("/api/advanceSettingLookup",
         options: Options(headers: {
           'Accept': 'application/json',
           'Connection': 'keep-alive',
@@ -129,24 +129,28 @@ Future getBotAdvancedSetting() async {
           'Access-Control-Allow-Origin': '*'
         }));
 
-    if (response.statusCode == 200 && response.data != null) {
-      AdvancedSettingModel advancedSettingModel =
-          AdvancedSettingModel.fromMap(response.data);
+    if (response.statusCode == 200) {
+      List advancedSettingModel = response.data
+          .map((item) => AdvancedSettingModel.fromMap(item))
+          .toList();
+
+      debugPrint(advancedSettingModel.length.toString());
       return advancedSettingModel;
     } else if (response.statusCode == 201) {
-      return null;
+      return [];
     } else if (response.statusCode == 401) {
-      return null;
+      return [];
     } else if (response.statusCode == 500) {
-      return null;
+      return [];
     } else {
-      return null;
+      return [];
     }
   } on DioException catch (e) {
     debugPrint(e.message.toString());
-    return null;
+    return [];
   } catch (e) {
-    return null;
+    debugPrint(e.toString());
+    return [];
   }
 }
 
@@ -165,15 +169,16 @@ Future<bool> changeAdvancedSetting({
   required bool value,
 }) async {
   try {
-    Response response = await GenaralApi.dio.patch("/api/advancedSetting",
-        data: {"key": name, "value": value},
-        options: Options(headers: {
-          'Accept': 'application/json',
-          'Connection': 'keep-alive',
-          "Content-Type": "application/json;charset=UTF-8",
-          "Charset": "utf-8",
-          'Access-Control-Allow-Origin': '*'
-        }));
+    Response response =
+        await GenaralApi.dio.post("/api/advanceSettingLookupUpdateByName",
+            data: {"name": name, "value": value.toString()},
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
 
     if (response.statusCode == 200 && response.data != null) {
       return true;

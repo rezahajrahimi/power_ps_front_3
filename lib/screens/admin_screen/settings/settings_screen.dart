@@ -3,7 +3,6 @@ import 'package:focused_menu/focused_menu.dart';
 import 'package:focused_menu/modals.dart';
 
 import 'package:powerps/helper/responsive.dart';
-import 'package:powerps/models/advanced_setting_model.dart';
 import 'package:powerps/models/details_info.dart';
 import 'package:powerps/models/setting_model.dart';
 import 'package:powerps/screens/admin_screen/settings/admins/manage_admins_screen.dart';
@@ -38,7 +37,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _showData = false;
   bool _showAdvancedSetting = false;
   late Setting _setting;
-  AdvancedSettingModel? _advancedSettingModel;
+  final List<Widget> _advancedSettingWidgetList = [];
   @override
   void initState() {
     _fillData();
@@ -98,9 +97,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     });
     await getBotAdvancedSetting().then((value) {
-      if (null != value) {
+      if (value.isNotEmpty) {
+        for (var item in value) {
+          _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
+            state: item.value == "true" ? true : false,
+            description: item.description,
+            name: item.name,
+          ));
+        }
         setState(() {
-          _advancedSettingModel = value;
           _showAdvancedSetting = true;
         });
       }
@@ -728,32 +733,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   _advancedSettingTabCard(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
 
-    List<Widget> factoryWidgetList = [];
-
-    setState(() {
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botShowConfigsByPanelsCategory,
-        description: "نمایش کانفیگها بر اساس موقعیت جغرافیایی پنل در ربات",
-        name: "bot_show_configs_by_panels_category",
-      ));
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botShowConfigsByPanelsCategory,
-        description:
-            "قیمت دلاری بسته ها بصورت خودکار بر اساس نوسانات دلار به روز شود",
-        name: "bot_calculate_product_category_price_in_dollar_by_toman",
-      ));
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botAutoSetPriceByDollarPrice,
-        description:
-            "قیمت تومانی بسته‌ها بصورت خودکار بر اساس نوسانات دلار به روز شود",
-        name: "bot_auto_set_price_by_dollar_price",
-      ));
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botShowOneRowConfig,
-        description: "نمایش نام و قیمت کانفیگها در ربات بصورت تک ستون",
-        name: "bot_show_one_row_config",
-      ));
-    });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
@@ -774,13 +753,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mobile: widgetsGridview(
                   childAspectRatio: 2.9,
                   context: context,
-                  importedList: factoryWidgetList),
+                  importedList: _advancedSettingWidgetList),
               tablet: widgetsGridview(
                   context: context,
                   childAspectRatio: 4.5,
-                  importedList: factoryWidgetList),
+                  importedList: _advancedSettingWidgetList),
               desktop: widgetsGridview(
-                  importedList: factoryWidgetList,
+                  importedList: _advancedSettingWidgetList,
                   context: context,
                   childAspectRatio: size.width < 1400 ? 4 : 4.5,
                   crossAxisCount: 2),
