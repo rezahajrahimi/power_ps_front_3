@@ -97,12 +97,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     });
     await getBotAdvancedSetting().then((value) {
-      if (value.isNotEmpty) {
+      if (!context.mounted) return;
+      if (value.isNotEmpty && value != null) {
         for (var item in value) {
           _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
             state: item.value == "true" ? true : false,
-            description: item.description,
-            name: item.name,
+            description: item.description ?? "تعریف نشده",
+            name: item.name ?? "تعریف نشده",
           ));
         }
         setState(() {
