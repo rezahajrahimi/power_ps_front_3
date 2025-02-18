@@ -19,6 +19,7 @@ import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.d
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/test_accounts/edit_test_account_details_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -518,6 +519,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: const Icon(Icons.backup),
         label: const Text("پشتیبان‌گیری و بازیابی"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TextScreenScreen(),
+              )).then((value) => {});
+        },
+        icon: const Icon(Icons.text_fields),
+        label: const Text("متن و پیام ها"),
+      ));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -716,6 +735,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           )).then((value) => {});
                     },
                     trailingIcon: const Icon(Icons.backup)),
+                FocusedMenuItem(
+                    backgroundColor: AppStyle.primaryColor,
+                    title: const Text("متن و پیام ها"),
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TextScreenScreen(),
+                          )).then((value) => {});
+                    },
+                    trailingIcon: const Icon(Icons.text_fields)),
               ],
               menuOffset: 50,
               duration: const Duration(milliseconds: 2),
