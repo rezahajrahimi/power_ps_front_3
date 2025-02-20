@@ -70,7 +70,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                               child: Column(
                                 children: [
                                   TextFormField(
-                                    keyboardType: TextInputType.phone,
                                     textDirection: TextDirection.ltr,
                                     decoration: InputDecoration(
                                         prefixIcon: Icon(

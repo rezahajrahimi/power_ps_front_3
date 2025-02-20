@@ -1,11 +1,11 @@
 {
-    "name": "power_ps_front_3",
-    "short_name": "power_ps_front_3",
+    "name": "PowePs",
+    "short_name": "PowePs",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#hexcode",
     "theme_color": "#hexcode",
-    "description": "A new Flutter project.",
+    "description": "Power Proxy Seller.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
