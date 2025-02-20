@@ -42,4 +42,149 @@ class CustomTextModel {
   }
 
   String toJson() => json.encode(toMap());
+
+  String parseFormattedText(Map<String, dynamic> variables) {
+    try {
+      // اگر متن JSON باشد، آن را پردازش می‌کنیم
+      List<dynamic> blocks = json.decode(customText);
+      StringBuffer result = StringBuffer();
+
+      for (var block in blocks) {
+        String text = block['text'] ?? '';
+
+        // جایگزینی متغیرها
+        variables.forEach((key, value) {
+          text = text.replaceAll('{$key}', value.toString());
+        });
+
+        // اعمال فرمت‌بندی بر اساس نوع بلوک
+        switch (block['type']) {
+          case 'bold':
+            result.write('**$text**');
+            break;
+          case 'italic':
+            result.write('*$text*');
+            break;
+          case 'link':
+            result.write('[$text](${block['url']})');
+            break;
+          case 'newline':
+            result.write('\n');
+            break;
+          case 'code':
+            result.write('`$text`');
+            break;
+          case 'text':
+          default:
+            result.write(text);
+            break;
+        }
+      }
+      return result.toString();
+    } catch (e) {
+      // اگر متن JSON نباشد، متن اصلی را برمی‌گردانیم
+      String text = customText;
+      variables.forEach((key, value) {
+        text = text.replaceAll('{$key}', value.toString());
+      });
+      return text;
+    }
+  }
+
+  static String convertMarkdownToJsonText(String markdownText) {
+    List<Map<String, dynamic>> blocks = [];
+    RegExp boldPattern = RegExp(r'\*\*(.*?)\*\*');
+    RegExp italicPattern = RegExp(r'\*(.*?)\*');
+    RegExp linkPattern = RegExp(r'\[(.*?)\]\((.*?)\)');
+    RegExp codePattern = RegExp(r'`(.*?)`');
+
+    // متن را بر اساس خط جدید تقسیم می‌کنیم
+    List<String> lines = markdownText.split('\n');
+
+    for (String line in lines) {
+      if (line.isEmpty) {
+        blocks.add({'type': 'newline'});
+        continue;
+      }
+
+      String remainingText = line;
+      // int lastIndex = 0;
+
+      // پیدا کردن تمام الگوهای فرمت در خط
+      while (remainingText.isNotEmpty) {
+        // بررسی برای متن پررنگ
+        Match? boldMatch = boldPattern.firstMatch(remainingText);
+        // بررسی برای متن مورب
+        Match? italicMatch = italicPattern.firstMatch(remainingText);
+        // بررسی برای لینک
+        Match? linkMatch = linkPattern.firstMatch(remainingText);
+        // بررسی برای کد
+        Match? codeMatch = codePattern.firstMatch(remainingText);
+
+        Match? firstMatch;
+        String type = '';
+        int matchStart = remainingText.length;
+
+        // پیدا کردن اولین الگوی منطبق
+        if (boldMatch != null && boldMatch.start < matchStart) {
+          firstMatch = boldMatch;
+          type = 'bold';
+          matchStart = boldMatch.start;
+        }
+        if (italicMatch != null && italicMatch.start < matchStart) {
+          firstMatch = italicMatch;
+          type = 'italic';
+          matchStart = italicMatch.start;
+        }
+        if (linkMatch != null && linkMatch.start < matchStart) {
+          firstMatch = linkMatch;
+          type = 'link';
+          matchStart = linkMatch.start;
+        }
+        if (codeMatch != null && codeMatch.start < matchStart) {
+          firstMatch = codeMatch;
+          type = 'code';
+          matchStart = codeMatch.start;
+        }
+
+        // اگر متن قبل از الگو وجود دارد، آن را به عنوان متن ساده اضافه می‌کنیم
+        if (firstMatch != null && firstMatch.start > 0) {
+          blocks.add({
+            'type': 'text',
+            'text': remainingText.substring(0, firstMatch.start)
+          });
+        }
+
+        if (firstMatch != null) {
+          switch (type) {
+            case 'bold':
+              blocks.add({'type': 'bold', 'text': firstMatch.group(1)!});
+              break;
+            case 'italic':
+              blocks.add({'type': 'italic', 'text': firstMatch.group(1)!});
+              break;
+            case 'link':
+              blocks.add({
+                'type': 'link',
+                'text': firstMatch.group(1)!,
+                'url': firstMatch.group(2)!
+              });
+              break;
+            case 'code':
+              blocks.add({'type': 'code', 'text': firstMatch.group(1)!});
+              break;
+          }
+          remainingText = remainingText.substring(firstMatch.end);
+        } else {
+          // اگر هیچ الگویی پیدا نشد، کل متن باقیمانده را به عنوان متن ساده اضافه می‌کنیم
+          if (remainingText.isNotEmpty) {
+            blocks.add({'type': 'text', 'text': remainingText});
+          }
+          break;
+        }
+      }
+    }
+
+    return json.encode(blocks);
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/styles/app_theme.dart';
+import 'package:powerps/widgets/formatted_text_editor.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
@@ -28,18 +29,28 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
       child: Scaffold(
         appBar: appBarWithBackButton(context: context, title: "متن و پیام ها"),
         body: SafeArea(
-          child: SingleChildScrollView(
-            primary: false,
+          child: Padding(
             padding: EdgeInsets.all(AppStyle.defaultPadding),
-            child: _showData == false
-                ? const Center(
-                    child: SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: CircularProgressIndicator(),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(AppStyle.defaultPadding),
+                    decoration: BoxDecoration(
+                      color: AppStyle.secondaryColor,
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
                     ),
-                  )
-                : _content(context),
+                    child: FormattedTextEditor(
+                      initialText: 'متن اولیه',
+                      onTextChanged: (String newText) {
+                        print('متن جدید: $newText');
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         bottomNavigationBar: Responsive.isMobile(context)
@@ -169,7 +180,14 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
       ),
       child: Column(
         children: [
-          Text("متن و پیام ها"),
+          // Text("متن و پیام ها"),
+          // FormattedTextEditor(
+          //   initialText: 'متن اولیه',
+          //   onTextChanged: (String newText) {
+          //     // اینجا می‌توانید متن تغییر یافته را مدیریت کنید
+          //     print('متن جدید: $newText');
+          //   },
+          // )
         ],
       ),
     );
