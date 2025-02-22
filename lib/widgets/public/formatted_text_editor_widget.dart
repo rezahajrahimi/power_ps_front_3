@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import '../models/custom_text_model.dart';
+import '../../models/custom_text_model.dart';
 
-class FormattedTextEditor extends StatefulWidget {
-  final String initialText;
+class FormattedTextEditorWidget extends StatefulWidget {
+  final CustomTextModel customTextModel;
   final Function(String) onTextChanged;
   final bool isJsonFormat;
 
-  const FormattedTextEditor({
+  const FormattedTextEditorWidget({
     super.key,
-    this.initialText = '',
+    required this.customTextModel,
     required this.onTextChanged,
     this.isJsonFormat = false,
   });
 
   @override
-  State<FormattedTextEditor> createState() => _FormattedTextEditorState();
+  State<FormattedTextEditorWidget> createState() =>
+      _FormattedTextEditorWidgetState();
 }
 
-class _FormattedTextEditorState extends State<FormattedTextEditor> {
+class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
   late TextEditingController _controller;
   late bool _isJsonFormat;
 
@@ -25,7 +26,27 @@ class _FormattedTextEditorState extends State<FormattedTextEditor> {
   void initState() {
     super.initState();
     _isJsonFormat = widget.isJsonFormat;
-    _controller = TextEditingController(text: widget.initialText);
+    String initialText = widget.customTextModel.customText.isNotEmpty
+        ? widget.customTextModel.customText
+        : widget.customTextModel.defaultText;
+
+    // اضافه کردن تشخیص خودکار فرمت JSON
+    if (initialText.startsWith('[') && initialText.endsWith(']')) {
+      try {
+        initialText = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: '',
+          customText: initialText,
+        ).parseFormattedText({});
+        _isJsonFormat = false;
+      } catch (e) {
+        // در صورت خطا، متن اصلی را نمایش می‌دهیم
+        print('Error parsing JSON: $e');
+      }
+    }
+
+    _controller = TextEditingController(text: initialText);
   }
 
   void _formatSelection(String type) {
@@ -184,6 +205,11 @@ class _FormattedTextEditorState extends State<FormattedTextEditor> {
                 label: Text(
                     _isJsonFormat ? 'تبدیل به مارک‌داون' : 'تبدیل به JSON'),
               ),
+              IconButton(
+                icon: const Icon(Icons.save),
+                onPressed: () => _saveText(),
+                tooltip: 'ذخیره',
+              ),
             ],
           ),
         ),
@@ -207,5 +233,9 @@ class _FormattedTextEditorState extends State<FormattedTextEditor> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _saveText() async {
+    // TODO: save text
   }
 }

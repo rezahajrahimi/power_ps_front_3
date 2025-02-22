@@ -19,7 +19,7 @@ class CustomTextModel {
       id: BigInt.parse(json['id'].toString()),
       defaultText: json['default_text'],
       key: json['key'],
-      customText: json['custom_text'],
+      customText: json['custom_text'] ?? '',
     );
   }
 

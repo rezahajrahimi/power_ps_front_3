@@ -5,7 +5,11 @@ import 'package:powerps/models/custom_text_model.dart';
 Future<List<CustomTextModel>> getCustomTexts() async {
   Response response = await GenaralApi.dio.get("/api/get-all-texts");
   if (response.statusCode == 200 && response.data != null) {
-    return response.data.map((e) => CustomTextModel.fromJson(e)).toList();
+    List<CustomTextModel> customTexts = [];
+    for (var i in response.data) {
+      customTexts.add(CustomTextModel.fromJson(i));
+    }
+    return customTexts;
   }
   return [];
 }
