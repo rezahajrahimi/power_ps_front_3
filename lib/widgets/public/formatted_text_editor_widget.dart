@@ -24,6 +24,7 @@ class FormattedTextEditorWidget extends StatefulWidget {
 class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
   late TextEditingController _controller;
   late bool _isJsonFormat;
+  late CustomTextModel _customTextModel;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
     String initialText = widget.customTextModel.customText.isNotEmpty
         ? widget.customTextModel.customText
         : widget.customTextModel.defaultText;
+    _customTextModel = widget.customTextModel;
 
     // اضافه کردن تشخیص خودکار فرمت JSON
     if (initialText.startsWith('[') && initialText.endsWith(']')) {
@@ -39,9 +41,9 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
         initialText = CustomTextModel(
           id: BigInt.from(0),
           defaultText: '',
-          key: '',
+          key: _customTextModel.key,
           customText: initialText,
-          description: '',
+          description: _customTextModel.description,
         ).parseFormattedText({});
         _isJsonFormat = false;
       } catch (e) {
@@ -136,42 +138,42 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
     );
   }
 
-  void _toggleFormat() {
-    setState(() {
-      if (_isJsonFormat) {
-        // تبدیل JSON به مارک‌داون
-        try {
-          final String markdownText = CustomTextModel(
-            id: BigInt.from(0),
-            defaultText: '',
-            key: '',
-            customText: _controller.text,
-            description: '',
-          ).parseFormattedText({});
-          _controller.text = markdownText;
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('خطا در تبدیل فرمت JSON')),
-          );
-          return;
-        }
-      } else {
-        // تبدیل مارک‌داون به JSON
-        try {
-          final String jsonText =
-              CustomTextModel.convertMarkdownToJsonText(_controller.text);
-          _controller.text = jsonText;
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('خطا در تبدیل فرمت مارک‌داون')),
-          );
-          return;
-        }
-      }
-      _isJsonFormat = !_isJsonFormat;
-      widget.onTextChanged(_controller.text);
-    });
-  }
+  // void _toggleFormat() {
+  //   setState(() {
+  //     if (_isJsonFormat) {
+  //       // تبدیل JSON به مارک‌داون
+  //       try {
+  //         final String markdownText = CustomTextModel(
+  //           id: BigInt.from(0),
+  //           defaultText: _customTextModel.defaultText,
+  //           key: _customTextModel.key,
+  //           customText: _controller.text,
+  //           description: _customTextModel.description,
+  //         ).parseFormattedText({});
+  //         _controller.text = markdownText;
+  //       } catch (e) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('خطا در تبدیل فرمت JSON')),
+  //         );
+  //         return;
+  //       }
+  //     } else {
+  //       // تبدیل مارک‌داون به JSON
+  //       try {
+  //         final String jsonText =
+  //             CustomTextModel.convertMarkdownToJsonText(_controller.text);
+  //         _controller.text = jsonText;
+  //       } catch (e) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('خطا در تبدیل فرمت مارک‌داون')),
+  //         );
+  //         return;
+  //       }
+  //     }
+  //     _isJsonFormat = !_isJsonFormat;
+  //     widget.onTextChanged(_controller.text);
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -211,12 +213,12 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
                 tooltip: 'خط جدید',
               ),
               const Spacer(),
-              IconButton(
-                onPressed: _toggleFormat,
-                icon: const Icon(Icons.swap_horiz),
-                // label: Text(
-                //     _isJsonFormat ? 'تبدیل به مارک‌داون' : 'تبدیل به JSON'),
-              ),
+              // IconButton(
+              //   onPressed: _toggleFormat,
+              //   icon: const Icon(Icons.swap_horiz),
+              //   // label: Text(
+              //   //     _isJsonFormat ? 'تبدیل به مارک‌داون' : 'تبدیل به JSON'),
+              // ),
               IconButton(
                 icon: const Icon(Icons.save),
                 onPressed: () => _saveText(),
@@ -270,8 +272,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
     }
     EasyLoading.show(status: 'ذخیره سازی...');
     await custom_text_repository
-        .updateCustomText(
-            key: widget.customTextModel.key, text: _controller.text)
+        .updateCustomText(key: _customTextModel.key, text: _controller.text)
         .then((value) {
       if (value) {
         EasyLoading.showSuccess('متن با موفقیت ذخیره شد');
