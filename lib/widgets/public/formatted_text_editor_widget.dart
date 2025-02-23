@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/repositories/custom_text_repository.dart'
+    as custom_text_repository;
 import '../../models/custom_text_model.dart';
 
 class FormattedTextEditorWidget extends StatefulWidget {
@@ -42,7 +45,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
         _isJsonFormat = false;
       } catch (e) {
         // در صورت خطا، متن اصلی را نمایش می‌دهیم
-        print('Error parsing JSON: $e');
+        debugPrint('Error parsing JSON: $e');
       }
     }
 
@@ -70,9 +73,11 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
         newText = '`$selectedText`';
         break;
       case 'link':
-        // نمایش دیالوگ برای دریافت URL
         _showLinkDialog(selectedText);
         return;
+      case 'newLine':
+        newText = '\n';
+        break;
       default:
         return;
     }
@@ -198,6 +203,11 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
                 onPressed: () => _formatSelection('link'),
                 tooltip: 'لینک',
               ),
+              IconButton(
+                icon: const Icon(Icons.keyboard_return),
+                onPressed: () => _formatSelection('newLine'),
+                tooltip: 'خط جدید',
+              ),
               const Spacer(),
               TextButton.icon(
                 onPressed: _toggleFormat,
@@ -209,6 +219,11 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
                 icon: const Icon(Icons.save),
                 onPressed: () => _saveText(),
                 tooltip: 'ذخیره',
+              ),
+              IconButton(
+                icon: const Icon(Icons.restore),
+                onPressed: () => _resetText(),
+                tooltip: 'متن پیش فرض',
               ),
             ],
           ),
@@ -236,6 +251,30 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
   }
 
   void _saveText() async {
-    // TODO: save text
+    if (_controller.text.isEmpty) {
+      EasyLoading.showError('متن خالی است');
+      return;
+    }
+    // chcek is json format
+    if (_isJsonFormat) {
+      // make _controller.text json valid
+      _controller.text =
+          CustomTextModel.convertMarkdownToJsonText(_controller.text);
+    }
+    EasyLoading.show(status: 'ذخیره سازی...');
+    await custom_text_repository
+        .updateCustomText(
+            key: widget.customTextModel.key, text: _controller.text)
+        .then((value) {
+      if (value) {
+        EasyLoading.showSuccess('متن با موفقیت ذخیره شد');
+      } else {
+        EasyLoading.showError('خطا در ذخیره متن');
+      }
+    });
+  }
+
+  void _resetText() {
+    _controller.text = widget.customTextModel.defaultText;
   }
 }

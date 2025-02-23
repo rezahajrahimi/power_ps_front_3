@@ -23,9 +23,13 @@ Future<CustomTextModel> getCustomText(String key) async {
       id: BigInt.zero, defaultText: "", key: "", customText: "");
 }
 
-Future<bool> updateCustomText(CustomTextModel customText) async {
-  Response response = await GenaralApi.dio.post(
-      "/api/set-text/${customText.customText}",
-      data: customText.toJson());
-  return response.statusCode == 200;
+Future<bool> updateCustomText(
+    {required String key, required String text}) async {
+  // Route::post('/set-text/{key}/{text}', [CustomTextController::class, 'setText']);
+
+  Response response = await GenaralApi.dio.post("/api/set-text/$key/$text");
+  if (response.statusCode == 200) {
+    return true;
+  }
+  return false;
 }
