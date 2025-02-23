@@ -15,7 +15,7 @@ class TextScreenScreen extends StatefulWidget {
 }
 
 class _TextScreenScreenState extends State<TextScreenScreen> {
-  bool _showData = true;
+  bool _showData = false;
   List<CustomTextModel> _customTextModelList = [];
   final List<Widget> _customTextModelWidgetList = [];
   @override

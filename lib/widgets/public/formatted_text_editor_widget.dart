@@ -282,7 +282,51 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
   }
 
   void _resetText() {
-    _controller.text = widget.customTextModel.defaultText;
+    String defaultText = widget.customTextModel.defaultText;
+
+    // بررسی اینکه آیا متن دو بار JSON encode شده است
+    if (defaultText.startsWith('[{"type":"text","text":"[') &&
+        defaultText.endsWith('"}]')) {
+      try {
+        // حذف لایه اول JSON
+        defaultText = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: '',
+          customText: defaultText,
+          description: '',
+        ).parseFormattedText({});
+
+        // حالا متن را به حالت مارک‌داون تبدیل می‌کنیم
+        _controller.text = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: '',
+          customText: defaultText,
+          description: '',
+        ).parseFormattedText({});
+        return;
+      } catch (e) {
+        debugPrint('Error parsing double encoded JSON: $e');
+      }
+    }
+
+    // اگر متن JSON ساده باشد
+    if (defaultText.startsWith('[') && defaultText.endsWith(']')) {
+      try {
+        _controller.text = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: '',
+          customText: defaultText,
+          description: '',
+        ).parseFormattedText({});
+      } catch (e) {
+        _controller.text = defaultText;
+      }
+    } else {
+      _controller.text = defaultText;
+    }
   }
 
   void _showDescription() {
