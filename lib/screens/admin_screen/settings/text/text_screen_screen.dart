@@ -55,9 +55,11 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
           child: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
-            child: Column(
-              children: [_showCustomTextModelWidgetList()],
-            ),
+            child: _showData
+                ? Column(
+                    children: [_showCustomTextModelWidgetList()],
+                  )
+                : const Center(child: CircularProgressIndicator()),
           ),
         ),
         bottomNavigationBar: Responsive.isMobile(context)

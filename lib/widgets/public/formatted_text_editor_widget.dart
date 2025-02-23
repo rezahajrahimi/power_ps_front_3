@@ -41,6 +41,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
           defaultText: '',
           key: '',
           customText: initialText,
+          description: '',
         ).parseFormattedText({});
         _isJsonFormat = false;
       } catch (e) {
@@ -145,6 +146,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
             defaultText: '',
             key: '',
             customText: _controller.text,
+            description: '',
           ).parseFormattedText({});
           _controller.text = markdownText;
         } catch (e) {
@@ -209,11 +211,11 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
                 tooltip: 'خط جدید',
               ),
               const Spacer(),
-              TextButton.icon(
+              IconButton(
                 onPressed: _toggleFormat,
                 icon: const Icon(Icons.swap_horiz),
-                label: Text(
-                    _isJsonFormat ? 'تبدیل به مارک‌داون' : 'تبدیل به JSON'),
+                // label: Text(
+                //     _isJsonFormat ? 'تبدیل به مارک‌داون' : 'تبدیل به JSON'),
               ),
               IconButton(
                 icon: const Icon(Icons.save),
@@ -224,6 +226,11 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
                 icon: const Icon(Icons.restore),
                 onPressed: () => _resetText(),
                 tooltip: 'متن پیش فرض',
+              ),
+              IconButton(
+                icon: const Icon(Icons.info),
+                onPressed: () => _showDescription(),
+                tooltip: 'توضیحات',
               ),
             ],
           ),
@@ -276,5 +283,21 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
 
   void _resetText() {
     _controller.text = widget.customTextModel.defaultText;
+  }
+
+  void _showDescription() {
+    // show dialog with description with close button
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(widget.customTextModel.description),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('بستن'),
+          ),
+        ],
+      ),
+    );
   }
 }

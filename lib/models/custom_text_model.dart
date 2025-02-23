@@ -6,12 +6,14 @@ class CustomTextModel {
   String defaultText;
   String key;
   String customText;
+  String description;
 
   CustomTextModel({
     required this.id,
     required this.defaultText,
     required this.key,
     required this.customText,
+    required this.description,
   });
 
   factory CustomTextModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class CustomTextModel {
       defaultText: json['default_text'],
       key: json['key'],
       customText: json['custom_text'] ?? '',
+      description: json['description'] ?? '',
     );
   }
 
@@ -29,6 +32,7 @@ class CustomTextModel {
       'default_text': defaultText,
       'key': key,
       'custom_text': customText,
+      'description': description,
     };
   }
 
@@ -38,6 +42,7 @@ class CustomTextModel {
       defaultText: map['default_text'] as String,
       key: map['key'] as String,
       customText: map['custom_text'] as String,
+      description: map['description'] as String,
     );
   }
 

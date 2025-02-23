@@ -20,7 +20,11 @@ Future<CustomTextModel> getCustomText(String key) async {
     return CustomTextModel.fromJson(response.data);
   }
   return CustomTextModel(
-      id: BigInt.zero, defaultText: "", key: "", customText: "");
+      id: BigInt.zero,
+      defaultText: "",
+      key: "",
+      customText: "",
+      description: "");
 }
 
 Future<bool> updateCustomText(
