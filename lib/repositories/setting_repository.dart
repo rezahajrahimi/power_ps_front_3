@@ -88,7 +88,6 @@ Future<bool> updateBotSetting({required Setting setting}) async {
           "bot_name": setting.botName,
           "admin_id": int.parse(setting.adminId),
           "bot_token": setting.botToken,
-          "welcome_message": setting.welcomeMessage,
           "panel_address": setting.panelAddress,
         },
         options: Options(headers: {

@@ -91,8 +91,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               botName: "تعریف نشده",
               botToken: "تعریف نشده",
               id: "تعریف نشده",
-              panelAddress: "لینک هسته ربات را وارد کنید",
-              welcomeMessage: "تعریف نشده");
+              panelAddress: "لینک هسته ربات را وارد کنید"
+              );
           _showData = true;
         });
       }
@@ -212,14 +212,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ? "${_setting.panelAddress.substring(0, 30)}..."
             : _setting.panelAddress,
         icon: const Icon(Icons.link),
-      )));
-      factoryWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "متن خوش آمد گویی به کاربر",
-        itemValue: _setting.welcomeMessage.length > 30
-            ? "${_setting.welcomeMessage.substring(0, 30)}..."
-            : _setting.welcomeMessage,
-        icon: const Icon(Icons.info),
       )));
     });
     return Container(
