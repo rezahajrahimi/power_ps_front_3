@@ -32,8 +32,6 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   final _zarinpalMerchantIdTxtEdit = TextEditingController();
   final _newPaymentMerchantIdTxtEdit = TextEditingController();
   final _newPaymentNameTxtEdit = TextEditingController();
-  final _mainMenuTitleTxtEdit = TextEditingController();
-  final _responseTitleTxtEdit = TextEditingController();
   bool _isZarinPalActive = true;
   final List<Widget> _paymentItemWidgetList = [];
 
@@ -106,7 +104,6 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     if (context.mounted) {
       var res = await getAllOfflinePayments();
       var resZarinpal = await getZarinpalPaymentDetails();
-      var resMenu = await getAllPaymentTypeMenues();
       var resNowPayment = await getNovPaymentDetails();
       await getDollorTransactionSetting().then((val) {
         if (mounted) {
@@ -119,14 +116,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           res != false &&
           resZarinpal != null &&
           resZarinpal != false &&
-          resMenu != null &&
-          resMenu != false &&
           resNowPayment != null &&
           resNowPayment != false) {
         setState(() {
           _showData = false;
           _paymentTypeList = res;
-          subList = resMenu;
           _paymentItemWidgetList.clear();
           for (var i in _paymentTypeList) {
             _paymentItemWidgetList.add(PaymentTypeItemInfoWidget(
@@ -142,8 +136,6 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           _zarinPal = resZarinpal;
           _zarinpalMerchantIdTxtEdit.text = _zarinPal!.merchantId;
           _isZarinPalActive = _zarinPal!.isActive;
-          _mainMenuTitleTxtEdit.text = resMenu[0].aliasName;
-          _responseTitleTxtEdit.text = resMenu[1].aliasName;
 
           // nowPayment
           _nowPayment = resNowPayment;
@@ -210,8 +202,6 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                 flex: 5,
                 child: Column(
                   children: [
-                    _menuItemTextTypeCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
                     _offlinePaymentTypeCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     _zarinpalGatewayTypeCard(context),
@@ -285,139 +275,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     });
   }
 
-  _menuItemTextTypeCard(BuildContext context) {
-    List<Widget> menuItemWidgetList = [];
-    List<Widget> actionWidgetList = [];
-    setState(() {
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _mainMenuTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که برای انتخاب گزینه های پرداخت به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _responseTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که بعد از انتخاب گزینه پرداخت به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
 
-      actionWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          if (_mainMenuTitleTxtEdit.text.isNotEmpty) {
-            EasyLoading.show();
-            if (_mainMenuTitleTxtEdit.text.isNotEmpty &&
-                _responseTitleTxtEdit.text.isNotEmpty) {
-              bool resMain = false;
-              bool resResponse = false;
-              resMain = await updatePaymentMenuAlisNameByLevel(
-                  level: 1, newText: _mainMenuTitleTxtEdit.text);
-              resResponse = await updatePaymentMenuAlisNameByLevel(
-                  level: 2, newText: _responseTitleTxtEdit.text);
-
-              if (resMain && resResponse) {
-                if (context.mounted) {
-                  showMsg(msg: "ویرایش شد.", context: context);
-                }
-              }
-            } else {
-              if (context.mounted) {
-                showMsg(msg: "خطا.", context: context, type: "error");
-              }
-            }
-            EasyLoading.dismiss();
-          }
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش"),
-      ));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "متن منو",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2,
-                  context: context,
-                  importedList: menuItemWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 3,
-                  importedList: menuItemWidgetList),
-              desktop: widgetsGridview(
-                  importedList: menuItemWidgetList,
-                  context: context,
-                  childAspectRatio: 3,
-                  crossAxisCount: 2),
-            ),
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 5,
-                  context: context,
-                  importedList: actionWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 5,
-                  crossAxisCount: 2,
-                  importedList: actionWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionWidgetList,
-                  context: context,
-                  childAspectRatio: 5.5,
-                  crossAxisCount: 4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   _dollarpaymentsTypeCard(BuildContext context) {
     List<Widget> dollarPaymentWidgetList = [];
