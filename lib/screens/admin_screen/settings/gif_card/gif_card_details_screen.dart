@@ -8,7 +8,6 @@ import 'package:powerps/models/sub_menu_item_model.dart';
 import 'package:powerps/repositories/gift_card_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
-import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/gift_card_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
@@ -25,9 +24,6 @@ class _GifCardScreenState extends State<GifCardScreen> {
   List<GiftCard> _giftCardList = [];
   final List<Widget> _giftItemWidgetList = [];
 
-  final _mainMenuTitleTxtEdit = TextEditingController();
-  final _acceptTitleTxtEdit = TextEditingController();
-  final _expireTitleTxtEdit = TextEditingController();
   final _newGiftCodeTxtEdit = TextEditingController();
   final _newStartDateTxtEdit = TextEditingController();
   final _newEndDateTxtEdit = TextEditingController();
@@ -80,12 +76,10 @@ class _GifCardScreenState extends State<GifCardScreen> {
   void _fillData() async {
     if (context.mounted) {
       var res = await getGiftCardList();
-      var resMenu = await getAllGiftCardMenues();
-      if (res != null && res != false && resMenu != null && resMenu != false) {
+      if (res != null && res != false) {
         setState(() {
           _showData = false;
           _giftCardList = res;
-          subList = resMenu;
           _giftItemWidgetList.clear();
           for (var i in _giftCardList) {
             _giftItemWidgetList.add(GiftCarfItemInfoWidget(
@@ -99,9 +93,6 @@ class _GifCardScreenState extends State<GifCardScreen> {
                   startDate: i.startDate),
             ));
           }
-          _mainMenuTitleTxtEdit.text = resMenu[0].aliasName;
-          _acceptTitleTxtEdit.text = resMenu[1].aliasName;
-          _expireTitleTxtEdit.text = resMenu[2].aliasName;
           _showData = true;
         });
       }
@@ -125,8 +116,6 @@ class _GifCardScreenState extends State<GifCardScreen> {
                 flex: 5,
                 child: Column(
                   children: [
-                    _menuItemTextTypeCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
                     _giftCardLIstCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                   ],
@@ -150,160 +139,6 @@ class _GifCardScreenState extends State<GifCardScreen> {
     );
   }
 
-  _menuItemTextTypeCard(BuildContext context) {
-    List<Widget> menuItemWidgetList = [];
-    List<Widget> actionWidgetList = [];
-    setState(() {
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _mainMenuTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که برای درخواست وارد کردن کد گیفت کارد به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _acceptTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که بعد از تایید کردن کد گیفت کارد به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _expireTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که برای تایید نکردن کد گیفت کارد به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
-
-      actionWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          if (_mainMenuTitleTxtEdit.text.isNotEmpty) {
-            EasyLoading.show();
-            if (_mainMenuTitleTxtEdit.text.isNotEmpty &&
-                _acceptTitleTxtEdit.text.isNotEmpty &&
-                _expireTitleTxtEdit.text.isNotEmpty) {
-              bool resMain = false;
-              bool acceptResponse = false;
-              bool expireResponse = false;
-              resMain = await updateGiftCardMenuAlisNameByLevel(
-                  level: 1, newText: _mainMenuTitleTxtEdit.text);
-              acceptResponse = await updateGiftCardMenuAlisNameByLevel(
-                  level: 2, newText: _acceptTitleTxtEdit.text);
-              expireResponse = await updateGiftCardMenuAlisNameByLevel(
-                  level: 3, newText: _expireTitleTxtEdit.text);
-
-              if (resMain && acceptResponse && expireResponse) {
-                if (context.mounted) {
-                  showMsg(msg: "ویرایش شد.", context: context);
-                }
-              }
-            } else {
-              if (context.mounted) {
-                showMsg(msg: "خطا.", context: context, type: "error");
-              }
-            }
-            EasyLoading.dismiss();
-          }
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش"),
-      ));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "متن منو",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2,
-                  context: context,
-                  importedList: menuItemWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 3,
-                  importedList: menuItemWidgetList),
-              desktop: widgetsGridview(
-                  importedList: menuItemWidgetList,
-                  context: context,
-                  childAspectRatio: 3,
-                  crossAxisCount: 2),
-            ),
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 5,
-                  context: context,
-                  importedList: actionWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 5,
-                  crossAxisCount: 2,
-                  importedList: actionWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionWidgetList,
-                  context: context,
-                  childAspectRatio: 5.5,
-                  crossAxisCount: 4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   _giftCardLIstCard(BuildContext context) {
     var size = MediaQuery.of(context).size.width;
