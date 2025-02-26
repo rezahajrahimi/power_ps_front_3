@@ -7,7 +7,6 @@ import 'package:powerps/repositories/channel_lock_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/channel_lock_item_info_widget.dart';
-import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class ChannelLockScreen extends StatefulWidget {
@@ -21,7 +20,6 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
   bool _showData = false;
   // List<SubMenuItem> subList = [];
   List<ChannelLock> _channelLockList = [];
-  final _mainMenuTitleTxtEdit = TextEditingController();
   final _newChannelIDEditTxt = TextEditingController();
   final List<Widget> _channelLockItemWidgetList = [];
 
@@ -62,8 +60,7 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
   void _fillData() async {
     if (context.mounted) {
       var res = await getAllChannelLock();
-      var resMenu = await getChannelLockMainMenuTitle();
-      if (res != null && res != false && resMenu != null && resMenu != false) {
+      if (res != null && res != false ) {
         setState(() {
           _showData = false;
           _channelLockList = res;
@@ -77,7 +74,6 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
               ),
             ));
           }
-          _mainMenuTitleTxtEdit.text = resMenu.aliasName;
           _showData = true;
         });
       }
@@ -94,8 +90,6 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
                 flex: 5,
                 child: Column(
                   children: [
-                    _menuItemTextTypeCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
                     _channelLockListCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                   ],
@@ -167,118 +161,7 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
     );
   }
 
-  _menuItemTextTypeCard(BuildContext context) {
-    List<Widget> menuItemWidgetList = [];
-    List<Widget> actionWidgetList = [];
-    setState(() {
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _mainMenuTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که برای درخواست عضویت به کانالهای لیست شده، به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
 
-      actionWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          if (_mainMenuTitleTxtEdit.text.isNotEmpty) {
-            EasyLoading.show();
-            if (_mainMenuTitleTxtEdit.text.isNotEmpty) {
-              bool resMain = false;
-              resMain = await updateChannelLockMenuAlisNameByLevel(
-                  level: 1, newText: _mainMenuTitleTxtEdit.text);
-
-              if (resMain) {
-                if (context.mounted) {
-                  showMsg(msg: "ویرایش شد.", context: context);
-                }
-              }
-            } else {
-              if (context.mounted) {
-                showMsg(msg: "خطا.", context: context, type: "error");
-              }
-            }
-            EasyLoading.dismiss();
-          }
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش"),
-      ));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "متن منو",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2,
-                  context: context,
-                  importedList: menuItemWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 3,
-                  importedList: menuItemWidgetList),
-              desktop: widgetsGridview(
-                  importedList: menuItemWidgetList,
-                  context: context,
-                  childAspectRatio: 3,
-                  crossAxisCount: 2),
-            ),
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: actionWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 5,
-                  crossAxisCount: 2,
-                  importedList: actionWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionWidgetList,
-                  context: context,
-                  childAspectRatio: 5.5,
-                  crossAxisCount: 4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   _channelLockListCard(BuildContext context) {
     var size = MediaQuery.of(context).size.width;
