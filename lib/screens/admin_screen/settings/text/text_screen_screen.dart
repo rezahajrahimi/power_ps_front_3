@@ -35,10 +35,10 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
               isJsonFormat: true,
               onTextChanged: (String newText) {},
             ));
-            setState(() {
-              _showData = true;
-            });
           }
+          setState(() {
+            _showData = true;
+          });
         }
         return [];
       },
@@ -89,19 +89,19 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
                   width: double.infinity,
                   child: Responsive(
                     mobile: widgetsGridview(
-                        childAspectRatio: 5,
+                        childAspectRatio: 2,
                         context: context,
                         crossAxisCount: 1,
                         importedList: _customTextModelWidgetList),
                     tablet: widgetsGridview(
                         context: context,
-                        childAspectRatio: 2.5,
+                        childAspectRatio: 3,
                         crossAxisCount: 1,
                         importedList: _customTextModelWidgetList),
                     desktop: widgetsGridview(
                         importedList: _customTextModelWidgetList,
                         context: context,
-                        childAspectRatio: 5,
+                        childAspectRatio: 3.5,
                         crossAxisCount: 2),
                   ),
                 ),

@@ -166,27 +166,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
               width: double.infinity,
               child: Column(
                 children: [
-                  CustomTextFromFieldWidget(
-                    controller: _descriptionTxtEdit,
-                    keyboardType: TextInputType.text,
-                    textHint: "توضیحات لینک دعوت",
-                    textDirection: TextDirection.ltr,
-                    validationError: "توضیحات لینک دعوت",
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      "متنی که به کاربر، برای ایجاد لینک دعوت نمایش می دهید.",
-                      style: TextStyle(color: AppStyle.deactiveStatus),
-                    ),
-                  ),
-                  CustomTextFromFieldWidget(
-                    controller: _visitCardTxtEdit,
-                    keyboardType: TextInputType.text,
-                    textHint: "متن پیام لینک دعوت",
-                    textDirection: TextDirection.ltr,
-                    validationError: "متن پیام لینک دعوت",
-                  ),
+                 
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/repositories/custom_text_repository.dart'
     as custom_text_repository;
+import 'package:powerps/styles/app_theme.dart';
 import '../../models/custom_text_model.dart';
 
 class FormattedTextEditorWidget extends StatefulWidget {
@@ -177,15 +178,23 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8.0),
+    return Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        border: Border.all(
+            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+        borderRadius: BorderRadius.all(
+          Radius.circular(AppStyle.defaultPadding),
+        ),
+      ),
+      child: Column(
+        children: [
+          Center(
+            child: Text(widget.customTextModel.key,style: AppStyle.thirdTitleStyle,),
           ),
-          child: Row(
+      
+          Row(
             children: [
               IconButton(
                 icon: const Icon(Icons.format_bold),
@@ -236,20 +245,20 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: TextField(
-            controller: _controller,
-            maxLines: null,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'متن خود را وارد کنید...',
+          const SizedBox(height: 8),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              maxLines: null,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'متن خود را وارد کنید...',
+              ),
+              onChanged: widget.onTextChanged,
             ),
-            onChanged: widget.onTextChanged,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
