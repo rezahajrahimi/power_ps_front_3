@@ -190,7 +190,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         icon: const Icon(Icons.shopping_cart),
         label: const Text("خرید کانفیگ جدید"),
       ));
-     actionsWidgetList.add(ElevatedButton.icon(
+      actionsWidgetList.add(ElevatedButton.icon(
         style: TextButton.styleFrom(
           padding: EdgeInsets.symmetric(
             horizontal: AppStyle.defaultPadding * 1.5,
@@ -199,23 +199,56 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           ),
         ),
         onPressed: () async {
-          if(_showBlockedUser){
-            EasyLoading.show(status: "در حال آزاد کردن کاربر");
-            await unblockUser(_botUser!.accountId.toString()).then((value) {
-              if (value) {
-                EasyLoading.dismiss();
-                setStateIfMounted(() {
-                  _showBlockedUser = false;
-                });
-              }else{
-                if (!context.mounted) return;
-                showMsg(msg: "خطا", context: context, type: "error");
-              }
-            }).onError((e, s) {
-              if (!context.mounted) return;
-              showMsg(msg: "خطا", context: context, type: "error");
-            });
-          }else{
+          if (_showBlockedUser) {
+            if (!context.mounted) return;
+            // show a toooltip that show the reason, if be blocked
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('دلیل بلاک'),
+                  content: Text(_botUser!.blockedUser!.reason.toString()),
+                  actions: [
+                    TextButton(
+                      onPressed: () async {
+                        EasyLoading.show(status: "در حال آزاد کردن کاربر");
+                        await unblockUser(_botUser!.accountId.toString())
+                            .then((value) {
+                          if (value) {
+                            if(!context.mounted) return;
+                            EasyLoading.dismiss();
+                            Navigator.of(context).pop();
+                            setStateIfMounted(() {
+                              _showBlockedUser = false;
+                            });
+                            showMsg(
+                                msg: "کاربر با موفقیت آزاد شد",
+                                context: context,
+                                type: "success");
+                            
+                          } else {
+                            if (!context.mounted) return;
+                            showMsg(
+                                msg: "خطا", context: context, type: "error");
+                          }
+                        }).onError((e, s) {
+                          if (!context.mounted) return;
+                          showMsg(msg: "خطا", context: context, type: "error");
+                        });
+                      },
+                      child: Text('Unblock'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('انصراف'),
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
             final reasonController = TextEditingController();
             String? reason = await showDialog<String>(
               context: context,
@@ -233,7 +266,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                            Navigator.of(context).pop(reasonController.text);
+                          Navigator.of(context).pop(reasonController.text);
                         },
                         child: Text('تایید'),
                       ),
@@ -243,7 +276,6 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                         },
                         child: Text('انصراف'),
                       ),
-                  
                     ],
                   ),
                 );
@@ -251,10 +283,11 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             );
             if (reason != null) {
               EasyLoading.show(status: "در حال بلاکی کردن کاربر");
-              await blockUser(_botUser!.accountId.toString(), reason).then((value) {
+              await blockUser(_botUser!.accountId.toString(), reason)
+                  .then((value) {
                 if (value) {
                   EasyLoading.dismiss();
-                }else{
+                } else {
                   EasyLoading.dismiss();
                   if (!context.mounted) return;
                   setStateIfMounted(() {
@@ -270,8 +303,12 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             }
           }
         },
-        icon: _botUser!.blockedUser != null? const Icon(Icons.block): const Icon(Icons.block_flipped),
-        label:_botUser!.blockedUser != null? const Text("Unblock"): const Text("Block"),
+        icon: _botUser!.blockedUser != null
+            ? const Icon(Icons.block)
+            : const Icon(Icons.block_flipped),
+        label: _botUser!.blockedUser != null
+            ? const Text("Unblock")
+            : const Text("Block"),
       ));
     });
     return Container(
