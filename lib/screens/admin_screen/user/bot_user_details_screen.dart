@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pagination_flutter/pagination.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
+import 'package:powerps/repositories/blocked_user_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/repositories/product_details_repository.dart';
 import 'package:powerps/repositories/referral_setting_repository.dart';
@@ -186,6 +187,56 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         },
         icon: const Icon(Icons.shopping_cart),
         label: const Text("خرید کانفیگ جدید"),
+      ));
+     actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          if(_botUser!.blockedUser != null){
+            await unblockUser(widget.id.toString());
+          }else{
+            final reasonController = TextEditingController();
+            String? reason = await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('دلیل بلاک'),
+                  content: TextField(
+                    controller: reasonController,
+                    decoration: InputDecoration(
+                      hintText: 'دلیل بلاک',
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                          Navigator.of(context).pop(reasonController.text);
+                      },
+                      child: Text('تایید'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('انصراف'),
+                    ),
+
+                  ],
+                );
+              },
+            );
+            if (reason != null) {
+              await blockUser(widget.id.toString(), reason);
+            }
+          }
+        },
+        icon: _botUser!.blockedUser != null? const Icon(Icons.block): const Icon(Icons.block_flipped),
+        label:_botUser!.blockedUser != null? const Text("Unblock"): const Text("Block"),
       ));
     });
     return Container(
