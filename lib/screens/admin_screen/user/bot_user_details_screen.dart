@@ -36,6 +36,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   BotUser? _botUser;
   bool _showData = false;
   bool _showBoughtProduct = false;
+  bool _showBlockedUser = false;
   int _lastPageOfUserBought = 1;
   int selectedPageOfUserBought = 1;
 
@@ -84,6 +85,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
       if (value != null && value != false) {
         setStateIfMounted(() {
           _botUser = value;
+          _showBlockedUser = _botUser!.blockedUser != null;
           _showData = true;
         });
       }
@@ -197,36 +199,53 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           ),
         ),
         onPressed: () async {
-          if(_botUser!.blockedUser != null){
-            await unblockUser(widget.id.toString());
+          if(_showBlockedUser){
+            EasyLoading.show(status: "در حال آزاد کردن کاربر");
+            await unblockUser(_botUser!.accountId.toString()).then((value) {
+              if (value) {
+                EasyLoading.dismiss();
+                setStateIfMounted(() {
+                  _showBlockedUser = false;
+                });
+              }else{
+                if (!context.mounted) return;
+                showMsg(msg: "خطا", context: context, type: "error");
+              }
+            }).onError((e, s) {
+              if (!context.mounted) return;
+              showMsg(msg: "خطا", context: context, type: "error");
+            });
           }else{
             final reasonController = TextEditingController();
             String? reason = await showDialog<String>(
               context: context,
               builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text('دلیل بلاک'),
-                  content: TextField(
-                    controller: reasonController,
-                    decoration: InputDecoration(
-                      hintText: 'دلیل بلاک',
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    title: Text('دلیل بلاک'),
+                    content: TextField(
+                      controller: reasonController,
+                      decoration: InputDecoration(
+                        hintText: 'دلیل بلاک',
+                      ),
                     ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                            Navigator.of(context).pop(reasonController.text);
+                        },
+                        child: Text('تایید'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('انصراف'),
+                      ),
+                  
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                          Navigator.of(context).pop(reasonController.text);
-                      },
-                      child: Text('تایید'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Text('انصراف'),
-                    ),
-
-                  ],
                 );
               },
             );
@@ -238,6 +257,9 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                 }else{
                   EasyLoading.dismiss();
                   if (!context.mounted) return;
+                  setStateIfMounted(() {
+                    _showBlockedUser = true;
+                  });
                   showMsg(msg: "خطا", context: context, type: "error");
                 }
               }).onError((e, s) {
