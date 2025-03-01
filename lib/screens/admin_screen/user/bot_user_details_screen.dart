@@ -231,7 +231,20 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               },
             );
             if (reason != null) {
-              await blockUser(widget.id.toString(), reason);
+              EasyLoading.show(status: "در حال بلاکی کردن کاربر");
+              await blockUser(_botUser!.accountId.toString(), reason).then((value) {
+                if (value) {
+                  EasyLoading.dismiss();
+                }else{
+                  EasyLoading.dismiss();
+                  if (!context.mounted) return;
+                  showMsg(msg: "خطا", context: context, type: "error");
+                }
+              }).onError((e, s) {
+                if (!context.mounted) return;
+                EasyLoading.dismiss();
+                showMsg(msg: "خطا", context: context, type: "error");
+              });
             }
           }
         },
