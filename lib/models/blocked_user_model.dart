@@ -9,13 +9,13 @@ class BlockedUserModel {
 
   factory BlockedUserModel.fromJson(Map<String, dynamic> json) {
     return BlockedUserModel(
-      accountId: json['accountId'],
+      accountId: json['account_id'],
       reason: json['reason'],
     );
   }
   fromMap(Map<String, dynamic> map) {
     return BlockedUserModel(
-      accountId: map['accountId'],
+      accountId: map['account_id'],
       reason: map['reason'],
     );
   }

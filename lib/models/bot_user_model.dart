@@ -101,7 +101,9 @@ class BotUser {
       referralWallet: map['referralWallet'] != null
           ? ReferralWalletModel.fromMap(map['referralWallet'])
           : null,
-          
+      blockedUser: map['blockedUser'] != null
+          ? BlockedUserModel.fromJson(map['blocked_user'])
+          : null,
     );
   }
 

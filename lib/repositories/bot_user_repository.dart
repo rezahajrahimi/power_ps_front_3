@@ -138,9 +138,6 @@ Future getBotUserByID({required int id}) async {
 
     if (response.statusCode == 200 && response.data != null) {
       BotUser botUser = BotUser.fromJson(response.data);
-      // transactionChangedToken = "transactionChanged";
-
-      // transactionNotifier.changedTransactionLockData();
       return botUser;
     } else if (response.statusCode == 201) {
       return null;
@@ -151,8 +148,8 @@ Future getBotUserByID({required int id}) async {
     } else {
       return null;
     }
-  } on DioException catch (e) {
-    debugPrint(e.message.toString());
+  } catch (e) {
+    debugPrint(e.toString());
     return null;
   }
 }
