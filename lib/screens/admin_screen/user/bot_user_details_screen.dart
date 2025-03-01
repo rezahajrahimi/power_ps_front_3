@@ -225,6 +225,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                                 msg: "کاربر با موفقیت آزاد شد",
                                 context: context,
                                 type: "success");
+                                _fillData();
                             
                           } else {
                             if (!context.mounted) return;
