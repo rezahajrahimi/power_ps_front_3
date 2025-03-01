@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:focused_menu/focused_menu.dart';
 import 'package:focused_menu/modals.dart';
 
@@ -765,9 +766,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "تنظیمات پیشرفته (اکانتهای نقره ای و طلایی)",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "تنظیمات پیشرفته (اکانتهای نقره ای و طلایی)",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              IconButton(
+                tooltip: "بازنشانی تنظیمات پیش فرض",
+                onPressed: () async{
+                  await restoreToDefaultAdvancedSettings().then((val){
+                    EasyLoading.showInfo("در حال بازنشانی");
+                    if(val){
+                      _fillData();
+                      EasyLoading.showInfo("بازنشانی با موفقیت انجام شد.");
+                    } else {
+                      EasyLoading.showError("خطا");
+                    }
+                  });
+                },
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(

@@ -152,6 +152,24 @@ Future getBotAdvancedSetting() async {
     return [];
   }
 }
+Future restoreToDefaultAdvancedSettings()async{
+  try{
+      Response response = await GenaralApi.dio.get("/api/restore-default-advanced-settings",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+        if(response.statusCode == 200) {
+          return true;
+        }
+        return false;
+  } catch(e){
+    return null;
+  }
+}
 
 /*************  ✨ Codeium Command ⭐  *************/
 /// Change advanced setting of the bot.
