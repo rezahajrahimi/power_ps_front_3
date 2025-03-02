@@ -225,8 +225,10 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                                 msg: "کاربر با موفقیت آزاد شد",
                                 context: context,
                                 type: "success");
-                                _fillData();
-                            
+                            setState(() {
+                              _showData = false;
+                            });
+                            _fillData();
                           } else {
                             if (!context.mounted) return;
                             showMsg(
@@ -287,7 +289,13 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               await blockUser(_botUser!.accountId.toString(), reason)
                   .then((value) {
                 if (value) {
+                  if(!context.mounted) return;
                   EasyLoading.dismiss();
+                  setStateIfMounted(() {
+                    _showData = false;
+                    _showBlockedUser = false;
+                  });
+                  _fillData();
                 } else {
                   EasyLoading.dismiss();
                   if (!context.mounted) return;
