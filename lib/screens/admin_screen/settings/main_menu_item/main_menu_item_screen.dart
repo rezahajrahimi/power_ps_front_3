@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/main_menu_item_model.dart';
 import 'package:powerps/repositories/main_menu_item_repository.dart';
@@ -127,7 +128,7 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
                           _mainMenuItemsList[i].position = i + 1;
                         }
                         // اینجا باید تغییرات به سرور ارسال شود
-                        _updatePositionsOnServer();
+                        _updatePositionsOnServer(context);
                       });
                     },
                   );
@@ -175,9 +176,13 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
   }
 
   // اضافه کردن متد جدید برای ارسال تغییرات به سرور
-   _updatePositionsOnServer() async {
-    // TODO: implement API call to update positions
-    // می‌توانید از updateMainMenuItems یا متد مشابه استفاده کنید
-    // await updateMainMenuItems(_mainMenuItemsList);
+   _updatePositionsOnServer(BuildContext context) async {
+    await updateMainMenuItems(_mainMenuItemsList).then((value) {
+      if(value == true){
+        if(context.mounted){
+          showMsg(msg: "منوها با موفقیت به روز شدند", context: context);
+        }
+      }
+    });
   }
 }
