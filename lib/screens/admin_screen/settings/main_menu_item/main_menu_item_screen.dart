@@ -5,7 +5,6 @@ import 'package:powerps/repositories/main_menu_item_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/menu_item_info_widget.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class MainMenuItemsScreen extends StatefulWidget {
   const MainMenuItemsScreen({super.key});
@@ -106,20 +105,31 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
                   if (value == "menuItemChanged") {
                     _retryMenuData();
                   }
-                  return Responsive(
-                    mobile: widgetsGridview(
-                        childAspectRatio: 2.5,
-                        context: context,
-                        importedList: _menuItemWidgetList),
-                    tablet: widgetsGridview(
-                        context: context,
-                        childAspectRatio: 4.5,
-                        importedList: _menuItemWidgetList),
-                    desktop: widgetsGridview(
-                        importedList: _menuItemWidgetList,
-                        context: context,
-                        childAspectRatio: 4.5,
-                        crossAxisCount: 2),
+                  return ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: _menuItemWidgetList.length,
+                    itemBuilder: (context, index) => _menuItemWidgetList[index],
+                    onReorder: (oldIndex, newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) {
+                          newIndex -= 1;
+                        }
+                        // جابجایی در هر دو لیست
+                        final menuItem = _mainMenuItemsList.removeAt(oldIndex);
+                        _mainMenuItemsList.insert(newIndex, menuItem);
+                        
+                        final widgetItem = _menuItemWidgetList.removeAt(oldIndex);
+                        _menuItemWidgetList.insert(newIndex, widgetItem);
+                        
+                        // بروزرسانی position‌ها
+                        for (int i = 0; i < _mainMenuItemsList.length; i++) {
+                          _mainMenuItemsList[i].position = i + 1;
+                        }
+                        // اینجا باید تغییرات به سرور ارسال شود
+                        _updatePositionsOnServer();
+                      });
+                    },
                   );
                 }),
           ),
@@ -128,33 +138,46 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
     );
   }
 
-  void _fillData() async {
-    if (context.mounted) {
-      var res = await getAllMainMenuItems();
-      if (res != null && res != false) {
-        setState(() {
-          _showData = false;
-          _mainMenuItemsList = res;
-          _menuItemWidgetList.clear();
-          for (var i in _mainMenuItemsList) {
-            _menuItemWidgetList.add(MenuItemInfoWidget(
-              aliasName: i.aliasName,
-              id: i.id,
-              isActive: i.isActive,
-              name: i.name,
-              position: i.position,
-            ));
-          }
-          _showData = true;
-        });
-      }
+   _fillData() async {
+    if(!mounted) return;
+    
+    _showData = false;
+      
+    var res = await getAllMainMenuItems();
+    if (res != null && res != false) {
+      if(!mounted) return;
+      
+      setState(() {
+        _mainMenuItemsList = res;
+        _menuItemWidgetList.clear();
+        // مرتب‌سازی بر اساس position
+        _mainMenuItemsList.sort((a, b) => a.position.compareTo(b.position));
+        
+        for (var i in _mainMenuItemsList) {
+          _menuItemWidgetList.add(MenuItemInfoWidget(
+            key: ValueKey(i.id),
+            aliasName: i.aliasName,
+            id: i.id,
+            isActive: i.isActive,
+            name: i.name,
+            position: i.position,
+          ));
+        }
+        _showData = true;
+      });
     }
   }
 
-  void _retryMenuData() {
+   _retryMenuData() async {
     menuChangedToken = "aaa";
-
-    _fillData();
+    await _fillData();
     menuItemNotifier.changedMenuData();
+  }
+
+  // اضافه کردن متد جدید برای ارسال تغییرات به سرور
+   _updatePositionsOnServer() async {
+    // TODO: implement API call to update positions
+    // می‌توانید از updateMainMenuItems یا متد مشابه استفاده کنید
+    // await updateMainMenuItems(_mainMenuItemsList);
   }
 }
