@@ -776,15 +776,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               IconButton(
                 tooltip: "بازنشانی تنظیمات پیش فرض",
                 onPressed: () async{
-                  await restoreToDefaultAdvancedSettings().then((val){
-                    EasyLoading.showInfo("در حال بازنشانی");
-                    if(val){
-                      _fillData();
-                      EasyLoading.showInfo("بازنشانی با موفقیت انجام شد.");
-                    } else {
-                      EasyLoading.showError("خطا");
-                    }
-                  });
+                  _restoreAdvancedSettings();
                 },
                 icon: const Icon(Icons.refresh),
               ),
@@ -812,6 +804,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+  
+  void _restoreAdvancedSettings() async{
+    showDialog(context: context, builder: (context){
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text("بازنشانی تنظیمات پیش فرض"),
+          content: Text("آیا از بازنشانی تنظیمات پیش فرض مطمئن هستید؟"),
+          actions: [
+            ElevatedButton(onPressed: ()async{
+              EasyLoading.showInfo("در حال بازنشانی");
+              await restoreToDefaultAdvancedSettings().then((val){
+                      if(val){
+                        EasyLoading.dismiss();
+                        if(! context.mounted) return;
+                        Navigator.pop(context);
+                        setState(() {
+                          _showAdvancedSetting = false;
+                        });
+
+                        _fillData();
+                        EasyLoading.showInfo("بازنشانی با موفقیت انجام شد.");
+                      } else {
+                        EasyLoading.showError("خطا");
+                      }
+                    }).catchError((e){
+                      EasyLoading.dismiss();
+                      EasyLoading.showError("خطا");
+                    });
+            }, child: Text("بازنشانی")),
+            ElevatedButton(onPressed: (){
+              Navigator.pop(context);
+            }, child: Text("انصراف")),
+          ],
+        ),
+      );
+    });
   }
 }
 
