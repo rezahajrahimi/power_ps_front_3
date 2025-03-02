@@ -71,9 +71,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
+        // bottomNavigationBar: Responsive.isMobile(context)
+        //     ? _buildBottomNavigationBar(context)
+        //     : const Opacity(opacity: 1),
       ),
     );
   }
@@ -92,8 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               botName: "تعریف نشده",
               botToken: "تعریف نشده",
               id: "تعریف نشده",
-              panelAddress: "لینک هسته ربات را وارد کنید"
-              );
+              panelAddress: "لینک هسته ربات را وارد کنید");
           _showData = true;
         });
       }
@@ -131,9 +130,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: CircularProgressIndicator(),
                         ),
                   SizedBox(height: AppStyle.defaultPadding),
+                  if (Responsive.isMobile(context)) _operationInfoCard(context),
+                  if (Responsive.isMobile(context))
+                    SizedBox(height: AppStyle.defaultPadding),
                   _showAdvancedSetting
                       ? _advancedSettingTabCard(context)
                       : Container(),
+// side bar mobile
                 ],
               ),
             ),
@@ -775,7 +778,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               IconButton(
                 tooltip: "بازنشانی تنظیمات پیش فرض",
-                onPressed: () async{
+                onPressed: () async {
                   _restoreAdvancedSettings();
                 },
                 icon: const Icon(Icons.refresh),
@@ -805,43 +808,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  
-  void _restoreAdvancedSettings() async{
-    showDialog(context: context, builder: (context){
-      return Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: Text("بازنشانی تنظیمات پیش فرض"),
-          content: Text("آیا از بازنشانی تنظیمات پیش فرض مطمئن هستید؟"),
-          actions: [
-            ElevatedButton(onPressed: ()async{
-              EasyLoading.showInfo("در حال بازنشانی");
-              await restoreToDefaultAdvancedSettings().then((val){
-                      if(val){
-                        EasyLoading.dismiss();
-                        if(! context.mounted) return;
-                        Navigator.pop(context);
-                        setState(() {
-                          _showAdvancedSetting = false;
-                        });
 
-                        _fillData();
-                        EasyLoading.showInfo("بازنشانی با موفقیت انجام شد.");
-                      } else {
+  void _restoreAdvancedSettings() async {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: Text("بازنشانی تنظیمات پیش فرض"),
+              content: Text("آیا از بازنشانی تنظیمات پیش فرض مطمئن هستید؟"),
+              actions: [
+                ElevatedButton(
+                    onPressed: () async {
+                      EasyLoading.showInfo("در حال بازنشانی");
+                      await restoreToDefaultAdvancedSettings().then((val) {
+                        if (val) {
+                          EasyLoading.dismiss();
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          setState(() {
+                            _showAdvancedSetting = false;
+                          });
+
+                          _fillData();
+                          EasyLoading.showInfo("بازنشانی با موفقیت انجام شد.");
+                        } else {
+                          EasyLoading.showError("خطا");
+                        }
+                      }).catchError((e) {
+                        EasyLoading.dismiss();
                         EasyLoading.showError("خطا");
-                      }
-                    }).catchError((e){
-                      EasyLoading.dismiss();
-                      EasyLoading.showError("خطا");
-                    });
-            }, child: Text("بازنشانی")),
-            ElevatedButton(onPressed: (){
-              Navigator.pop(context);
-            }, child: Text("انصراف")),
-          ],
-        ),
-      );
-    });
+                      });
+                    },
+                    child: Text("بازنشانی")),
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text("انصراف")),
+              ],
+            ),
+          );
+        });
   }
 }
 
