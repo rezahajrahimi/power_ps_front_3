@@ -89,7 +89,7 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
                   width: double.infinity,
                   child: Responsive(
                     mobile: widgetsGridview(
-                        childAspectRatio: 2,
+                        childAspectRatio: 1.5,
                         context: context,
                         crossAxisCount: 1,
                         importedList: _customTextModelWidgetList),
@@ -101,7 +101,7 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
                     desktop: widgetsGridview(
                         importedList: _customTextModelWidgetList,
                         context: context,
-                        childAspectRatio: 3.5,
+                        childAspectRatio: 3.3,
                         crossAxisCount: 2),
                   ),
                 ),

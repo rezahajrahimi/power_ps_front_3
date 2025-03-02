@@ -1049,10 +1049,14 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     await decreaseUserAccuntBalanceByUserID(
                             ballance: double.parse(_ballanceController.text),
                             userID: _botUser!.id.toInt(),
-                            type: type)
+                            type: type,
+                            isRequestByAdmin: true
+                            )
                         .then((value) {
                       if (!context.mounted) return;
-                      if (value.toString() != "false") {
+                      if (value.toString() != "false" &&
+                          value.toString() != "" &&
+                          value.toString() != "null") {
                         setState(() {
                           if (type == "toman") {
                             _botUser!.ballance!.ballance =

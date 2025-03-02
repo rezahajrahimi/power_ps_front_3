@@ -75,7 +75,8 @@ Future increaseUserAccuntBalanceByUserID(
 Future decreaseUserAccuntBalanceByUserID(
     {required double ballance,
     required int userID,
-    required String type}) async {
+    required String type,
+    required bool isRequestByAdmin}) async {
   try {
     Response response =
         await GenaralApi.dio.put("/api/decreaseUserAccuntBalanceByUserID",
@@ -83,6 +84,7 @@ Future decreaseUserAccuntBalanceByUserID(
               "ballance": type == "toman" ? ballance.toInt() : ballance,
               "userID": userID,
               "type": type,
+              "is_request_by_admin": isRequestByAdmin
             },
             options: Options(headers: {
               'Accept': 'application/json',
