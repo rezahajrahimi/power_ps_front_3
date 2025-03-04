@@ -53,7 +53,7 @@ Future getAllOfflinePayments() async {
 Future<bool> getDollorTransactionSetting() async {
   try {
     Response response =
-        await GenaralApi.dio.get("/api/getDollorTransactionSetting",
+        await GenaralApi.dio.get("/api/reverse-status-by-key/usd_transaction",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -85,9 +85,9 @@ Future<bool> getDollorTransactionSetting() async {
 Future<bool> setDollorTransactionSetting(
     {required bool dollarTransaction}) async {
   try {
+
     Response response =
-        await GenaralApi.dio.patch("/api/setDollorTransactionSetting",
-            data: {"dollar_transaction": dollarTransaction},
+        await GenaralApi.dio.patch("/api/set-payment-setting-status-by-key/usd_transaction/$dollarTransaction",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
