@@ -380,9 +380,9 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                       if (!context.mounted) return;
 
                       if (val) {
-                        showMsg(msg: "فعال شد.", context: context);
+                        showMsg(msg: "ذخیره شد.", context: context);
                       } else {
-                        showMsg(msg: "غیر فعال شد.", context: context);
+                        showMsg(msg: "خطا", context: context);
                       }
                     }).whenComplete(() {
                       setState(() {
