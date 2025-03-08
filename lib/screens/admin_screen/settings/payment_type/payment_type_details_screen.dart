@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/crypto_payment_gateway_model.dart';
@@ -407,9 +408,75 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Text("API ENDPOINT: "),
+              Text("$baseURL/api/shetab-verify"),
+              IconButton(
+                tooltip: "کپی کنید",
+                  onPressed: () {
+                    Clipboard.setData(
+                        ClipboardData(text: "$baseURL/api/shetab-verify"));
+                        // refresh this 
+                    if (context.mounted) {
+                      showMsg(msg: "API ENDPOINT کپی شد.", context: context);
+                    }
+                  },
+                  icon: const Icon(Icons.copy)),
+              // qr code
+              IconButton(
+                tooltip: "نمایش QR CODE",
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => Dialog(
+                        child: Container(
+                          width: 250,
+                          height: 250,
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "API ENDPOINT",
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 16),
+                              Expanded(
+                                child: QrImageView(
+                                  data: "$baseURL/api/shetab-verify",
+                                  version: QrVersions.auto,
+                                  backgroundColor: Colors.white,
+                                  size: 200,
+                                  errorStateBuilder: (cxt, err) {
+                                    debugPrint(err.toString());
+                                    return Text(err.toString());
+                                  },
+                                ),
+                              ),
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("بستن"))
+                            ],
+                          ),
+
+                        ),
+                        
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.qr_code)),
+              //refresh button
+              
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Text("API KEY: "),
               Text(_shetabVerifySetting!.value),
               IconButton(
+                tooltip: "کپی کنید",
                   onPressed: () {
                     Clipboard.setData(
                         ClipboardData(text: _shetabVerifySetting!.value));
@@ -421,6 +488,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   icon: const Icon(Icons.copy)),
               // qr code
               IconButton(
+                tooltip: "نمایش QR CODE",
                   onPressed: () {
                     showDialog(
                       context: context,
@@ -465,6 +533,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   icon: const Icon(Icons.qr_code)),
               //refresh button
               IconButton(
+                tooltip: "بازنشانی API KEY",
                   onPressed: () {
                     setState(() {
                       reGenerateShetabVerifyApiKey().then((val) {
