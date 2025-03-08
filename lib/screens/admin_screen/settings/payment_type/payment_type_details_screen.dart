@@ -364,6 +364,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
 
   _shetabVerifyCard(BuildContext context) {
     List<Widget> dollarPaymentWidgetList = [];
+    
     setState(() {
       dollarPaymentWidgetList.add(Column(
         children: [
@@ -412,6 +413,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   onPressed: () {
                     Clipboard.setData(
                         ClipboardData(text: _shetabVerifySetting!.value));
+                        // refresh this 
                     if (context.mounted) {
                       showMsg(msg: "API KEY کپی شد.", context: context);
                     }
@@ -465,7 +467,16 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
               IconButton(
                   onPressed: () {
                     setState(() {
-                      // _shetabVerifySetting = await getShetabVerifySetting();
+                      reGenerateShetabVerifyApiKey().then((val) {
+                        if (val != null) {
+                          _shetabVerifySetting!.value = val;
+                          if (context.mounted) {
+                            showMsg(msg: "API KEY بازنشانی شد.", context: context);
+                            // refresh _shetabVerifyCard
+                            _shetabVerifyCard(context);
+                          }
+                        }
+                      });
                     });
                   },
                   icon: const Icon(Icons.refresh))

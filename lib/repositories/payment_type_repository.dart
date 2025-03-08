@@ -110,6 +110,19 @@ Future<bool> setShetabVerifySetting(
     return false;
   }
 }
+Future<String?> reGenerateShetabVerifyApiKey() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/re-generate-shetab-verify");
+    if (response.statusCode == 200 && response.data != null) {
+      return response.data.toString();
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
 
 Future<bool> setDollorTransactionSetting(
     {required bool dollarTransaction}) async {
