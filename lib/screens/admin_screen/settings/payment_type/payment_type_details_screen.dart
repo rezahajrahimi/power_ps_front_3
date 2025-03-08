@@ -381,7 +381,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
         children: [
           Row(
             children: [
-              const Text("فعال سازی تایید خودکار پرداخت کارت به کارت"),
+              Flexible(child: const Text("فعال سازی تایید خودکار پرداخت کارت به کارت")),
               Switch(
                   value: _shetabVerifySetting!.status,
                   onChanged: (bool newValue) async {
@@ -418,8 +418,8 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("API ENDPOINT: "),
-              Text("$baseURL/api/shetab-verify"),
+               Text("API ENDPOINT: "),
+              Flexible(child: Text("$baseURL/api/shetab-verify".length > 20 ? "${"$baseURL/api/shetab-verify".substring(0, 20)}..." : "$baseURL/api/shetab-verify")),
               IconButton(
                   tooltip: "کپی کنید",
                   onPressed: () {
@@ -477,11 +477,12 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
               //refresh button
             ],
           ),
+          SizedBox(height: AppStyle.defaultPadding),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("API KEY: "),
-              Text(_shetabVerifySetting!.value),
+              Flexible(child: Text("API KEY: ")),
+              Flexible(child: Text(_shetabVerifySetting!.value.length > 20 ? "${_shetabVerifySetting!.value.substring(0, 20)}..." : _shetabVerifySetting!.value)),
               IconButton(
                   tooltip: "کپی کنید",
                   onPressed: () {
@@ -616,17 +617,18 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
             width: double.infinity,
             child: Responsive(
               mobile: widgetsGridview(
-                  childAspectRatio: 2,
+                  childAspectRatio: 1.4,
                   context: context,
                   importedList: dollarPaymentWidgetList),
               tablet: widgetsGridview(
                   context: context,
-                  childAspectRatio: 3,
+                  childAspectRatio: 1.4,
+                  crossAxisCount: 2,
                   importedList: dollarPaymentWidgetList),
               desktop: widgetsGridview(
                   importedList: dollarPaymentWidgetList,
                   context: context,
-                  childAspectRatio: 3,
+                  childAspectRatio: 2.7,
                   crossAxisCount: 2),
             ),
           ),
