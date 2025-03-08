@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/crypto_payment_gateway_model.dart';
+import 'package:powerps/models/payment_setting_model.dart';
 import 'package:powerps/models/payment_type_model.dart';
 import 'package:powerps/models/sub_menu_item_model.dart';
 
@@ -53,7 +54,7 @@ Future getAllOfflinePayments() async {
 Future<bool> getDollorTransactionSetting() async {
   try {
     Response response =
-        await GenaralApi.dio.get("/api/reverse-status-by-key/usd_transaction",
+        await GenaralApi.dio.get("/api/get-payment-setting-by-key/usd_transaction",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -73,6 +74,34 @@ Future<bool> getDollorTransactionSetting() async {
       return false;
     } else if (response.statusCode == 500) {
       return false;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
+Future<PaymentSettingModel> getShetabVerifySetting() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/get-payment-setting-by-key/shetab_verify");
+    if (response.statusCode == 200 && response.data != null) {
+      return PaymentSettingModel.fromJson(response.data);
+    } else {
+      return PaymentSettingModel(key: "", value: "", description: "", status: false);
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return PaymentSettingModel(key: "", value: "", description: "", status: false);
+  }
+}
+
+Future<bool> setShetabVerifySetting(
+    {required bool status}) async {
+  try {
+    Response response = await GenaralApi.dio.patch("/api/set-payment-setting-status-by-key/shetab_verify/$status");
+    if (response.statusCode == 200 && response.data != null) {
+      return true;
     } else {
       return false;
     }
