@@ -123,6 +123,21 @@ Future<String?> reGenerateShetabVerifyApiKey() async {
     return null;
   }
 }
+// set-payment-setting-description-by-key/{key}/{description}
+Future<bool> setShetabVeriyNewCardNumber(
+    {required String cardNumber}) async {
+  try {
+    Response response = await GenaralApi.dio.patch("/api/set-payment-setting-description-by-key/shetab_verify/$cardNumber");
+    if (response.statusCode == 200 && response.data != null) {
+      return true;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
 
 Future<bool> setDollorTransactionSetting(
     {required bool dollarTransaction}) async {

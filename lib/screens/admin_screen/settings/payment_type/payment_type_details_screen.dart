@@ -36,6 +36,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   final _zarinpalMerchantIdTxtEdit = TextEditingController();
   final _newPaymentMerchantIdTxtEdit = TextEditingController();
   final _newPaymentNameTxtEdit = TextEditingController();
+  final _shetabVerifyApiKeyTxtEdit = TextEditingController();
   bool _isZarinPalActive = true;
   final List<Widget> _paymentItemWidgetList = [];
   PaymentSettingModel? _shetabVerifySetting;
@@ -111,7 +112,16 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     var res = await getAllOfflinePayments();
     var resZarinpal = await getZarinpalPaymentDetails();
     var resNowPayment = await getNovPaymentDetails();
-    _shetabVerifySetting = await getShetabVerifySetting();
+    await getShetabVerifySetting().then((val) {
+      if (mounted) {
+        setState(() {
+          _shetabVerifySetting = val;
+          _shetabVerifyApiKeyTxtEdit.text = val.description.isEmpty
+              ? "یک شماره کارت وارد کنید"
+              : val.description;
+        });
+      }
+    });
 
     await getDollorTransactionSetting().then((val) {
       if (mounted) {
@@ -365,9 +375,9 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
 
   _shetabVerifyCard(BuildContext context) {
     List<Widget> dollarPaymentWidgetList = [];
-    
     setState(() {
       dollarPaymentWidgetList.add(Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Row(
             children: [
@@ -411,11 +421,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
               Text("API ENDPOINT: "),
               Text("$baseURL/api/shetab-verify"),
               IconButton(
-                tooltip: "کپی کنید",
+                  tooltip: "کپی کنید",
                   onPressed: () {
                     Clipboard.setData(
                         ClipboardData(text: "$baseURL/api/shetab-verify"));
-                        // refresh this 
+                    // refresh this
                     if (context.mounted) {
                       showMsg(msg: "API ENDPOINT کپی شد.", context: context);
                     }
@@ -423,7 +433,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   icon: const Icon(Icons.copy)),
               // qr code
               IconButton(
-                tooltip: "نمایش QR CODE",
+                  tooltip: "نمایش QR CODE",
                   onPressed: () {
                     showDialog(
                       context: context,
@@ -459,15 +469,12 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                                   child: const Text("بستن"))
                             ],
                           ),
-
                         ),
-                        
                       ),
                     );
                   },
                   icon: const Icon(Icons.qr_code)),
               //refresh button
-              
             ],
           ),
           Row(
@@ -476,11 +483,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
               Text("API KEY: "),
               Text(_shetabVerifySetting!.value),
               IconButton(
-                tooltip: "کپی کنید",
+                  tooltip: "کپی کنید",
                   onPressed: () {
                     Clipboard.setData(
                         ClipboardData(text: _shetabVerifySetting!.value));
-                        // refresh this 
+                    // refresh this
                     if (context.mounted) {
                       showMsg(msg: "API KEY کپی شد.", context: context);
                     }
@@ -488,7 +495,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   icon: const Icon(Icons.copy)),
               // qr code
               IconButton(
-                tooltip: "نمایش QR CODE",
+                  tooltip: "نمایش QR CODE",
                   onPressed: () {
                     showDialog(
                       context: context,
@@ -524,23 +531,22 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                                   child: const Text("بستن"))
                             ],
                           ),
-
                         ),
-                        
                       ),
                     );
                   },
                   icon: const Icon(Icons.qr_code)),
               //refresh button
               IconButton(
-                tooltip: "بازنشانی API KEY",
+                  tooltip: "بازنشانی API KEY",
                   onPressed: () {
                     setState(() {
                       reGenerateShetabVerifyApiKey().then((val) {
                         if (val != null) {
                           _shetabVerifySetting!.value = val;
                           if (context.mounted) {
-                            showMsg(msg: "API KEY بازنشانی شد.", context: context);
+                            showMsg(
+                                msg: "API KEY بازنشانی شد.", context: context);
                             // refresh _shetabVerifyCard
                             _shetabVerifyCard(context);
                           }
@@ -550,6 +556,44 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   },
                   icon: const Icon(Icons.refresh))
             ],
+          ),
+        ],
+      ));
+      dollarPaymentWidgetList.add(Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          CustomTextFromFieldWidget(
+            controller: _shetabVerifyApiKeyTxtEdit,
+            textHint: "شماره کارت",
+            validationError: "شماره کارت را وارد کنید.",
+          ),
+          SizedBox(
+            height: AppStyle.defaultPadding,
+          ),
+          ElevatedButton.icon(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppStyle.defaultPadding * 1.5,
+                vertical: AppStyle.defaultPadding /
+                    (Responsive.isMobile(context) ? 2 : 1),
+              ),
+            ),
+            onPressed: () {
+              // validate card number
+              if (_shetabVerifyApiKeyTxtEdit.text.isNotEmpty) {
+                setShetabVeriyNewCardNumber(cardNumber: _shetabVerifyApiKeyTxtEdit.text).then((val) {
+                  if(!context.mounted) return;
+                  if (val) {
+                    
+                    showMsg(msg: "ذخیره شد.", context: context);
+                  } else {
+                    showMsg(msg: "خطا", context: context, type: "error");
+                  }
+                });
+              }
+            },
+            icon: const Icon(Icons.save),
+            label: const Text("ذخیره"),
           )
         ],
       ));
