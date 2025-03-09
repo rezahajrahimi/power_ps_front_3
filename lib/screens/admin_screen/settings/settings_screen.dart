@@ -594,6 +594,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               IconButton(
                 tooltip: "بازنشانی تنظیمات پیش فرض",
                 onPressed: () async {
+                  _advancedSettingWidgetList.clear();
                   _restoreAdvancedSettings();
                 },
                 icon: const Icon(Icons.refresh),
