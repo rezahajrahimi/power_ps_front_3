@@ -27,7 +27,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
   int _selectedIndex = 0;
   String _currentPageName = "داشبورد";
   late User loggedUSer;
@@ -52,9 +52,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _fillData();
     super.initState();
   }
+    @override
+  bool get wantKeepAlive => true;
+
 
   @override
   Widget build(BuildContext context) {
+        super.build(context);
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: _selectDrawer(context),

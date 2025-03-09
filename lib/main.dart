@@ -1,6 +1,7 @@
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
+import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
 import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/provider/auth_provider.dart';
@@ -73,48 +74,53 @@ class MyApp extends StatelessWidget {
             create: (context) => PaymentProvider(),
           ),
         ],
-        child: MaterialApp(
-            builder: EasyLoading.init(),
-            title: projectName,
-            onGenerateRoute: (setting) {
-              if (setting.name!.contains("/login/")) {
-                String url =
-                    setting.name!.substring(setting.name!.indexOf("login/"));
-                var inputs = url.split("/");
-                // print(inputs);
+        child: Consumer<AuthChangeController>(
+          builder: (context, authController, child) {
+            // فراخوانی متد checkAuthStatus
+            authController.checkAuthStatus();
+            
+            return MaterialApp(
+                builder: EasyLoading.init(),
+                title: projectName,
+                onGenerateRoute: (setting) {
+                  if (setting.name!.contains("/login/")) {
+                    String url =
+                        setting.name!.substring(setting.name!.indexOf("login/"));
+                    var inputs = url.split("/");
+                    // print(inputs);
 
-                // print("acc: ${inputs[1].trim()} pass: ${inputs[2].trim()}");
-                return MaterialPageRoute(
-                    builder: (_) => LoginScreen(
-                          accountID: inputs[1],
-                          password: inputs[2],
-                        ));
-              }
+                    // print("acc: ${inputs[1].trim()} pass: ${inputs[2].trim()}");
+                    return MaterialPageRoute(
+                        builder: (_) => LoginScreen(
+                              accountID: inputs[1],
+                              password: inputs[2],
+                            ));
+                  }
 
-              return null;
-            },
-            theme: ThemeData.dark().copyWith(
-              scaffoldBackgroundColor: AppStyle.bgColor,
-              textTheme:
-                  GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
-                      .apply(bodyColor: Colors.white),
-              canvasColor: AppStyle.secondaryColor,
-            ),
-            routes: {
-              // '/': (context) => const HomeScreen(
-              //       selectedPage: 0,
-              //     ),
-              '/home': (context) => const HomeScreen(
-                    selectedPage: 0,
-                  ),
-              '/login': (context) => const LoginScreen(),
-            },
-            debugShowCheckedModeBanner: false,
-            navigatorKey: navigatorKey,
-            home: const Directionality(
-              textDirection: TextDirection.rtl,
-              child: CheckAuth(),
-            )));
+                  return null;
+                },
+                theme: ThemeData.dark().copyWith(
+                  scaffoldBackgroundColor: AppStyle.bgColor,
+                  textTheme:
+                      GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
+                          .apply(bodyColor: Colors.white),
+                  canvasColor: AppStyle.secondaryColor,
+                ),
+                routes: {
+                  '/': (context) => const Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: CheckAuth(),
+                      ),
+                  '/home': (context) => const HomeScreen(
+                        selectedPage: 0,
+                      ),
+                  '/login': (context) => const LoginScreen(),
+                },
+                debugShowCheckedModeBanner: false,
+                navigatorKey: navigatorKey,
+                );
+          },
+        ));
   }
 }
 
@@ -127,14 +133,24 @@ class CheckAuth extends StatefulWidget {
 
 class _CheckAuthState extends State<CheckAuth> {
   bool isAuth = false;
+  bool isLoading = true;
+
   @override
   void initState() {
-    _checkLogin();
     super.initState();
+    _checkLogin();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
     Widget child;
     if (isAuth) {
       child = const Directionality(
@@ -153,18 +169,37 @@ class _CheckAuthState extends State<CheckAuth> {
   }
 
   void _checkLogin() async {
-    String token = await LoggingPreference().getToken();
-    if (token == 'void' || token.isEmpty) {
+    try {
+      // فراخوانی متد checkAuthStatus در AuthChangeController
+      await Provider.of<AuthChangeController>(context, listen: false).checkAuthStatus();
+      
+      // بررسی وضعیت کاربر
+      if(!mounted) return;
+      User user = Provider.of<AuthChangeController>(context, listen: false).user;
+      
+      String token = await LoggingPreference().getToken();
+      
+      if (token != 'void' && token.isNotEmpty && user.id != 0) {
+        // تنظیم هدرهای درخواست
+        GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
+        GenaralApi.dio.options.headers['x-access-token'] = token;
+        
+        setState(() {
+          isAuth = true;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isAuth = false;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error checking login: $e");
       setState(() {
         isAuth = false;
+        isLoading = false;
       });
-      return;
     }
-    setState(() {
-      GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
-      GenaralApi.dio.options.headers['x-access-token'] = token;
-
-      isAuth = true;
-    });
   }
 }

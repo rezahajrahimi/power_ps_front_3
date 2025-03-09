@@ -4,41 +4,38 @@ import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
 
-Future logIn({
+Future<dynamic> logIn({
   required String accountID,
   required String password,
 }) async {
   try {
-    Response response = await GenaralApi.dio.post("/api/login",
-        data: {"account_id": accountID, "password": password},
-        options: Options(headers: {
-          'Accept': 'application/json',
-          'Connection': 'keep-alive',
-          "Content-Type": "application/json;charset=UTF-8",
-          "Charset": "utf-8",
-          'Access-Control-Allow-Origin': '*'
-        }));
-    debugPrint(response.data.toString());
-    if (response.statusCode == 200 && response.data != null) {
-      User user = User.fromJson(response.data["user"]);
+    var response = await GenaralApi.dio.post('/api/login', data: {
+      'account_id': accountID,
+      'password': password,
+    });
 
-      final token = response.data["token"];
+    if (response.statusCode == 200) {
+      // ذخیره توکن
+      String token = response.data['token'];
+      await LoggingPreference().saveToken(token);
+      
+      // تنظیم هدرهای درخواست
       GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
       GenaralApi.dio.options.headers['x-access-token'] = token;
-      LoggingPreference().setToken(token: token);
+      
+      // ایجاد شیء User از پاسخ
+      User user = User.fromMap(response.data['user']);
+      
+      // ذخیره اطلاعات کاربر
+      await LoggingPreference().saveUserData(user);
+      
       return user;
-    } else if (response.statusCode == 201) {
-      return null;
-    } else if (response.statusCode == 401) {
-      return null;
-    } else if (response.statusCode == 500) {
-      return null;
     } else {
-      return null;
+      return false;
     }
-  } on DioException catch (e) {
-    debugPrint(e.message);
-    return null;
+  } catch (e) {
+    debugPrint("Login error: $e");
+    return false;
   }
 }
 
@@ -54,7 +51,7 @@ Future getlogedUserData() async {
         }));
 
     if (response.statusCode == 200 && response.data != null) {
-      User user = User.fromJson(response.data);
+      User user = User. fromMap(response.data);
 
       return user;
     } else if (response.statusCode == 201) {
@@ -112,7 +109,7 @@ Future<bool> logOut() async {
 
       const token = "void";
 
-      LoggingPreference().setToken(token: token);
+      LoggingPreference().saveToken(token);
 
       return true;
     } else if (response.statusCode == 201) {

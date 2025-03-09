@@ -1,29 +1,40 @@
-import 'dart:convert';
 
 class User {
-  int id;
-  String name;
-  int accountId;
-  String role;
-  User(
-      {required this.id,
-      required this.name,
-      required this.accountId,
-      required this.role});
-
+  final int id;
+  final int accountId;
+  final String name;
+  final String role;
+  
+  User({
+    required this.id,
+    required this.accountId,
+    required this.name,
+    required this.role,
+  });
+  
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-        id: json['id'],
-        name: json['name'],
-        accountId: json['account_id'],
-        role: json['role']);
+      id: json['id'],
+      accountId: json['accountId'],
+      name: json['name'],
+      role: json['role'],
+    );
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'account_id': accountId,
+      'name': name,
+      'role': role,
+    };
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
-      'accountId': accountId,
+      'account_id': accountId,
       'role': role,
     };
   }
@@ -32,10 +43,9 @@ class User {
     return User(
       id: map['id']?.toInt() ?? 0,
       name: map['name'] ?? '',
-      accountId: map['accountId']?.toInt() ?? 0,
+      accountId: map['account_id']?.toInt() ?? 0,
       role: map['role'] ?? '',
     );
   }
 
-  String toJson() => json.encode(toMap());
 }
