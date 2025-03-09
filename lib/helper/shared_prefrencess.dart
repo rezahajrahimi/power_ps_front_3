@@ -37,13 +37,11 @@ class LoggingPreference {
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(TOKEN_KEY, token);
-    debugPrint("Token saved: $token");
   }
   
   Future<String> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(TOKEN_KEY) ?? 'void';
-    debugPrint("Token retrieved: $token");
     return token;
   }
   
@@ -51,13 +49,11 @@ class LoggingPreference {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(TOKEN_KEY);
     await prefs.remove(USER_DATA_KEY);
-    debugPrint("Token and user data removed");
   }
   
   Future<void> saveUserData(User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(USER_DATA_KEY, jsonEncode(user.toJson()));
-    debugPrint("User data saved: ${user.name}");
   }
   
   Future<User?> getUserData() async {
@@ -67,7 +63,6 @@ class LoggingPreference {
       debugPrint("User data retrieved");
       return User.fromJson(jsonDecode(userData));
     }
-    debugPrint("No user data found");
     return null;
   }
 }
