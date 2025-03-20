@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/crypto_payment_gateway_model.dart';
+import 'package:powerps/models/payment_setting_model.dart';
 import 'package:powerps/models/payment_type_model.dart';
 import 'package:powerps/models/sub_menu_item_model.dart';
 import 'package:powerps/provider/paymeny_provider.dart';
@@ -13,6 +16,8 @@ import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/payment_type_info_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentTypeScreen extends StatefulWidget {
   const PaymentTypeScreen({super.key});
@@ -32,10 +37,10 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   final _zarinpalMerchantIdTxtEdit = TextEditingController();
   final _newPaymentMerchantIdTxtEdit = TextEditingController();
   final _newPaymentNameTxtEdit = TextEditingController();
-  final _mainMenuTitleTxtEdit = TextEditingController();
-  final _responseTitleTxtEdit = TextEditingController();
+  final _shetabVerifyApiKeyTxtEdit = TextEditingController();
   bool _isZarinPalActive = true;
   final List<Widget> _paymentItemWidgetList = [];
+  PaymentSettingModel? _shetabVerifySetting;
 
   // nowPayment
   final _nowPaymentApiKeyTxtEdit = TextEditingController();
@@ -103,60 +108,67 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   }
 
   void _fillData() async {
-    if (context.mounted) {
-      var res = await getAllOfflinePayments();
-      var resZarinpal = await getZarinpalPaymentDetails();
-      var resMenu = await getAllPaymentTypeMenues();
-      var resNowPayment = await getNovPaymentDetails();
-      await getDollorTransactionSetting().then((val) {
-        if (mounted) {
-          setState(() {
-            _hasDollarePayment = val;
-          });
-        }
-      });
-      if (res != null &&
-          res != false &&
-          resZarinpal != null &&
-          resZarinpal != false &&
-          resMenu != null &&
-          resMenu != false &&
-          resNowPayment != null &&
-          resNowPayment != false) {
+    if (!context.mounted) return;
+
+    var res = await getAllOfflinePayments();
+    var resZarinpal = await getZarinpalPaymentDetails();
+    var resNowPayment = await getNovPaymentDetails();
+    await getShetabVerifySetting().then((val) {
+      if (mounted) {
         setState(() {
-          _showData = false;
-          _paymentTypeList = res;
-          subList = resMenu;
-          _paymentItemWidgetList.clear();
-          for (var i in _paymentTypeList) {
-            _paymentItemWidgetList.add(PaymentTypeItemInfoWidget(
-              paymentType: PaymentType(
-                  id: i.id,
-                  name: i.name,
-                  merchantId: i.merchantId,
-                  isActive: i.isActive,
-                  type: i.type),
-            ));
-          }
-
-          _zarinPal = resZarinpal;
-          _zarinpalMerchantIdTxtEdit.text = _zarinPal!.merchantId;
-          _isZarinPalActive = _zarinPal!.isActive;
-          _mainMenuTitleTxtEdit.text = resMenu[0].aliasName;
-          _responseTitleTxtEdit.text = resMenu[1].aliasName;
-
-          // nowPayment
-          _nowPayment = resNowPayment;
-          _nowPaymentApiKeyTxtEdit.text = _nowPayment!.apiKey;
-          _nowPaymentEmaikTxtEdit.text = _nowPayment!.email;
-          _nowPaymentPasswordTxtEdit.text = _nowPayment!.password;
-          _nowPaymentIsActive = _nowPayment!.isActive;
-          _nowPaymentIsFeePaidByUser = _nowPayment!.isFeePaidByUser;
-          // _showOfflinePayment = true;
-          _showData = true;
+          _shetabVerifySetting = val;
+          _shetabVerifyApiKeyTxtEdit.text = val.description.isEmpty
+              ? "یک شماره کارت وارد کنید"
+              : val.description;
         });
       }
+    });
+
+    await getDollorTransactionSetting().then((val) {
+      if (mounted) {
+        setState(() {
+          _hasDollarePayment = val;
+        });
+      }
+    });
+    if (res != null &&
+        res != false &&
+        resZarinpal != null &&
+        resZarinpal != false &&
+        resNowPayment != null &&
+        resNowPayment != false) {
+      setState(() {
+        _showData = false;
+        _paymentTypeList = res;
+        _paymentItemWidgetList.clear();
+        for (var i in _paymentTypeList) {
+          _paymentItemWidgetList.add(PaymentTypeItemInfoWidget(
+            paymentType: PaymentType(
+                id: i.id,
+                name: i.name,
+                merchantId: i.merchantId,
+                isActive: i.isActive,
+                type: i.type),
+          ));
+        }
+
+        _zarinPal = resZarinpal;
+        _zarinpalMerchantIdTxtEdit.text = _zarinPal!.merchantId;
+        _isZarinPalActive = _zarinPal!.isActive;
+
+        // nowPayment
+        _nowPayment = resNowPayment;
+        _nowPaymentApiKeyTxtEdit.text = _nowPayment!.apiKey;
+        _nowPaymentEmaikTxtEdit.text = _nowPayment!.email;
+        _nowPaymentPasswordTxtEdit.text = _nowPayment!.password;
+        _nowPaymentIsActive = _nowPayment!.isActive;
+        _nowPaymentIsFeePaidByUser = _nowPayment!.isFeePaidByUser;
+        // _showOfflinePayment = true;
+      });
     }
+    setState(() {
+      _showData = true;
+    });
   }
 
   _buildBottomNavigationBar(BuildContext context) {
@@ -210,9 +222,9 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                 flex: 5,
                 child: Column(
                   children: [
-                    _menuItemTextTypeCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
                     _offlinePaymentTypeCard(context),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    _shetabVerifyCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     _zarinpalGatewayTypeCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
@@ -285,140 +297,6 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     });
   }
 
-  _menuItemTextTypeCard(BuildContext context) {
-    List<Widget> menuItemWidgetList = [];
-    List<Widget> actionWidgetList = [];
-    setState(() {
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _mainMenuTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که برای انتخاب گزینه های پرداخت به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
-      menuItemWidgetList.add(Column(
-        children: [
-          CustomTextFromFieldWidget(
-            controller: _responseTitleTxtEdit,
-            textDirection: TextDirection.rtl,
-            textHint: "متن",
-            validationError: "متن را وارد کنید.",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "متنی که بعد از انتخاب گزینه پرداخت به کاربر نمایش می دهید.",
-              style: TextStyle(color: AppStyle.deactiveStatus),
-            ),
-          ),
-        ],
-      ));
-
-      actionWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          if (_mainMenuTitleTxtEdit.text.isNotEmpty) {
-            EasyLoading.show();
-            if (_mainMenuTitleTxtEdit.text.isNotEmpty &&
-                _responseTitleTxtEdit.text.isNotEmpty) {
-              bool resMain = false;
-              bool resResponse = false;
-              resMain = await updatePaymentMenuAlisNameByLevel(
-                  level: 1, newText: _mainMenuTitleTxtEdit.text);
-              resResponse = await updatePaymentMenuAlisNameByLevel(
-                  level: 2, newText: _responseTitleTxtEdit.text);
-
-              if (resMain && resResponse) {
-                if (context.mounted) {
-                  showMsg(msg: "ویرایش شد.", context: context);
-                }
-              }
-            } else {
-              if (context.mounted) {
-                showMsg(msg: "خطا.", context: context, type: "error");
-              }
-            }
-            EasyLoading.dismiss();
-          }
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش"),
-      ));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "متن منو",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2,
-                  context: context,
-                  importedList: menuItemWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 3,
-                  importedList: menuItemWidgetList),
-              desktop: widgetsGridview(
-                  importedList: menuItemWidgetList,
-                  context: context,
-                  childAspectRatio: 3,
-                  crossAxisCount: 2),
-            ),
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 5,
-                  context: context,
-                  importedList: actionWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 5,
-                  crossAxisCount: 2,
-                  importedList: actionWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionWidgetList,
-                  context: context,
-                  childAspectRatio: 5.5,
-                  crossAxisCount: 4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   _dollarpaymentsTypeCard(BuildContext context) {
     List<Widget> dollarPaymentWidgetList = [];
     setState(() {
@@ -488,6 +366,305 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   importedList: dollarPaymentWidgetList,
                   context: context,
                   childAspectRatio: 3,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _shetabVerifyCard(BuildContext context) {
+    List<Widget> dollarPaymentWidgetList = [];
+    setState(() {
+      dollarPaymentWidgetList.add(Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Row(
+            children: [
+              Flexible(child: const Text("فعال سازی تایید خودکار پرداخت کارت به کارت")),
+              Switch(
+                  value: _shetabVerifySetting!.status,
+                  onChanged: (bool newValue) async {
+                    EasyLoading.show();
+                    await setShetabVerifySetting(status: newValue).then((val) {
+                      if (!context.mounted) return;
+
+                      if (val) {
+                        showMsg(msg: "ذخیره شد.", context: context);
+                      } else {
+                        showMsg(msg: "خطا", context: context);
+                      }
+                    }).whenComplete(() {
+                      setState(() {
+                        _shetabVerifySetting!.status = newValue;
+                      });
+                      EasyLoading.dismiss();
+                    }).onError((e, s) {
+                      if (context.mounted) {
+                        EasyLoading.dismiss();
+                        showMsg(msg: "خطا.", context: context, type: "error");
+                      }
+                    });
+                  }),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              "در صورت فعال بودن و نصب اپلیکیشن Shetab Verify، پرداخت های کارت به کارت به صورت خودکار تایید خواهد شد.",
+              style: TextStyle(color: AppStyle.deactiveStatus),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+               Text("API ENDPOINT: "),
+              Flexible(child: Text("$baseURL/api/shetab-verify".length > 20 ? "${"$baseURL/api/shetab-verify".substring(0, 20)}..." : "$baseURL/api/shetab-verify")),
+              IconButton(
+                  tooltip: "کپی کنید",
+                  onPressed: () {
+                    Clipboard.setData(
+                        ClipboardData(text: "$baseURL/api/shetab-verify"));
+                    // refresh this
+                    if (context.mounted) {
+                      showMsg(msg: "API ENDPOINT کپی شد.", context: context);
+                    }
+                  },
+                  icon: const Icon(Icons.copy)),
+              // qr code
+              IconButton(
+                  tooltip: "نمایش QR CODE",
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => Dialog(
+                        child: Container(
+                          width: 250,
+                          height: 250,
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "API ENDPOINT",
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 16),
+                              Expanded(
+                                child: QrImageView(
+                                  data: "$baseURL/api/shetab-verify",
+                                  version: QrVersions.auto,
+                                  backgroundColor: Colors.white,
+                                  size: 200,
+                                  errorStateBuilder: (cxt, err) {
+                                    debugPrint(err.toString());
+                                    return Text(err.toString());
+                                  },
+                                ),
+                              ),
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("بستن"))
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.qr_code)),
+              //refresh button
+            ],
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(child: Text("API KEY: ")),
+              Flexible(child: Text(_shetabVerifySetting!.value.length > 20 ? "${_shetabVerifySetting!.value.substring(0, 20)}..." : _shetabVerifySetting!.value)),
+              IconButton(
+                  tooltip: "کپی کنید",
+                  onPressed: () {
+                    Clipboard.setData(
+                        ClipboardData(text: _shetabVerifySetting!.value));
+                    // refresh this
+                    if (context.mounted) {
+                      showMsg(msg: "API KEY کپی شد.", context: context);
+                    }
+                  },
+                  icon: const Icon(Icons.copy)),
+              // qr code
+              IconButton(
+                  tooltip: "نمایش QR CODE",
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => Dialog(
+                        child: Container(
+                          width: 250,
+                          height: 250,
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "API KEY",
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 16),
+                              Expanded(
+                                child: QrImageView(
+                                  data: _shetabVerifySetting!.value,
+                                  version: QrVersions.auto,
+                                  backgroundColor: Colors.white,
+                                  size: 200,
+                                  errorStateBuilder: (cxt, err) {
+                                    debugPrint(err.toString());
+                                    return Text(err.toString());
+                                  },
+                                ),
+                              ),
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("بستن"))
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.qr_code)),
+              //refresh button
+              IconButton(
+                  tooltip: "بازنشانی API KEY",
+                  onPressed: () {
+                    setState(() {
+                      reGenerateShetabVerifyApiKey().then((val) {
+                        if (val != null) {
+                          _shetabVerifySetting!.value = val;
+                          if (context.mounted) {
+                            showMsg(
+                                msg: "API KEY بازنشانی شد.", context: context);
+                            // refresh _shetabVerifyCard
+                            _shetabVerifyCard(context);
+                          }
+                        }
+                      });
+                    });
+                  },
+                  icon: const Icon(Icons.refresh))
+            ],
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.blueGrey,
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Flexible(child: Text("برای دریافت برنامه به این آدرس مراجعه کنید و پس از نصب، وارد برنامه بشوید، و در قسمت  تنظیمات Api، مقادیر در خواستی را وارد کنید.")),
+                        // open link                    
+                  ],
+                ),
+                SizedBox(height: AppStyle.defaultPadding),
+                Row(
+                  children: [
+                        TextButton(
+                            child: const Text("دانلود از کافه بازار"),
+                            
+                            onPressed: () {
+                              launchUrl(Uri.parse("https://cafebazaar.ir/app/com.example.shetab_verification"));
+                            },
+                        ),
+                        TextButton(
+                            child: const Text("دانلود از مایکت"),
+                            onPressed: () {
+                              launchUrl(Uri.parse("https://myket.ir/app/com.example.shetab_verification"));
+                            },
+                        )                    
+                  ],
+                )
+              ],
+            ),
+          )
+        ],
+      ));
+      dollarPaymentWidgetList.add(Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          CustomTextFromFieldWidget(
+            controller: _shetabVerifyApiKeyTxtEdit,
+            textHint: "شماره کارت",
+            validationError: "شماره کارت را وارد کنید.",
+          ),
+          SizedBox(
+            height: AppStyle.defaultPadding,
+          ),
+          ElevatedButton.icon(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppStyle.defaultPadding * 1.5,
+                vertical: AppStyle.defaultPadding /
+                    (Responsive.isMobile(context) ? 2 : 1),
+              ),
+            ),
+            onPressed: () {
+              // validate card number
+              if (_shetabVerifyApiKeyTxtEdit.text.isNotEmpty) {
+                setShetabVeriyNewCardNumber(cardNumber: _shetabVerifyApiKeyTxtEdit.text).then((val) {
+                  if(!context.mounted) return;
+                  if (val) {
+                    
+                    showMsg(msg: "ذخیره شد.", context: context);
+                  } else {
+                    showMsg(msg: "خطا", context: context, type: "error");
+                  }
+                });
+              }
+            },
+            icon: const Icon(Icons.save),
+            label: const Text("ذخیره"),
+          )
+        ],
+      ));
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "تایید خودکار پرداخت کارت به کارت",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 1.4,
+                  context: context,
+                  importedList: dollarPaymentWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 1,
+                  crossAxisCount: 2,
+                  importedList: dollarPaymentWidgetList),
+              desktop: widgetsGridview(
+                  importedList: dollarPaymentWidgetList,
+                  context: context,
+                  childAspectRatio: 2,
                   crossAxisCount: 2),
             ),
           ),

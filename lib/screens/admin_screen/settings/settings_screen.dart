@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:focused_menu/focused_menu.dart';
-import 'package:focused_menu/modals.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:powerps/helper/responsive.dart';
-import 'package:powerps/models/advanced_setting_model.dart';
 import 'package:powerps/models/details_info.dart';
 import 'package:powerps/models/setting_model.dart';
 import 'package:powerps/screens/admin_screen/settings/admins/manage_admins_screen.dart';
@@ -20,10 +18,13 @@ import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.d
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/test_accounts/edit_test_account_details_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/setting/advanced_setting_info_widget.dart';
+
+import 'backup/backup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -36,7 +37,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _showData = false;
   bool _showAdvancedSetting = false;
   late Setting _setting;
-  AdvancedSettingModel? _advancedSettingModel;
+  final List<Widget> _advancedSettingWidgetList = [];
   @override
   void initState() {
     _fillData();
@@ -68,9 +69,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
+        // bottomNavigationBar: Responsive.isMobile(context)
+        //     ? _buildBottomNavigationBar(context)
+        //     : const Opacity(opacity: 1),
       ),
     );
   }
@@ -89,16 +90,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               botName: "تعریف نشده",
               botToken: "تعریف نشده",
               id: "تعریف نشده",
-              panelAddress: "لینک هسته ربات را وارد کنید",
-              welcomeMessage: "تعریف نشده");
+              panelAddress: "لینک هسته ربات را وارد کنید");
           _showData = true;
         });
       }
     });
     await getBotAdvancedSetting().then((value) {
-      if (null != value) {
+      if (!context.mounted) return;
+      if (value.isNotEmpty && value != null) {
+        for (var item in value) {
+          _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
+            state: item.value == "true" ? true : false,
+            description: item.description ?? "تعریف نشده",
+            name: item.name ?? "تعریف نشده",
+          ));
+        }
         setState(() {
-          _advancedSettingModel = value;
           _showAdvancedSetting = true;
         });
       }
@@ -121,9 +128,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: CircularProgressIndicator(),
                         ),
                   SizedBox(height: AppStyle.defaultPadding),
+                  if (Responsive.isMobile(context)) _operationInfoCard(context),
+                  if (Responsive.isMobile(context))
+                    SizedBox(height: AppStyle.defaultPadding),
                   _showAdvancedSetting
                       ? _advancedSettingTabCard(context)
                       : Container(),
+// side bar mobile
                 ],
               ),
             ),
@@ -203,14 +214,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ? "${_setting.panelAddress.substring(0, 30)}..."
             : _setting.panelAddress,
         icon: const Icon(Icons.link),
-      )));
-      factoryWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "متن خوش آمد گویی به کاربر",
-        itemValue: _setting.welcomeMessage.length > 30
-            ? "${_setting.welcomeMessage.substring(0, 30)}..."
-            : _setting.welcomeMessage,
-        icon: const Icon(Icons.info),
       )));
     });
     return Container(
@@ -492,6 +495,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: const Icon(Icons.supervised_user_circle),
         label: const Text("دستیاران فروش"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const BackupScreen(),
+              )).then((value) => {});
+        },
+        icon: const Icon(Icons.backup),
+        label: const Text("پشتیبان‌گیری و بازیابی"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TextScreenScreen(),
+              )).then((value) => {});
+        },
+        icon: const Icon(Icons.text_fields),
+        label: const Text("متن و پیام ها"),
+      ));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -532,197 +571,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: 50.0,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          Flexible(
-            fit: FlexFit.tight,
-            flex: 1,
-            child: FocusedMenuHolder(
-              menuWidth: MediaQuery.of(context).size.width * 0.50,
-              menuItems: [
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("تغییر متن منوها"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MainMenuItemsScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.menu)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("درگاه ها و پرداخت"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PaymentTypeScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.credit_card)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("گیف کارت"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const GifCardScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.discount)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("تنظیمات پنل‌ها"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PannelScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.input)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("پشتتیبانی و سوالات"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SupportFaqScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.support)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("قفل ربات"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ChannelLockScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.lock)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("برنامه‌های مورد نیاز"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ApplicationScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.app_settings_alt)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("پیام‌های خودکار"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CronjobManagingScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.notifications)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("بازاریابی و لینک دعوت"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ReferralScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.featured_play_list_sharp)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("اکانت آزمایشی"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const EditTestAccountDetailsScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.first_page)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("دستیاران فروش"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AgentsManageScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.supervised_user_circle)),
-                FocusedMenuItem(
-                    backgroundColor: AppStyle.primaryColor,
-                    title: const Text("مدیران"),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ManageAdminsScreen(),
-                          )).then((value) => {});
-                    },
-                    trailingIcon: const Icon(Icons.admin_panel_settings)),
-              ],
-              menuOffset: 50,
-              duration: const Duration(milliseconds: 2),
-              blurBackgroundColor: Colors.white70,
-              animateMenuItems: true,
-              openWithTap: true,
-              onPressed: () {},
-              child: const OprWidget(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   _advancedSettingTabCard(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
 
-    List<Widget> factoryWidgetList = [];
-
-    setState(() {
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botShowConfigsByPanelsCategory,
-        description: "نمایش کانفیگها بر اساس موقعیت جغرافیایی پنل در ربات",
-        name: "bot_show_configs_by_panels_category",
-      ));
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botShowConfigsByPanelsCategory,
-        description:
-            "قیمت دلاری بسته ها بصورت خودکار بر اساس نوسانات دلار به روز شود",
-        name: "bot_calculate_product_category_price_in_dollar_by_toman",
-      ));
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botAutoSetPriceByDollarPrice,
-        description:
-            "قیمت تومانی بسته‌ها بصورت خودکار بر اساس نوسانات دلار به روز شود",
-        name: "bot_auto_set_price_by_dollar_price",
-      ));
-      factoryWidgetList.add(AdvancedSettingInfoWidget(
-        state: _advancedSettingModel!.botShowOneRowConfig,
-        description: "نمایش نام و قیمت کانفیگها در ربات بصورت تک ستون",
-        name: "bot_show_one_row_config",
-      ));
-    });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
@@ -732,9 +584,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "تنظیمات پیشرفته (اکانتهای نقره ای و طلایی)",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "تنظیمات پیشرفته (اکانتهای نقره ای و طلایی)",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              IconButton(
+                tooltip: "بازنشانی تنظیمات پیش فرض",
+                onPressed: () async {
+                  _advancedSettingWidgetList.clear();
+                  _restoreAdvancedSettings();
+                },
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
@@ -743,13 +608,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mobile: widgetsGridview(
                   childAspectRatio: 2.9,
                   context: context,
-                  importedList: factoryWidgetList),
+                  importedList: _advancedSettingWidgetList),
               tablet: widgetsGridview(
                   context: context,
                   childAspectRatio: 4.5,
-                  importedList: factoryWidgetList),
+                  importedList: _advancedSettingWidgetList),
               desktop: widgetsGridview(
-                  importedList: factoryWidgetList,
+                  importedList: _advancedSettingWidgetList,
                   context: context,
                   childAspectRatio: size.width < 1400 ? 4 : 4.5,
                   crossAxisCount: 2),
@@ -758,6 +623,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  void _restoreAdvancedSettings() async {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: Text("بازنشانی تنظیمات پیش فرض"),
+              content: Text("آیا از بازنشانی تنظیمات پیش فرض مطمئن هستید؟"),
+              actions: [
+                ElevatedButton(
+                    onPressed: () async {
+                      EasyLoading.showInfo("در حال بازنشانی");
+                      await restoreToDefaultAdvancedSettings().then((val) {
+                        if (val) {
+                          EasyLoading.dismiss();
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          setState(() {
+                            _showAdvancedSetting = false;
+                          });
+
+                          _fillData();
+                          EasyLoading.showInfo("بازنشانی با موفقیت انجام شد.");
+                        } else {
+                          EasyLoading.showError("خطا");
+                        }
+                      }).catchError((e) {
+                        EasyLoading.dismiss();
+                        EasyLoading.showError("خطا");
+                      });
+                    },
+                    child: Text("بازنشانی")),
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text("انصراف")),
+              ],
+            ),
+          );
+        });
   }
 }
 

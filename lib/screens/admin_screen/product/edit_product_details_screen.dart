@@ -142,7 +142,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           widget.selectedProductCategory.showSubscriptionLink;
       _showPannelLink = widget.selectedProductCategory.showPannelLink;
       _isActive = widget.selectedProductCategory.isActive;
-      if (resPannel!.isNotEmpty) {
+      if (resPannel != null && resPannel.isNotEmpty) {
         _pannelNameList.clear();
         for (var i in resPannel) {
           _pannelNameList

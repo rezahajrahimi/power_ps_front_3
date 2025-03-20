@@ -1,0 +1,357 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/repositories/custom_text_repository.dart'
+    as custom_text_repository;
+import 'package:powerps/styles/app_theme.dart';
+import '../../models/custom_text_model.dart';
+
+class FormattedTextEditorWidget extends StatefulWidget {
+  final CustomTextModel customTextModel;
+  final Function(String) onTextChanged;
+  final bool isJsonFormat;
+
+  const FormattedTextEditorWidget({
+    super.key,
+    required this.customTextModel,
+    required this.onTextChanged,
+    this.isJsonFormat = false,
+  });
+
+  @override
+  State<FormattedTextEditorWidget> createState() =>
+      _FormattedTextEditorWidgetState();
+}
+
+class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
+  late TextEditingController _controller;
+  late bool _isJsonFormat;
+  late CustomTextModel _customTextModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _isJsonFormat = widget.isJsonFormat;
+    String initialText = widget.customTextModel.customText.isNotEmpty
+        ? widget.customTextModel.customText
+        : widget.customTextModel.defaultText;
+    _customTextModel = widget.customTextModel;
+
+    // اضافه کردن تشخیص خودکار فرمت JSON
+    if (initialText.startsWith('[') && initialText.endsWith(']')) {
+      try {
+        initialText = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: _customTextModel.key,
+          customText: initialText,
+          description: _customTextModel.description,
+        ).parseFormattedText({});
+        _isJsonFormat = false;
+      } catch (e) {
+        // در صورت خطا، متن اصلی را نمایش می‌دهیم
+        debugPrint('Error parsing JSON: $e');
+      }
+    }
+
+    _controller = TextEditingController(text: initialText);
+  }
+
+  void _formatSelection(String type) {
+    final TextSelection selection = _controller.selection;
+    if (!selection.isValid) return;
+
+    String selectedText = _controller.text.substring(
+      selection.start,
+      selection.end,
+    );
+    String newText;
+
+    switch (type) {
+      case 'bold':
+        newText = '**$selectedText**';
+        break;
+      case 'italic':
+        newText = '*$selectedText*';
+        break;
+      case 'code':
+        newText = '`$selectedText`';
+        break;
+      case 'link':
+        _showLinkDialog(selectedText);
+        return;
+      case 'newLine':
+        newText = '\n';
+        break;
+      default:
+        return;
+    }
+
+    final int cursorPosition = selection.start;
+    _controller.text = _controller.text.replaceRange(
+      selection.start,
+      selection.end,
+      newText,
+    );
+
+    // تنظیم موقعیت کرسر بعد از فرمت‌گذاری
+    _controller.selection = TextSelection(
+      baseOffset: cursorPosition,
+      extentOffset: cursorPosition + newText.length,
+    );
+
+    widget.onTextChanged(_controller.text);
+  }
+
+  Future<void> _showLinkDialog(String selectedText) async {
+    String url = '';
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('افزودن لینک'),
+        content: TextField(
+          decoration: const InputDecoration(
+            hintText: 'آدرس لینک را وارد کنید',
+            labelText: 'URL',
+          ),
+          onChanged: (value) => url = value,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('لغو'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              final String newText = '[$selectedText]($url)';
+              final TextSelection selection = _controller.selection;
+              _controller.text = _controller.text.replaceRange(
+                selection.start,
+                selection.end,
+                newText,
+              );
+              widget.onTextChanged(_controller.text);
+            },
+            child: const Text('تایید'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // void _toggleFormat() {
+  //   setState(() {
+  //     if (_isJsonFormat) {
+  //       // تبدیل JSON به مارک‌داون
+  //       try {
+  //         final String markdownText = CustomTextModel(
+  //           id: BigInt.from(0),
+  //           defaultText: _customTextModel.defaultText,
+  //           key: _customTextModel.key,
+  //           customText: _controller.text,
+  //           description: _customTextModel.description,
+  //         ).parseFormattedText({});
+  //         _controller.text = markdownText;
+  //       } catch (e) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('خطا در تبدیل فرمت JSON')),
+  //         );
+  //         return;
+  //       }
+  //     } else {
+  //       // تبدیل مارک‌داون به JSON
+  //       try {
+  //         final String jsonText =
+  //             CustomTextModel.convertMarkdownToJsonText(_controller.text);
+  //         _controller.text = jsonText;
+  //       } catch (e) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('خطا در تبدیل فرمت مارک‌داون')),
+  //         );
+  //         return;
+  //       }
+  //     }
+  //     _isJsonFormat = !_isJsonFormat;
+  //     widget.onTextChanged(_controller.text);
+  //   });
+  // }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        border: Border.all(
+            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+        borderRadius: BorderRadius.all(
+          Radius.circular(AppStyle.defaultPadding),
+        ),
+      ),
+      child: Column(
+        children: [
+          Center(
+            child: Text(widget.customTextModel.key,style: AppStyle.thirdTitleStyle,),
+          ),
+      
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.format_bold),
+                onPressed: () => _formatSelection('bold'),
+                tooltip: 'پررنگ',
+              ),
+              IconButton(
+                icon: const Icon(Icons.format_italic),
+                onPressed: () => _formatSelection('italic'),
+                tooltip: 'مورب',
+              ),
+              IconButton(
+                icon: const Icon(Icons.code),
+                onPressed: () => _formatSelection('code'),
+                tooltip: 'کد',
+              ),
+              IconButton(
+                icon: const Icon(Icons.link),
+                onPressed: () => _formatSelection('link'),
+                tooltip: 'لینک',
+              ),
+              IconButton(
+                icon: const Icon(Icons.keyboard_return),
+                onPressed: () => _formatSelection('newLine'),
+                tooltip: 'خط جدید',
+              ),
+              const Spacer(),
+              // IconButton(
+              //   onPressed: _toggleFormat,
+              //   icon: const Icon(Icons.swap_horiz),
+              //   // label: Text(
+              //   //     _isJsonFormat ? 'تبدیل به مارک‌داون' : 'تبدیل به JSON'),
+              // ),
+              IconButton(
+                icon: const Icon(Icons.save),
+                onPressed: () => _saveText(),
+                tooltip: 'ذخیره',
+              ),
+              IconButton(
+                icon: const Icon(Icons.restore),
+                onPressed: () => _resetText(),
+                tooltip: 'متن پیش فرض',
+              ),
+              IconButton(
+                icon: const Icon(Icons.info),
+                onPressed: () => _showDescription(),
+                tooltip: 'توضیحات',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              maxLines: null,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'متن خود را وارد کنید...',
+              ),
+              onChanged: widget.onTextChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _saveText() async {
+    if (_controller.text.isEmpty) {
+      EasyLoading.showError('متن خالی است');
+      return;
+    }
+    // chcek is json format
+    if (_isJsonFormat) {
+      // make _controller.text json valid
+      _controller.text =
+          CustomTextModel.convertMarkdownToJsonText(_controller.text);
+    }
+    EasyLoading.show(status: 'ذخیره سازی...');
+    await custom_text_repository
+        .updateCustomText(key: _customTextModel.key, text: _controller.text)
+        .then((value) {
+      if (value) {
+        EasyLoading.showSuccess('متن با موفقیت ذخیره شد');
+      } else {
+        EasyLoading.showError('خطا در ذخیره متن');
+      }
+    });
+  }
+
+  void _resetText() {
+    String defaultText = widget.customTextModel.defaultText;
+
+    // بررسی اینکه آیا متن دو بار JSON encode شده است
+    if (defaultText.startsWith('[{"type":"text","text":"[') &&
+        defaultText.endsWith('"}]')) {
+      try {
+        // حذف لایه اول JSON
+        defaultText = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: '',
+          customText: defaultText,
+          description: '',
+        ).parseFormattedText({});
+
+        // حالا متن را به حالت مارک‌داون تبدیل می‌کنیم
+        _controller.text = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: '',
+          customText: defaultText,
+          description: '',
+        ).parseFormattedText({});
+        return;
+      } catch (e) {
+        debugPrint('Error parsing double encoded JSON: $e');
+      }
+    }
+
+    // اگر متن JSON ساده باشد
+    if (defaultText.startsWith('[') && defaultText.endsWith(']')) {
+      try {
+        _controller.text = CustomTextModel(
+          id: BigInt.from(0),
+          defaultText: '',
+          key: '',
+          customText: defaultText,
+          description: '',
+        ).parseFormattedText({});
+      } catch (e) {
+        _controller.text = defaultText;
+      }
+    } else {
+      _controller.text = defaultText;
+    }
+  }
+
+  void _showDescription() {
+    // show dialog with description with close button
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(widget.customTextModel.description),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('بستن'),
+          ),
+        ],
+      ),
+    );
+  }
+}

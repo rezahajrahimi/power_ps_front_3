@@ -39,92 +39,76 @@ class _MenuItemInfoWidgetState extends State<MenuItemInfoWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        border: Border.all(
-            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-        borderRadius: BorderRadius.all(
-          Radius.circular(AppStyle.defaultPadding),
+        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+        padding: EdgeInsets.only(
+            left: AppStyle.defaultPadding * 2,
+            bottom: AppStyle.defaultPadding,
+            right: AppStyle.defaultPadding,
+            top: AppStyle.defaultPadding),
+        decoration: BoxDecoration(
+          border: Border.all(
+              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+          borderRadius: BorderRadius.all(
+            Radius.circular(AppStyle.defaultPadding),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            height: 20,
-            width: 20,
-            child: Icon(Icons.menu),
-          ),
-          Expanded(
-            child: Padding(
-              padding:
-                  EdgeInsets.symmetric(horizontal: AppStyle.defaultPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    widget.aliasName,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall!
-                        .copyWith(color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                  // height: 10,
-                  // width: 10,
-                  child: Switch(
-                      value: _newState,
-                      onChanged: (bool newValue) async {
-                        EasyLoading.show();
-                        if (newValue == true) {
-                          bool res =
-                              await reActiveMainMenuItem(name: widget.name);
-                          if (res == true) {
-                            if (context.mounted) {
-                              showMsg(msg: "فعال شد.", context: context);
-                            }
-                          }
-                        } else {
-                          bool res =
-                              await deActiveMainMenuItem(name: widget.name);
-                          if (res == true) {
-                            if (context.mounted) {
-                              showMsg(msg: "غیر فعال شد.", context: context);
-                            }
-                          }
-                        }
-                        setState(() {
-                          _newState = newValue;
-                        });
-                        EasyLoading.dismiss();
-                      })),
-              GestureDetector(
-                onTap: () async {
-                  await _openAddNewAdditionDialog(context: context);
-                },
-                child: const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: Icon(Icons.edit),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: AppStyle.defaultPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      widget.aliasName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall!
+                          .copyWith(color: Colors.white70),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          )
-        ],
-      ),
-    );
+            ),
+            Switch(
+                value: _newState,
+                onChanged: (bool newValue) async {
+                  EasyLoading.show();
+                  if (newValue == true) {
+                    bool res = await reActiveMainMenuItem(name: widget.name);
+                    if (res == true) {
+                      if (context.mounted) {
+                        showMsg(msg: "فعال شد.", context: context);
+                      }
+                    }
+                  } else {
+                    bool res = await deActiveMainMenuItem(name: widget.name);
+                    if (res == true) {
+                      if (context.mounted) {
+                        showMsg(msg: "غیر فعال شد.", context: context);
+                      }
+                    }
+                  }
+                  setState(() {
+                    _newState = newValue;
+                  });
+                  EasyLoading.dismiss();
+                }),
+            IconButton(
+              onPressed: () async {
+                await _openAddNewAdditionDialog(context: context);
+              },
+              icon: Icon(Icons.edit),
+            ),
+          ],
+        ));
   }
 
   _openAddNewAdditionDialog({required BuildContext context}) {

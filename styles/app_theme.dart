@@ -13,103 +13,47 @@ class AppStyle {
 
   static Color secendColor = const Color(0xFF2A2D3E);
   static Color searchBarColor = const Color.fromARGB(255, 226, 229, 236);
-  // static TextStyle mainTitleStyle = const TextStyle(
-  //     fontFamily: "Vazir",
-  //     color: Colors.black,
-  //     fontWeight: FontWeight.bold,
-  //     fontSize: 18);
   static TextStyle mainTitleStyle = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(
           fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black));
   static TextStyle secendTitleStyle = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(fontSize: 18, color: Colors.black));
 
-  // static TextStyle secendTitleStyle =
-  //     const TextStyle(fontFamily: "Vazir", color: Colors.black, fontSize: 18);
   static TextStyle thirdTitleStyle = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(fontSize: 16, color: Colors.white70));
 
-  // static TextStyle thirdTitleStyle =
-  //     const TextStyle(fontFamily: "Vazir", color: Colors.white70, fontSize: 16);
-  // static TextStyle thirdTitleStyle =
-  //     const TextStyle(fontFamily: "Vazir", color: Colors.grey, fontSize: 16);
   static TextStyle fourthTitleStyle = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(fontSize: 13, color: Colors.white));
 
-  // static TextStyle fourthTitleStyle =
-  //     const TextStyle(fontFamily: "Vazir", color: Colors.white, fontSize: 13);
   static TextStyle appBarTitleStyle = GoogleFonts.vazirmatn(
       textStyle: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
           color: AppStyle.primaryColor));
-
-  // static TextStyle appBarTitleStyle = TextStyle(
-  //     fontFamily: "Vazir",
-  //     color: AppStyle.primaryColor,
-  //     fontWeight: FontWeight.bold,
-  //     fontSize: 16);
   static TextStyle appBarLocationStyle = GoogleFonts.vazirmatn(
       textStyle: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.normal,
           color: AppStyle.primaryColor));
-
-  // static TextStyle appBarLocationStyle = TextStyle(
-  //     fontFamily: "Vazir",
-  //     color: AppStyle.primaryColor,
-  //     fontWeight: FontWeight.normal,
-  //     fontSize: 14);
   static TextStyle subTitleStyle = GoogleFonts.vazirmatn(
       textStyle: TextStyle(
           fontSize: 18, fontWeight: FontWeight.w400, color: secendColor));
 
-  // static TextStyle subTitleStyle = TextStyle(
-  //     fontFamily: "Vazir",
-  //     color: secendColor,
-  //     fontWeight: FontWeight.w400,
-  //     fontSize: 18);
   static TextStyle priceTitleStyle = GoogleFonts.vazirmatn(
       textStyle: TextStyle(
           fontSize: 32, fontWeight: FontWeight.bold, color: primaryColor));
-
-  // static TextStyle priceTitleStyle = TextStyle(
-  //     fontFamily: "Vazir",
-  //     color: primaryColor,
-  //     fontWeight: FontWeight.bold,
-  //     fontSize: 32);
   static TextStyle sectionTitleStyle = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(
           fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black));
-
-  // static TextStyle sectionTitleStyle = const TextStyle(
-  //     fontFamily: "Vazir",
-  //     color: Colors.black,
-  //     fontWeight: FontWeight.bold,
-  //     fontSize: 20);
   static TextStyle sectionTitleStyle2 = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(
           fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white));
-
-  // static TextStyle sectionTitleStyle2 = const TextStyle(
-  //     fontFamily: "Vazir",
-  //     color: Colors.white,
-  //     fontWeight: FontWeight.bold,
-  //     fontSize: 20);
   static TextStyle sectionSmallTitleStyle = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(fontSize: 16, color: Colors.black));
-
-  // static TextStyle sectionSmallTitleStyle =
-  //     const TextStyle(fontFamily: "Vazir", color: Colors.black, fontSize: 16);
   static TextStyle sectionFoodCategoryTitleStyle = GoogleFonts.vazirmatn(
       textStyle: const TextStyle(
           fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16));
 
-  // static TextStyle sectionFoodCategoryTitleStyle = const TextStyle(
-  //     fontFamily: "Vazir",
-  //     fontWeight: FontWeight.bold,
-  //     color: Colors.white,
-  //     fontSize: 16);
   static const mobileBackgroundColor = Color.fromRGBO(0, 0, 0, 1);
   static const webBackgroundColor = Color.fromRGBO(18, 18, 18, 1);
   static const mobileSearchColor = Color.fromRGBO(38, 38, 38, 1);
@@ -126,8 +70,4 @@ class AppStyle {
       vertical: AppStyle.defaultPadding / 2,
     ),
   );
-  // static ButtonStyle alertButtonStyle = ButtonStyle(
-  //     backgroundColor: MaterialStateProperty.all(Colors.grey),
-  //     foregroundColor: MaterialStateProperty.all(Colors.black),
-  //     elevation: MaterialStateProperty.all(2.5));
 }

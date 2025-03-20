@@ -205,6 +205,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   void _submitData(BuildContext context) async {
+    // بررسی خالی بودن همه فیلدها
     if (_name.text.isEmpty &&
         _password.text.isEmpty &&
         _confirmPassword.text.isEmpty) {
@@ -214,7 +215,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           type: "error");
       return;
     }
-    if (_password.text == _confirmPassword.text) {
+    
+    // بررسی رمز عبور
+    if (_password.text.isNotEmpty || _confirmPassword.text.isNotEmpty) {
+      // بررسی یکسان بودن رمز عبور و تکرار آن
+      if (_password.text != _confirmPassword.text) {
+        showMsg(
+            msg: "رمز عبور و تکرار آن باید یکسان باشند",
+            context: context,
+            type: "error");
+        return;
+      }
+      
+      // بررسی طول رمز عبور
       if (_password.text.length < 8) {
         showMsg(
             msg: "رمز عبور باید حداقل 8 کاراکتر باشد",
@@ -223,6 +236,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         return;
       }
     }
+    
+    // اعتبارسنجی نام کاربری
+    if (_name.text.isEmpty) {
+      showMsg(
+          msg: "نام کاربری نمی‌تواند خالی باشد",
+          context: context,
+          type: "error");
+      return;
+    }
+    
+    // اگر همه شرایط برقرار بود، به‌روزرسانی را انجام بده
     if (_currentUserData!.role == "admin") {
       if (!context.mounted) return;
       EasyLoading.show();

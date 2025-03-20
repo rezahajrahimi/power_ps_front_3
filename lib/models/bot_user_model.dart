@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:powerps/models/ballance_model.dart';
+import 'package:powerps/models/blocked_user_model.dart';
 import 'package:powerps/models/log_model.dart';
 import 'package:powerps/models/product_details_model.dart';
 import 'package:powerps/models/referral_wallet_model.dart';
@@ -19,6 +20,7 @@ class BotUser {
   List<Transaction>? transactions = [];
   Ballance? ballance;
   ReferralWalletModel? referralWallet;
+  BlockedUserModel? blockedUser;  
   BotUser(
       {required this.id,
       required this.accountId,
@@ -31,7 +33,8 @@ class BotUser {
       this.ballance,
       this.referralWallet,
       this.transactions,
-      this.products});
+      this.products,
+      this.blockedUser});
   // List<Log> itemsList = List<Log>.from(json['logs'].map<Log>((dynamic i) => Log.fromJson(i)));
 
   factory BotUser.fromJson(Map<dynamic, dynamic> json) {
@@ -62,6 +65,9 @@ class BotUser {
           ? List<Transaction>.from(json['transaction']
               .map<Transaction>((dynamic i) => Transaction.fromJson(i)))
           : null,
+      blockedUser: json['blocked_user'] != null
+          ? BlockedUserModel.fromJson(json['blocked_user'])
+          : null,
     );
   }
 
@@ -74,6 +80,9 @@ class BotUser {
       'lastName': lastName,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'ballance': ballance?.toMap(),
+      'referralWallet': referralWallet?.toMap(),
+      'blockedUser': blockedUser?.toMap(),
     };
   }
 
@@ -86,6 +95,15 @@ class BotUser {
       lastName: map['lastName'],
       createdAt: map['createdAt'] ?? '',
       updatedAt: map['updatedAt'] ?? '',
+      ballance: map['ballance'] != null
+          ? Ballance.fromMap(map['ballance'])
+          : null,
+      referralWallet: map['referralWallet'] != null
+          ? ReferralWalletModel.fromMap(map['referralWallet'])
+          : null,
+      blockedUser: map['blockedUser'] != null
+          ? BlockedUserModel.fromJson(map['blocked_user'])
+          : null,
     );
   }
 

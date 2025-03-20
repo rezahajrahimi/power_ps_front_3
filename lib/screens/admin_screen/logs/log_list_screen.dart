@@ -52,11 +52,15 @@ class _LogsListScreenState extends State<LogsListScreen> {
 
   void _retriveData() async {
     await getAllLogs(count: 400);
-    setState(() {
-      if (lastLogList.isNotEmpty) {
-        _showEvents = true;
-      }
-    });
+    
+    // بررسی می‌کنیم که آیا ویجت هنوز در درخت ویجت‌ها وجود دارد
+    if (mounted) {
+      setState(() {
+        if (lastLogList.isNotEmpty) {
+          _showEvents = true;
+        }
+      });
+    }
   }
 
   _content(BuildContext context) {

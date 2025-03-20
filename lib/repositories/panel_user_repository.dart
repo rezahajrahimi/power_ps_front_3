@@ -36,7 +36,7 @@ Future<bool> updateUser({required User user, required String password}) async {
       "role": user.role
     });
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data != null && response.data['user'] != null) {
       User user = User.fromJson(response.data["user"]);
       AuthChangeController().setUser(user);
       return true;

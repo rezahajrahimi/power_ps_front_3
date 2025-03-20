@@ -51,7 +51,7 @@ Future getFaqList() async {
 
 Future getFacById({required int id}) async {
   try {
-    Response response = await GenaralApi.dio.get("/api/getFacById/$id",
+    Response response = await GenaralApi.dio.get("/api/getFaqById/$id",
         options: Options(headers: {
           'Accept': 'application/json',
           'Connection': 'keep-alive',

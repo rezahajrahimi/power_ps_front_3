@@ -130,34 +130,35 @@ class _PannelScreenState extends State<PannelScreen> {
 
   void _fillData() async {
     if (context.mounted) {
-      var res = await getPannels();
-      if (res != null && res != false) {
-        setState(() {
-          _showData = false;
-          _pannelList = res;
-          _pannelItemWidgetList.clear();
-          for (var i in _pannelList) {
-            _pannelItemWidgetList.add(PannelItemInfoWidget(
-              pannel: Pannel(
-                  id: i.id,
-                  type: i.type,
-                  adminUrl: i.adminUrl,
-                  capacity: i.capacity,
-                  location: i.location,
-                  password: i.password,
-                  token: i.token,
-                  urlPort: i.urlPort,
-                  username: i.username,
-                  userLink: i.userLink,
-                  secretCode: i.secretCode),
-              callback: (val) {
-                _retryPannelData();
-              },
-            ));
-          }
-          _showData = true;
-        });
-      }
+      await getPannels().then((res) {
+        if (res != null && res != false) {
+          setState(() {
+            _showData = false;
+            _pannelList = res;
+            _pannelItemWidgetList.clear();
+            for (var i in _pannelList) {
+              _pannelItemWidgetList.add(PannelItemInfoWidget(
+                pannel: Pannel(
+                    id: i.id,
+                    type: i.type,
+                    adminUrl: i.adminUrl,
+                    capacity: i.capacity,
+                    location: i.location,
+                    password: i.password,
+                    token: i.token,
+                    urlPort: i.urlPort,
+                    username: i.username,
+                    userLink: i.userLink,
+                    secretCode: i.secretCode),
+                callback: (val) {
+                  _retryPannelData();
+                },
+              ));
+            }
+            _showData = true;
+          });
+        }
+      });
     }
   }
 

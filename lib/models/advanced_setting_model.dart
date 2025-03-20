@@ -1,64 +1,55 @@
-import 'dart:convert';
-
 class AdvancedSettingModel {
-  bool botShowConfigsByPanelsCategory;
-  bool botAutoSetPriceByDollarPrice;
-  bool botShowWebAppLinkInTelegramForAllUsers;
-  bool botCalculateProductCategoryPriceInDollarByToman;
-  bool botShowOneRowConfig;
+  final String name;
+  final String value;
+  final String? description;
+
   AdvancedSettingModel({
-    required this.botShowConfigsByPanelsCategory,
-    required this.botAutoSetPriceByDollarPrice,
-    required this.botShowWebAppLinkInTelegramForAllUsers,
-    required this.botCalculateProductCategoryPriceInDollarByToman,
-    required this.botShowOneRowConfig,
+    required this.name,
+    required this.value,
+    this.description,
   });
 
-  Map<String, dynamic> toMap() {
+  factory AdvancedSettingModel.fromJson(Map<String, dynamic> json) {
+    return AdvancedSettingModel(
+      name: json['name'] ?? '',
+      value: json['value'] ?? '',
+      description: json['description'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
     return {
-      'botShowConfigsByPanelsCategory': botShowConfigsByPanelsCategory,
-      'botAutoSetPriceByDollarPrice': botAutoSetPriceByDollarPrice,
-      'botShowWebAppLinkInTelegramForAllUsers':
-          botShowWebAppLinkInTelegramForAllUsers,
-      'botCalculateProductCategoryPriceInDollarByToman':
-          botCalculateProductCategoryPriceInDollarByToman,
-      'botShowOneRowConfig': botShowOneRowConfig
+      'name': name,
+      'value': value,
+      'description': description,
     };
+  }
+
+  AdvancedSettingModel copyWith({
+    String? name,
+    String? value,
+    String? description,
+  }) {
+    return AdvancedSettingModel(
+      name: name ?? this.name,
+      value: value ?? this.value,
+      description: description ?? this.description,
+    );
   }
 
   factory AdvancedSettingModel.fromMap(Map<String, dynamic> map) {
     return AdvancedSettingModel(
-      botShowConfigsByPanelsCategory:
-          map['bot_show_configs_by_panels_category'] == true ||
-                  map['bot_show_configs_by_panels_category'] == 1
-              ? true
-              : false,
-      botAutoSetPriceByDollarPrice:
-          map['bot_auto_set_price_by_dollar_price'] == true ||
-                  map['bot_auto_set_price_by_dollar_price'] == 1
-              ? true
-              : false,
-      botShowWebAppLinkInTelegramForAllUsers:
-          map['bot_show_web_app_link_in_telegram_for_all_users'] == true ||
-                  map['bot_show_web_app_link_in_telegram_for_all_users'] == 1
-              ? true
-              : false,
-      botCalculateProductCategoryPriceInDollarByToman:
-          map['bot_calculate_product_category_price_in_dollar_by_toman'] ==
-                      true ||
-                  map['bot_calculate_product_category_price_in_dollar_by_toman'] ==
-                      1
-              ? true
-              : false,
-      botShowOneRowConfig: map['bot_show_one_row_config'] == true ||
-              map['bot_show_one_row_config'] == 1
-          ? true
-          : false,
+      name: map['name'] ?? '',
+      value: map['value'] ?? '',
+      description: map['description'],
     );
   }
 
-  String toJson() => json.encode(toMap());
-
-  factory AdvancedSettingModel.fromJson(String source) =>
-      AdvancedSettingModel.fromMap(json.decode(source));
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'value': value,
+      'description': description,
+    };
+  }
 }

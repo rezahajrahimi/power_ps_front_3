@@ -21,7 +21,6 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
   final _botNameTxtEdit = TextEditingController();
   final _botTokenTxtEdit = TextEditingController();
   final _adminIdTxtEdit = TextEditingController();
-  final _welcomeMessageTxtEdit = TextEditingController();
   final _panelAddressTxtEdit = TextEditingController();
   final List<Widget> _botInfoWidgetList = [];
   final List<Widget> _botTokenWidgetList = [];
@@ -70,7 +69,6 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           _botNameTxtEdit.text = _setting.botName;
           _adminIdTxtEdit.text = _setting.adminId;
           _botTokenTxtEdit.text = _setting.botToken;
-          _welcomeMessageTxtEdit.text = _setting.welcomeMessage;
           _panelAddressTxtEdit.text = _setting.panelAddress;
         });
       } else {
@@ -80,8 +78,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
               botName: "تعریف نشده",
               botToken: "تعریف نشده",
               id: "تعریف نشده",
-              panelAddress: "تعریف نشده",
-              welcomeMessage: "تعریف نشده");
+              panelAddress: "تعریف نشده"
+              );
         });
       }
       setState(() {
@@ -150,7 +148,6 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
             if (_botNameTxtEdit.text.isNotEmpty &&
                 _botTokenTxtEdit.text.isNotEmpty &&
                 _adminIdTxtEdit.text.isNotEmpty &&
-                _welcomeMessageTxtEdit.text.isNotEmpty &&
                 _panelAddressTxtEdit.text.isNotEmpty) {
               _submitData(context);
             }
@@ -177,23 +174,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           ],
         ));
 
-        _botDescriptionWidgetList.add(Column(
-          children: [
-            CustomTextFromFieldWidget(
-              controller: _welcomeMessageTxtEdit,
-              keyboardType: TextInputType.multiline,
-              textHint: "متن خوش آمد گویی به ربات",
-              validationError: "متن خوش آمد گویی به ربات",
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                "متنی که در ابتدا به کاربر به عنوان خوش آمد گویی نمایش می دهید. برای نمایش نام کاربر از {userName} استفاده کنید. ",
-                style: TextStyle(color: AppStyle.deactiveStatus),
-              ),
-            ),
-          ],
-        ));
+
         _showData = true;
       });
     });
@@ -240,7 +221,6 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
             if (_botNameTxtEdit.text.isNotEmpty &&
                 _botTokenTxtEdit.text.isNotEmpty &&
                 _adminIdTxtEdit.text.isNotEmpty &&
-                _welcomeMessageTxtEdit.text.isNotEmpty &&
                 _panelAddressTxtEdit.text.isNotEmpty) {
               _submitData(context);
             }
@@ -378,7 +358,6 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           botName: _botNameTxtEdit.text,
           adminId: _adminIdTxtEdit.text,
           botToken: _botTokenTxtEdit.text,
-          welcomeMessage: _welcomeMessageTxtEdit.text,
           panelAddress: _panelAddressTxtEdit.text);
 
       res = await updateBotSetting(setting: set);
