@@ -44,7 +44,7 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "دستیاران فروش"),
+        appBar: appBarWithBackButton(context: context, title: "دستیاران فروش (اکانتهای نقره ای و طلایی)"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,

@@ -17,6 +17,7 @@ import 'package:powerps/widgets/public/payment_type_info_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentTypeScreen extends StatefulWidget {
   const PaymentTypeScreen({super.key});
@@ -558,6 +559,41 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   icon: const Icon(Icons.refresh))
             ],
           ),
+          SizedBox(height: AppStyle.defaultPadding),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.blueGrey,
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Flexible(child: Text("برای دریافت برنامه به این آدرس مراجعه کنید و پس از نصب، وارد برنامه بشوید، و در قسمت  تنظیمات Api، مقادیر در خواستی را وارد کنید.")),
+                        // open link                    
+                  ],
+                ),
+                SizedBox(height: AppStyle.defaultPadding),
+                Row(
+                  children: [
+                        TextButton(
+                            child: const Text("دانلود از کافه بازار"),
+                            
+                            onPressed: () {
+                              launchUrl(Uri.parse("https://cafebazaar.ir/app/com.example.shetab_verification"));
+                            },
+                        ),
+                        TextButton(
+                            child: const Text("دانلود از مایکت"),
+                            onPressed: () {
+                              launchUrl(Uri.parse("https://myket.ir/app/com.example.shetab_verification"));
+                            },
+                        )                    
+                  ],
+                )
+              ],
+            ),
+          )
         ],
       ));
       dollarPaymentWidgetList.add(Column(
@@ -609,7 +645,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "تایید خودکار پرداخت کارت به کارت (اکانتهای طلایی و نقره ای)",
+            "تایید خودکار پرداخت کارت به کارت",
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: AppStyle.defaultPadding),
@@ -622,13 +658,13 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   importedList: dollarPaymentWidgetList),
               tablet: widgetsGridview(
                   context: context,
-                  childAspectRatio: 1.4,
+                  childAspectRatio: 1,
                   crossAxisCount: 2,
                   importedList: dollarPaymentWidgetList),
               desktop: widgetsGridview(
                   importedList: dollarPaymentWidgetList,
                   context: context,
-                  childAspectRatio: 2.7,
+                  childAspectRatio: 2,
                   crossAxisCount: 2),
             ),
           ),
