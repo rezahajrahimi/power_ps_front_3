@@ -166,14 +166,14 @@ class _GiftCarfItemInfoWidgetState extends State<GiftCarfItemInfoWidget> {
                         const SizedBox(
                           height: 8,
                         ),
-                        const Text("toPersianDate"),
+                        const Text("مبلغ گیفت کارت (تومان)"),
                         TextFormField(
                           controller: _newDiscountDateTxtEdit,
                           keyboardType: TextInputType.text,
                           textInputAction: TextInputAction.next,
                           maxLines: null,
                           decoration:
-                              const InputDecoration(labelText: "toPersianDate"),
+                              const InputDecoration(labelText: "مبلغ گیفت کارت (تومان)"),
                         ),
                         const Text("محدودیت استفاده(عدد)"),
                         TextFormField(
