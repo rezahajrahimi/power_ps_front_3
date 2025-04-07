@@ -49,6 +49,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   bool _nowPaymentIsActive = true;
   bool _nowPaymentIsFeePaidByUser = true;
 
+  // Cryptumos
+  final _cryptomusApiKeyTxtEdit = TextEditingController();
+  final _cryptomusMerchantIdTxtEdit = TextEditingController();
+  bool _cryptomusIsActive = true;
+
   @override
   void initState() {
     _fillData();
@@ -231,6 +236,8 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                     _dollarpaymentsTypeCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     _nowPaymentTypeCard(context),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    _cryptomusTypeCard(context),
                   ],
                 )),
             if (!Responsive.isMobile(context))
@@ -382,7 +389,9 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
         children: [
           Row(
             children: [
-              Flexible(child: const Text("فعال سازی تایید خودکار پرداخت کارت به کارت")),
+              Flexible(
+                  child:
+                      const Text("فعال سازی تایید خودکار پرداخت کارت به کارت")),
               Switch(
                   value: _shetabVerifySetting!.status,
                   onChanged: (bool newValue) async {
@@ -419,8 +428,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-               Text("API ENDPOINT: "),
-              Flexible(child: Text("$baseURL/api/shetab-verify".length > 20 ? "${"$baseURL/api/shetab-verify".substring(0, 20)}..." : "$baseURL/api/shetab-verify")),
+              Text("API ENDPOINT: "),
+              Flexible(
+                  child: Text("$baseURL/api/shetab-verify".length > 20
+                      ? "${"$baseURL/api/shetab-verify".substring(0, 20)}..."
+                      : "$baseURL/api/shetab-verify")),
               IconButton(
                   tooltip: "کپی کنید",
                   onPressed: () {
@@ -483,7 +495,10 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(child: Text("API KEY: ")),
-              Flexible(child: Text(_shetabVerifySetting!.value.length > 20 ? "${_shetabVerifySetting!.value.substring(0, 20)}..." : _shetabVerifySetting!.value)),
+              Flexible(
+                  child: Text(_shetabVerifySetting!.value.length > 20
+                      ? "${_shetabVerifySetting!.value.substring(0, 20)}..."
+                      : _shetabVerifySetting!.value)),
               IconButton(
                   tooltip: "کپی کنید",
                   onPressed: () {
@@ -569,26 +584,29 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
               children: [
                 Row(
                   children: [
-                    Flexible(child: Text("برای دریافت برنامه به این آدرس مراجعه کنید و پس از نصب، وارد برنامه بشوید، و در قسمت  تنظیمات Api، مقادیر در خواستی را وارد کنید.")),
-                        // open link                    
+                    Flexible(
+                        child: Text(
+                            "برای دریافت برنامه به این آدرس مراجعه کنید و پس از نصب، وارد برنامه بشوید، و در قسمت  تنظیمات Api، مقادیر در خواستی را وارد کنید.")),
+                    // open link
                   ],
                 ),
                 SizedBox(height: AppStyle.defaultPadding),
                 Row(
                   children: [
-                        TextButton(
-                            child: const Text("دانلود از کافه بازار"),
-                            
-                            onPressed: () {
-                              launchUrl(Uri.parse("https://cafebazaar.ir/app/com.example.shetab_verification"));
-                            },
-                        ),
-                        TextButton(
-                            child: const Text("دانلود از مایکت"),
-                            onPressed: () {
-                              launchUrl(Uri.parse("https://myket.ir/app/com.example.shetab_verification"));
-                            },
-                        )                    
+                    TextButton(
+                      child: const Text("دانلود از کافه بازار"),
+                      onPressed: () {
+                        launchUrl(Uri.parse(
+                            "https://cafebazaar.ir/app/com.example.shetab_verification"));
+                      },
+                    ),
+                    TextButton(
+                      child: const Text("دانلود از مایکت"),
+                      onPressed: () {
+                        launchUrl(Uri.parse(
+                            "https://myket.ir/app/com.example.shetab_verification"));
+                      },
+                    )
                   ],
                 )
               ],
@@ -618,10 +636,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
             onPressed: () {
               // validate card number
               if (_shetabVerifyApiKeyTxtEdit.text.isNotEmpty) {
-                setShetabVeriyNewCardNumber(cardNumber: _shetabVerifyApiKeyTxtEdit.text).then((val) {
-                  if(!context.mounted) return;
+                setShetabVeriyNewCardNumber(
+                        cardNumber: _shetabVerifyApiKeyTxtEdit.text)
+                    .then((val) {
+                  if (!context.mounted) return;
                   if (val) {
-                    
                     showMsg(msg: "ذخیره شد.", context: context);
                   } else {
                     showMsg(msg: "خطا", context: context, type: "error");
@@ -664,7 +683,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
               desktop: widgetsGridview(
                   importedList: dollarPaymentWidgetList,
                   context: context,
-                  childAspectRatio: 2,
+                  childAspectRatio: 1.7,
                   crossAxisCount: 2),
             ),
           ),
@@ -1119,6 +1138,179 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                   importedList: zarinpalWidgetList),
               desktop: widgetsGridview(
                   importedList: zarinpalWidgetList,
+                  context: context,
+                  childAspectRatio: 3,
+                  crossAxisCount: 2),
+            ),
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 5,
+                  context: context,
+                  importedList: actionWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 5,
+                  crossAxisCount: 2,
+                  importedList: actionWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionWidgetList,
+                  context: context,
+                  childAspectRatio: 5.5,
+                  crossAxisCount: 4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _cryptomusTypeCard(BuildContext context) {
+    List<Widget> crytomusWidgetList = [];
+    List<Widget> actionWidgetList = [];
+    setState(() {
+      crytomusWidgetList.add(Column(
+        children: [
+          CustomTextFromFieldWidget(
+            controller: _cryptomusApiKeyTxtEdit,
+            textDirection: TextDirection.ltr,
+            textHint: "API KEY",
+            validationError: "API KEY را وارد کنید.",
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+              "از قسمت setting درگاه، منوی Payments , کد API KEY را کپی کنید و در این قسمت وارد کنید.",
+              style: TextStyle(color: AppStyle.deactiveStatus),
+            ),
+          ),
+        ],
+      ));
+      crytomusWidgetList.add(Column(
+        children: [
+          CustomTextFromFieldWidget(
+            controller: _cryptomusMerchantIdTxtEdit,
+            textDirection: TextDirection.ltr,
+            textHint: "MERCHANT ID",
+            validationError: "MERCHANT ID را وارد کنید.",
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+              "MERCHANT ID را از قسمت setting درگاه، منوی Payments , کد MERCHANT ID را کپی کنید و در این قسمت وارد کنید.",
+              style: TextStyle(color: AppStyle.deactiveStatus),
+            ),
+          ),
+        ],
+      ));
+      crytomusWidgetList.add(Column(
+        children: [
+          Row(
+            children: [
+              const Text("امکان پرداخت از این درگاه"),
+              Switch(
+                  value: _nowPaymentIsActive,
+                  onChanged: (bool newValue) async {
+                    setState(() {
+                      _nowPaymentIsActive = newValue;
+                    });
+                  })
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              "قابلیت پرداخت از درگاه Cryptomus",
+              style: TextStyle(color: AppStyle.deactiveStatus),
+            ),
+          ),
+        ],
+      ));
+
+      actionWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          if (_cryptomusApiKeyTxtEdit.text.isNotEmpty &&
+              _cryptomusMerchantIdTxtEdit.text.isNotEmpty) {
+            EasyLoading.show();
+            await updateNowPaymentDetails(
+                    cryptoPaymentGateway: CryptoPaymentGateway(
+                        id: 0,
+                        name: "Cryptomus",
+                        apiKey: _cryptomusApiKeyTxtEdit.text,
+                        email: "john@gmail.com",
+                        password: _cryptomusMerchantIdTxtEdit.text,
+                        isActive: _cryptomusIsActive,
+                        isFeePaidByUser: false))
+                .then((value) {
+              if (value != null) {
+                setState(() {
+                  _nowPayment = value;
+                });
+              }
+            }).whenComplete(() {
+              if (!context.mounted) return;
+
+              EasyLoading.dismiss();
+              showMsg(
+                msg: "ذخیره شد.",
+                context: context,
+              );
+            });
+          } else {
+            if (context.mounted) {
+              showMsg(
+                  msg: "API KEY نمی تواند خالی باشد.",
+                  context: context,
+                  type: "ERROR");
+            }
+          }
+        },
+        icon: const Icon(Icons.edit),
+        label: const Text("ویرایش"),
+      ));
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "درگاره پرداخت Cryptomus",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.5,
+                  context: context,
+                  importedList: crytomusWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 3,
+                  importedList: crytomusWidgetList),
+              desktop: widgetsGridview(
+                  importedList: crytomusWidgetList,
                   context: context,
                   childAspectRatio: 3,
                   crossAxisCount: 2),
