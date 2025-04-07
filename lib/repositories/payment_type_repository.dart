@@ -53,8 +53,8 @@ Future getAllOfflinePayments() async {
 
 Future<bool> getDollorTransactionSetting() async {
   try {
-    Response response =
-        await GenaralApi.dio.get("/api/get-payment-setting-by-key/usd_transaction",
+    Response response = await GenaralApi.dio
+        .get("/api/get-payment-setting-by-key/usd_transaction",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -82,24 +82,28 @@ Future<bool> getDollorTransactionSetting() async {
     return false;
   }
 }
+
 Future<PaymentSettingModel> getShetabVerifySetting() async {
   try {
-    Response response = await GenaralApi.dio.get("/api/get-payment-setting-by-key/shetab_verify");
+    Response response = await GenaralApi.dio
+        .get("/api/get-payment-setting-by-key/shetab_verify");
     if (response.statusCode == 200 && response.data != null) {
       return PaymentSettingModel.fromJson(response.data);
     } else {
-      return PaymentSettingModel(key: "", value: "", description: "", status: false);
+      return PaymentSettingModel(
+          key: "", value: "", description: "", status: false);
     }
   } on DioException catch (e) {
     debugPrint(e.message.toString());
-    return PaymentSettingModel(key: "", value: "", description: "", status: false);
+    return PaymentSettingModel(
+        key: "", value: "", description: "", status: false);
   }
 }
 
-Future<bool> setShetabVerifySetting(
-    {required bool status}) async {
+Future<bool> setShetabVerifySetting({required bool status}) async {
   try {
-    Response response = await GenaralApi.dio.patch("/api/set-payment-setting-status-by-key/shetab_verify/$status");
+    Response response = await GenaralApi.dio
+        .patch("/api/set-payment-setting-status-by-key/shetab_verify/$status");
     if (response.statusCode == 200 && response.data != null) {
       return true;
     } else {
@@ -110,9 +114,11 @@ Future<bool> setShetabVerifySetting(
     return false;
   }
 }
+
 Future<String?> reGenerateShetabVerifyApiKey() async {
   try {
-    Response response = await GenaralApi.dio.get("/api/re-generate-shetab-verify");
+    Response response =
+        await GenaralApi.dio.get("/api/re-generate-shetab-verify");
     if (response.statusCode == 200 && response.data != null) {
       return response.data.toString();
     } else {
@@ -123,11 +129,12 @@ Future<String?> reGenerateShetabVerifyApiKey() async {
     return null;
   }
 }
+
 // set-payment-setting-description-by-key/{key}/{description}
-Future<bool> setShetabVeriyNewCardNumber(
-    {required String cardNumber}) async {
+Future<bool> setShetabVeriyNewCardNumber({required String cardNumber}) async {
   try {
-    Response response = await GenaralApi.dio.patch("/api/set-payment-setting-description-by-key/shetab_verify/$cardNumber");
+    Response response = await GenaralApi.dio.patch(
+        "/api/set-payment-setting-description-by-key/shetab_verify/$cardNumber");
     if (response.statusCode == 200 && response.data != null) {
       return true;
     } else {
@@ -142,16 +149,15 @@ Future<bool> setShetabVeriyNewCardNumber(
 Future<bool> setDollorTransactionSetting(
     {required bool dollarTransaction}) async {
   try {
-
-    Response response =
-        await GenaralApi.dio.patch("/api/set-payment-setting-status-by-key/usd_transaction/$dollarTransaction",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+    Response response = await GenaralApi.dio.patch(
+        "/api/set-payment-setting-status-by-key/usd_transaction/$dollarTransaction",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
 
     if (response.statusCode == 200 && response.data != null) {
       if (response.data == 1 || response.data == true) {
@@ -336,6 +342,33 @@ Future updateNowPaymentDetails(
   }
 }
 
+Future updateCryptomusPaymentDetails(
+    {required CryptoPaymentGateway cryptoPaymentGateway}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.patch("/api/updateCryptomusPayment", data: {
+      "api_key": cryptoPaymentGateway.apiKey,
+      "password": cryptoPaymentGateway.password,
+      "is_active": cryptoPaymentGateway.isActive,
+    });
+
+    if (response.statusCode == 200 && response.data != null) {
+      return CryptoPaymentGateway.fromMap(response.data);
+    } else if (response.statusCode == 201) {
+      return null;
+    } else if (response.statusCode == 401) {
+      return null;
+    } else if (response.statusCode == 500) {
+      return null;
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
 Future getNovPaymentDetails() async {
   try {
     Response response = await GenaralApi.dio.get("/api/getNovPaymentData");
@@ -348,6 +381,20 @@ Future getNovPaymentDetails() async {
       return null;
     } else if (response.statusCode == 500) {
       return null;
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future getCryptomusPaymentDetails() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/getCryptoPaymentData");
+    if (response.statusCode == 200 && response.data != null) {
+      return CryptoPaymentGateway.fromMap(response.data);
     } else {
       return null;
     }

@@ -34,6 +34,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   List<SubMenuItem> subList = [];
   PaymentType? _zarinPal;
   CryptoPaymentGateway? _nowPayment;
+  CryptoPaymentGateway? _cryptomus;
   final _zarinpalMerchantIdTxtEdit = TextEditingController();
   final _newPaymentMerchantIdTxtEdit = TextEditingController();
   final _newPaymentNameTxtEdit = TextEditingController();
@@ -118,6 +119,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     var res = await getAllOfflinePayments();
     var resZarinpal = await getZarinpalPaymentDetails();
     var resNowPayment = await getNovPaymentDetails();
+    var resCryptomus = await getCryptomusPaymentDetails();
     await getShetabVerifySetting().then((val) {
       if (mounted) {
         setState(() {
@@ -169,6 +171,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
         _nowPaymentIsActive = _nowPayment!.isActive;
         _nowPaymentIsFeePaidByUser = _nowPayment!.isFeePaidByUser;
         // _showOfflinePayment = true;
+        // cryptomus
+        _cryptomus = resCryptomus;
+        _cryptomusApiKeyTxtEdit.text = _cryptomus!.apiKey;
+        _cryptomusMerchantIdTxtEdit.text = _cryptomus!.password;
+        _cryptomusIsActive = _cryptomus!.isActive;
       });
     }
     setState(() {
@@ -1247,7 +1254,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           if (_cryptomusApiKeyTxtEdit.text.isNotEmpty &&
               _cryptomusMerchantIdTxtEdit.text.isNotEmpty) {
             EasyLoading.show();
-            await updateNowPaymentDetails(
+            await updateCryptomusPaymentDetails(
                     cryptoPaymentGateway: CryptoPaymentGateway(
                         id: 0,
                         name: "Cryptomus",
