@@ -19,12 +19,12 @@ import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/material.dart';
 
 Future main() async {
-  // await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -78,47 +78,47 @@ class MyApp extends StatelessWidget {
           builder: (context, authController, child) {
             // فراخوانی متد checkAuthStatus
             authController.checkAuthStatus();
-            
+
             return MaterialApp(
-                builder: EasyLoading.init(),
-                title: projectName,
-                onGenerateRoute: (setting) {
-                  if (setting.name!.contains("/login/")) {
-                    String url =
-                        setting.name!.substring(setting.name!.indexOf("login/"));
-                    var inputs = url.split("/");
-                    // print(inputs);
+              builder: EasyLoading.init(),
+              title: projectName,
+              onGenerateRoute: (setting) {
+                if (setting.name!.contains("/login/")) {
+                  String url =
+                      setting.name!.substring(setting.name!.indexOf("login/"));
+                  var inputs = url.split("/");
+                  // print(inputs);
 
-                    // print("acc: ${inputs[1].trim()} pass: ${inputs[2].trim()}");
-                    return MaterialPageRoute(
-                        builder: (_) => LoginScreen(
-                              accountID: inputs[1],
-                              password: inputs[2],
-                            ));
-                  }
+                  // print("acc: ${inputs[1].trim()} pass: ${inputs[2].trim()}");
+                  return MaterialPageRoute(
+                      builder: (_) => LoginScreen(
+                            accountID: inputs[1],
+                            password: inputs[2],
+                          ));
+                }
 
-                  return null;
-                },
-                theme: ThemeData.dark().copyWith(
-                  scaffoldBackgroundColor: AppStyle.bgColor,
-                  textTheme:
-                      GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
-                          .apply(bodyColor: Colors.white),
-                  canvasColor: AppStyle.secondaryColor,
-                ),
-                routes: {
-                  '/': (context) => const Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: CheckAuth(),
-                      ),
-                  '/home': (context) => const HomeScreen(
-                        selectedPage: 0,
-                      ),
-                  '/login': (context) => const LoginScreen(),
-                },
-                debugShowCheckedModeBanner: false,
-                navigatorKey: navigatorKey,
-                );
+                return null;
+              },
+              theme: ThemeData.dark().copyWith(
+                scaffoldBackgroundColor: AppStyle.bgColor,
+                textTheme:
+                    GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
+                        .apply(bodyColor: Colors.white),
+                canvasColor: AppStyle.secondaryColor,
+              ),
+              routes: {
+                '/': (context) => const Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: CheckAuth(),
+                    ),
+                '/home': (context) => const HomeScreen(
+                      selectedPage: 0,
+                    ),
+                '/login': (context) => const LoginScreen(),
+              },
+              debugShowCheckedModeBanner: false,
+              navigatorKey: navigatorKey,
+            );
           },
         ));
   }
@@ -150,7 +150,7 @@ class _CheckAuthState extends State<CheckAuth> {
         ),
       );
     }
-    
+
     Widget child;
     if (isAuth) {
       child = const Directionality(
@@ -171,19 +171,21 @@ class _CheckAuthState extends State<CheckAuth> {
   void _checkLogin() async {
     try {
       // فراخوانی متد checkAuthStatus در AuthChangeController
-      await Provider.of<AuthChangeController>(context, listen: false).checkAuthStatus();
-      
+      await Provider.of<AuthChangeController>(context, listen: false)
+          .checkAuthStatus();
+
       // بررسی وضعیت کاربر
-      if(!mounted) return;
-      User user = Provider.of<AuthChangeController>(context, listen: false).user;
-      
+      if (!mounted) return;
+      User user =
+          Provider.of<AuthChangeController>(context, listen: false).user;
+
       String token = await LoggingPreference().getToken();
-      
+
       if (token != 'void' && token.isNotEmpty && user.id != 0) {
         // تنظیم هدرهای درخواست
         GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
         GenaralApi.dio.options.headers['x-access-token'] = token;
-        
+
         setState(() {
           isAuth = true;
           isLoading = false;

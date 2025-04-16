@@ -172,10 +172,17 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
         _nowPaymentIsFeePaidByUser = _nowPayment!.isFeePaidByUser;
         // _showOfflinePayment = true;
         // cryptomus
-        _cryptomus = resCryptomus;
-        _cryptomusApiKeyTxtEdit.text = _cryptomus!.apiKey;
-        _cryptomusMerchantIdTxtEdit.text = _cryptomus!.password;
-        _cryptomusIsActive = _cryptomus!.isActive;
+        if (resCryptomus != null) {
+          _cryptomus = resCryptomus;
+          _cryptomusApiKeyTxtEdit.text = _cryptomus!.apiKey;
+          _cryptomusMerchantIdTxtEdit.text = _cryptomus!.password;
+          _cryptomusIsActive = _cryptomus!.isActive;
+        } else {
+          _cryptomus = null;
+          _cryptomusApiKeyTxtEdit.text = "";
+          _cryptomusMerchantIdTxtEdit.text = "";
+          _cryptomusIsActive = false;
+        }
       });
     }
     setState(() {
@@ -1224,10 +1231,10 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
             children: [
               const Text("امکان پرداخت از این درگاه"),
               Switch(
-                  value: _nowPaymentIsActive,
+                  value: _cryptomusIsActive,
                   onChanged: (bool newValue) async {
                     setState(() {
-                      _nowPaymentIsActive = newValue;
+                      _cryptomusIsActive = newValue;
                     });
                   })
             ],
