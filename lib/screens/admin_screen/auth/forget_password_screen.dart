@@ -428,7 +428,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       print(e);
     }
 
-    setState(() {});
+    // setState(() {});
   }
 
   _startTimer() {

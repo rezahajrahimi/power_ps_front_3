@@ -154,10 +154,7 @@ class CustomTextModel {
 
         // اگر متن قبل از الگو وجود دارد، آن را به عنوان متن ساده اضافه می‌کنیم
         if (firstMatch != null && firstMatch.start > 0) {
-          blocks.add({
-            'type': 'text',
-            'text': remainingText.substring(0, firstMatch.start)
-          });
+          blocks.add({'type': 'text', 'text': remainingText.substring(0, firstMatch.start)});
         }
 
         if (firstMatch != null) {
@@ -169,12 +166,8 @@ class CustomTextModel {
               blocks.add({'type': 'italic', 'text': firstMatch.group(1)!});
               break;
             case 'link':
-              blocks.add({
-                'type': 'link',
-                'text': firstMatch.group(1)!,
-                'url': firstMatch.group(2)!
-              });
-              break;
+              blocks.add({'type': 'link', 'text': firstMatch.group(1)!, 'url': firstMatch.group(2)!});
+              break ;
             case 'code':
               blocks.add({'type': 'code', 'text': firstMatch.group(1)!});
               break;
