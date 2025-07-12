@@ -373,7 +373,7 @@ Future getNovPaymentDetails() async {
   try {
     Response response = await GenaralApi.dio.get("/api/getNovPaymentData");
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data != null && response.data is Map) {
       return CryptoPaymentGateway.fromMap(response.data);
     } else if (response.statusCode == 201) {
       return null;
@@ -393,7 +393,7 @@ Future getNovPaymentDetails() async {
 Future getCryptomusPaymentDetails() async {
   try {
     Response response = await GenaralApi.dio.get("/api/getCryptoPaymentData");
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data != null && response.data is Map) {
       return CryptoPaymentGateway.fromMap(response.data);
     } else {
       return null;
