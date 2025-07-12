@@ -25,7 +25,6 @@ class GroupOperationsScreen extends StatefulWidget {
 class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   bool _showData = false;
   bool _showPannelData = false;
-  bool _selectAll = false;
   final List<Widget> _productCatWidgetLIst = [];
   final List<ProductCategory> _productCategoryList = [];
   final List<String> _pannelNameList = [];
@@ -420,75 +419,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
             "کانفیگ‌های موجود در پنل",
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  Provider.of<PannelChangeController>(context, listen: false)
-                      .clearConfigList();
-                  for (HiddifyConfig config in _usersList) {
-                    Provider.of<PannelChangeController>(context, listen: false)
-                        .addNewConfig(config);
-                  }
-                },
-                icon: const Icon(Icons.check_box),
-                label: const Text("انتخاب همه"),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Provider.of<PannelChangeController>(context, listen: false)
-                      .clearConfigList();
-                  for (HiddifyConfig config in _usersList) {
-                    if (config.isActive == false) {
-                      Provider.of<PannelChangeController>(context,
-                              listen: false)
-                          .addNewConfig(config);
-                    }
-                  }
-                },
-                icon: const Icon(Icons.disabled_by_default),
-                label: const Text("غیر فعالها"),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Provider.of<PannelChangeController>(context, listen: false)
-                      .clearConfigList();
-                  for (HiddifyConfig config in _usersList) {
-                    if (config.isActive == true) {
-                      Provider.of<PannelChangeController>(context,
-                              listen: false)
-                          .addNewConfig(config);
-                    }
-                  }
-                },
-                icon: const Icon(Icons.access_alarm),
-                label: const Text("فعالها"),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Provider.of<PannelChangeController>(context, listen: false)
-                      .clearConfigList();
-                  for (HiddifyConfig config in _usersList) {
-                    if (config.currentUsageGB == 0 ) {
-                      Provider.of<PannelChangeController>(context,
-                              listen: false)
-                          .addNewConfig(config);
-                    }
-                  }
-                },
-                icon: const Icon(Icons.access_alarm),
-                label: const Text("استفاده نشده"),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Provider.of<PannelChangeController>(context, listen: false)
-                      .clearConfigList();
-                },
-                icon: const Icon(Icons.clear),
-                label: const Text("پاک کردن لیست"),
-              ),
-            ],
-          ),
+          _selectionOptions(context),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
               width: double.infinity,
@@ -547,6 +478,91 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _selectionOptions(BuildContext context) {
+    List<Widget> widgetList = [];
+    widgetList.add(ElevatedButton.icon(
+      onPressed: () {
+        Provider.of<PannelChangeController>(context, listen: false)
+            .clearConfigList();
+        for (HiddifyConfig config in _usersList) {
+          Provider.of<PannelChangeController>(context, listen: false)
+              .addNewConfig(config);
+        }
+      },
+      icon: const Icon(Icons.check_box),
+      label: const Text("انتخاب همه"),
+    ));
+    widgetList.add(ElevatedButton.icon(
+      onPressed: () {
+        Provider.of<PannelChangeController>(context, listen: false)
+            .clearConfigList();
+        for (HiddifyConfig config in _usersList) {
+          if (config.isActive == false) {
+            Provider.of<PannelChangeController>(context, listen: false)
+                .addNewConfig(config);
+          }
+        }
+      },
+      icon: const Icon(Icons.disabled_by_default),
+      label: const Text("غیر فعالها"),
+    ));
+    widgetList.add(ElevatedButton.icon(
+      onPressed: () {
+        Provider.of<PannelChangeController>(context, listen: false)
+            .clearConfigList();
+        for (HiddifyConfig config in _usersList) {
+          if (config.isActive == true) {
+            Provider.of<PannelChangeController>(context, listen: false)
+                .addNewConfig(config);
+          }
+        }
+      },
+      icon: const Icon(Icons.access_alarm),
+      label: const Text("فعالها"),
+    ));
+    widgetList.add(ElevatedButton.icon(
+      onPressed: () {
+        Provider.of<PannelChangeController>(context, listen: false)
+            .clearConfigList();
+        for (HiddifyConfig config in _usersList) {
+          if (config.currentUsageGB == 0) {
+            Provider.of<PannelChangeController>(context, listen: false)
+                .addNewConfig(config);
+          }
+        }
+      },
+      icon: const Icon(Icons.access_alarm),
+      label: const Text("استفاده نشده"),
+    ));
+    widgetList.add(ElevatedButton.icon(
+      onPressed: () {
+        Provider.of<PannelChangeController>(context, listen: false)
+            .clearConfigList();
+      },
+      icon: const Icon(Icons.clear),
+      label: const Text("پاک کردن لیست"),
+    ));
+    return SizedBox(
+        width: double.infinity,
+        child: Responsive(
+          mobile: widgetsGridview(
+              childAspectRatio: 3.2,
+              context: context,
+              crossAxisCount: 2,
+              importedList: widgetList),
+          tablet: widgetsGridview(
+              context: context,
+              childAspectRatio: 4.5,
+              crossAxisCount: 4,
+              importedList: widgetList),
+          desktop: widgetsGridview(
+              importedList: widgetList,
+              context: context,
+              childAspectRatio: 4.5,
+              crossAxisCount: 6),
+        ));
   }
 
   _submitData(BuildContext context) async {
