@@ -15,7 +15,7 @@ import 'package:powerps/screens/admin_screen/settings/main_menu_item/main_menu_i
 import 'package:powerps/screens/admin_screen/settings/pannel/pannel_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/payment_type/payment_type_details_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.dart';
-import 'package:powerps/screens/admin_screen/settings/reports/reports_and_messages_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/reports/group_operations_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/test_accounts/edit_test_account_details_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
@@ -544,11 +544,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const ReportsAndMessagesScreen(),
+                builder: (context) => const GroupOperationsScreen(),
               )).then((value) => {});
         },
         icon: const Icon(Icons.report),
-        label: const Text("گزارشات و پیام ها"),
+        label: const Text("عملیات گروهی"),
       ));
     });
     return Container(

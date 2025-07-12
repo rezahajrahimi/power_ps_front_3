@@ -7,7 +7,6 @@ import 'package:powerps/models/hiffify_config_model.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/provider/panel_controller.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
-import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -16,21 +15,18 @@ import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:searchable_listview/searchable_listview.dart';
 
-class ReportsAndMessagesScreen extends StatefulWidget {
-  const ReportsAndMessagesScreen({super.key});
+class GroupOperationsScreen extends StatefulWidget {
+  const GroupOperationsScreen({super.key});
 
   @override
-  State<ReportsAndMessagesScreen> createState() =>
-      _ReportsAndMessagesScreenState();
+  State<GroupOperationsScreen> createState() =>
+      _GroupOperationsScreenState();
 }
 
-class _ReportsAndMessagesScreenState extends State<ReportsAndMessagesScreen> {
+class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   bool _showData = false;
   bool _showPannelData = false;
-  bool _showBotUsers = false;
   bool _selectAll = false;
-  String _selectedUserName = "";
-  final List<String> _botUserList = [];
   final List<Widget> _productCatWidgetLIst = [];
   final List<ProductCategory> _productCategoryList = [];
   final List<String> _pannelNameList = [];
@@ -63,7 +59,7 @@ class _ReportsAndMessagesScreenState extends State<ReportsAndMessagesScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar:
-            appBarWithBackButton(context: context, title: "گزارشات و پیام ها"),
+            appBarWithBackButton(context: context, title: "عملیات گروهی"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -142,8 +138,6 @@ class _ReportsAndMessagesScreenState extends State<ReportsAndMessagesScreen> {
                 children: [
                   _pannelListInfoTabCard(context),
                   SizedBox(width: AppStyle.defaultPadding),
-                  if (_showBotUsers) _botUserListInfoTabCard(context),
-                  SizedBox(width: AppStyle.defaultPadding),
                   if (_showPannelData) _usersListInfoTabCard(context),
                   if (Responsive.isMobile(context))
                     _existConfigsListInfoCard(context)
@@ -185,8 +179,22 @@ class _ReportsAndMessagesScreenState extends State<ReportsAndMessagesScreen> {
         onPressed: () async {
           await _submitData(context);
         },
-        icon: const Icon(Icons.send),
-        label: const Text("ارسال پیام"),
+        icon: const Icon(Icons.add),
+        label: const Text("افزایش روز/حجم"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _submitData(context);
+        },
+        icon: const Icon(Icons.remove),
+        label: const Text("کاهش روز/حجم"),
       ));
     });
     return Container(
@@ -281,22 +289,7 @@ class _ReportsAndMessagesScreenState extends State<ReportsAndMessagesScreen> {
 
   void _fillData() async {
     if (context.mounted) {
-      await getBotUserList().then((val) {
-        if (val != null && val.isNotEmpty) {
-          setState(() {
-            for (var i in val) {
-              _botUserList.add("${i.accountId}: ${i.username}");
-            }
-            _selectedUserName = "${val[0].accountId}: ${val[0].username}";
-
-            _showBotUsers = true;
-          });
-        }
-      }).onError((e, s) {
-        if (!mounted) return;
-        showMsg(msg: "$e خطا", context: context, type: "error");
-        Navigator.of(context).pop();
-      });
+      
       await getPannels().then((onValue) {
         if (onValue.isNotEmpty) {
           setState(() {
@@ -517,73 +510,11 @@ class _ReportsAndMessagesScreenState extends State<ReportsAndMessagesScreen> {
     );
   }
 
-  _botUserListInfoTabCard(BuildContext context) {
-    List<Widget> myList = [];
-    setState(() {
-      myList.add(const Text("کاربر را انتخاب کنید."));
 
-      myList.add(DropdownButtonFormField(
-        isExpanded: true,
-        hint: const Text('کاربر'),
-        value: _selectedUserName,
-        alignment: Alignment.centerRight,
-        onChanged: (newValue) {
-          setState(() {
-            _selectedUserName = newValue.toString();
-          });
-        },
-        items: _botUserList.map((user) {
-          return DropdownMenuItem(
-            value: user,
-            alignment: Alignment.centerRight,
-            child: Text(user),
-          );
-        }).toList(),
-      ));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "کاربران شما",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                    childAspectRatio: 3.2,
-                    context: context,
-                    importedList: myList),
-                tablet: widgetsGridview(
-                    context: context,
-                    childAspectRatio: 4,
-                    importedList: myList),
-                desktop: widgetsGridview(
-                    importedList: myList,
-                    context: context,
-                    childAspectRatio: 4.5,
-                    crossAxisCount: 2),
-              )),
-        ],
-      ),
-    );
-  }
 
   _submitData(BuildContext context) async {
     EasyLoading.show();
-    if (_selectedUserName.isEmpty) {
-      EasyLoading.dismiss();
-      showMsg(msg: "لطفا یک کاربر راانتخاب کنید.", context: context);
-      return;
-    }
+
     if (_selectedPannelName.isEmpty) {
       EasyLoading.dismiss();
       showMsg(msg: "لطفا یک پنل راانتخاب کنید.", context: context);
@@ -594,9 +525,7 @@ class _ReportsAndMessagesScreenState extends State<ReportsAndMessagesScreen> {
       pannelID = int.parse(_selectedPannelName.split(":")[0]);
     }
     int selectedUserTelID = 0;
-    if (_selectedUserName != "") {
-      selectedUserTelID = int.parse(_selectedUserName.split(":")[0]);
-    }
+   
     await obtainBatchOfExistProductsToUser(
             accountID: selectedUserTelID,
             pannelID: pannelID,
