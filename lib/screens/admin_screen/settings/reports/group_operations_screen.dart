@@ -19,8 +19,7 @@ class GroupOperationsScreen extends StatefulWidget {
   const GroupOperationsScreen({super.key});
 
   @override
-  State<GroupOperationsScreen> createState() =>
-      _GroupOperationsScreenState();
+  State<GroupOperationsScreen> createState() => _GroupOperationsScreenState();
 }
 
 class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
@@ -58,8 +57,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar:
-            appBarWithBackButton(context: context, title: "عملیات گروهی"),
+        appBar: appBarWithBackButton(context: context, title: "عملیات گروهی"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -289,7 +287,6 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
 
   void _fillData() async {
     if (context.mounted) {
-      
       await getPannels().then((onValue) {
         if (onValue.isNotEmpty) {
           setState(() {
@@ -419,35 +416,77 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            "کانفیگ‌های موجود در پنل",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           Row(
             children: [
-              Text(
-                "کانفیگ‌های موجود در پنل",
-                style: Theme.of(context).textTheme.titleMedium,
+              ElevatedButton.icon(
+                onPressed: () {
+                  Provider.of<PannelChangeController>(context, listen: false)
+                      .clearConfigList();
+                  for (HiddifyConfig config in _usersList) {
+                    Provider.of<PannelChangeController>(context, listen: false)
+                        .addNewConfig(config);
+                  }
+                },
+                icon: const Icon(Icons.check_box),
+                label: const Text("انتخاب همه"),
               ),
-              const Spacer(),
-              // انتخاب همه
-              Checkbox.adaptive(
-                  value: _selectAll,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectAll = value ?? false;
-                      // if value is not null and be true, add to _obtinedConfigList
-                      if (_selectAll == true) {
-                        for (HiddifyConfig config in _usersList) {
-                          Provider.of<PannelChangeController>(context,
-                                  listen: false)
-                              .addNewConfig(config);
-                        }
-                      } else {
-                        for (HiddifyConfig config in _usersList) {
-                          Provider.of<PannelChangeController>(context,
-                                  listen: false)
-                              .removeConfig(config);
-                        }
-                      }
-                    });
-                  })
+              ElevatedButton.icon(
+                onPressed: () {
+                  Provider.of<PannelChangeController>(context, listen: false)
+                      .clearConfigList();
+                  for (HiddifyConfig config in _usersList) {
+                    if (config.isActive == false) {
+                      Provider.of<PannelChangeController>(context,
+                              listen: false)
+                          .addNewConfig(config);
+                    }
+                  }
+                },
+                icon: const Icon(Icons.disabled_by_default),
+                label: const Text("غیر فعالها"),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Provider.of<PannelChangeController>(context, listen: false)
+                      .clearConfigList();
+                  for (HiddifyConfig config in _usersList) {
+                    if (config.isActive == true) {
+                      Provider.of<PannelChangeController>(context,
+                              listen: false)
+                          .addNewConfig(config);
+                    }
+                  }
+                },
+                icon: const Icon(Icons.access_alarm),
+                label: const Text("فعالها"),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Provider.of<PannelChangeController>(context, listen: false)
+                      .clearConfigList();
+                  for (HiddifyConfig config in _usersList) {
+                    if (config.currentUsageGB == 0 ) {
+                      Provider.of<PannelChangeController>(context,
+                              listen: false)
+                          .addNewConfig(config);
+                    }
+                  }
+                },
+                icon: const Icon(Icons.access_alarm),
+                label: const Text("استفاده نشده"),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Provider.of<PannelChangeController>(context, listen: false)
+                      .clearConfigList();
+                },
+                icon: const Icon(Icons.clear),
+                label: const Text("پاک کردن لیست"),
+              ),
             ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
@@ -510,8 +549,6 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     );
   }
 
-
-
   _submitData(BuildContext context) async {
     EasyLoading.show();
 
@@ -525,7 +562,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       pannelID = int.parse(_selectedPannelName.split(":")[0]);
     }
     int selectedUserTelID = 0;
-   
+
     await obtainBatchOfExistProductsToUser(
             accountID: selectedUserTelID,
             pannelID: pannelID,
