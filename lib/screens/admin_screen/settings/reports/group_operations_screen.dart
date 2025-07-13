@@ -633,15 +633,30 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                   }
 
                   if (formKey.currentState!.validate()) {
+                    EasyLoading.show();
                     batchExistSubscriptionJobDayOpr(
-                        action: actionEn,
-                        day: int.parse(input.text),
-                        panelId: pannelID,
-                        hiddifyConfig: Provider.of<PannelChangeController>(
-                                context,
-                                listen: false)
-                            .obtinedConfigList);
+                            action: actionEn,
+                            day: int.parse(input.text),
+                            panelId: pannelID,
+                            hiddifyConfig: Provider.of<PannelChangeController>(
+                                    context,
+                                    listen: false)
+                                .obtinedConfigList)
+                        .then((value) {
+                      EasyLoading.dismiss();
+                      if (!context.mounted) return;
+
+                      if (value) {
+                        showMsg(msg: "با موفقیت انجام شد", context: context);
+                      } else {
+                        showMsg(msg: "خطا", context: context, type: "error");
+                      }
+                    });
                     Navigator.of(context).pop();
+                  } else {
+                    showMsg(
+                        msg: "اطلاعات درخواستی را وارد کنید.",
+                        context: context);
                   }
                 },
                 child: const Text("اعمال"),
