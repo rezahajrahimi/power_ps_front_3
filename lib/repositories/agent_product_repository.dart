@@ -95,7 +95,7 @@ Future obtainBatchOfExistProductsToUser({
   var formData = FormData.fromMap({
     'accountID': accountID,
     'pannelID': pannelID,
-    'selectedExistConfig': json.encode(hiddifyConfig),
+    'configs': json.encode(hiddifyConfig),
   });
 
   try {
@@ -176,7 +176,7 @@ Future batchExistSubscriptionJobDayOpr(
     'action': action,
     'panel_id': panelId,
     'days': day,
-    'configs': json.encode(HiddifyConfig),
+    'configs': json.encode(hiddifyConfig),
   });
 
   try {
@@ -190,8 +190,8 @@ Future batchExistSubscriptionJobDayOpr(
               "Charset": "utf-8",
               'Access-Control-Allow-Origin': '*'
             }));
-    debugPrint(response.statusCode.toString());
-    debugPrint(response.statusMessage);
+    debugPrint("response ${response.statusCode}");
+    debugPrint("status code:=>${response.statusMessage}");
     if (response.statusCode == 200 && response.data != null) {
       return true;
     } else if (response.statusCode == 201) {

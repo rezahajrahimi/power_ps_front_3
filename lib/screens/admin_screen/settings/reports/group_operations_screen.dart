@@ -646,13 +646,19 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                       EasyLoading.dismiss();
                       if (!context.mounted) return;
 
-                      if (value) {
+                      if (value == true) {
                         showMsg(msg: "با موفقیت انجام شد", context: context);
                       } else {
                         showMsg(msg: "خطا", context: context, type: "error");
                       }
+                    }).onError((e, s) {
+                      EasyLoading.dismiss();
+                      if (!context.mounted) return;
+                      debugPrint("Error: $e");
+
+                      showMsg(msg: "خطا", context: context, type: "error");
                     });
-                    Navigator.of(context).pop();
+                    // Navigator.of(context).pop();
                   } else {
                     showMsg(
                         msg: "اطلاعات درخواستی را وارد کنید.",

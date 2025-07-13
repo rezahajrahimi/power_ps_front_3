@@ -585,7 +585,7 @@ class _ObtainExistPanelUsersToAgentsScreenState
                 Provider.of<PannelChangeController>(context, listen: false)
                     .obtinedConfigList)
         .then((value) {
-                                  if(!context.mounted) return;
+      if (!context.mounted) return;
 
       if (value) {
         Provider.of<PannelChangeController>(context, listen: false)
