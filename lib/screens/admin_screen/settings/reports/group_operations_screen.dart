@@ -636,8 +636,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                     EasyLoading.show();
                     batchExistSubscriptionJobDayOpr(
                             action: actionEn,
-                            day: int.parse(input.text),
-                            vol: double.parse(input.text),
+                            day: int.tryParse(input.text) ?? 0,
+                            vol: input.text,
                             panelId: pannelID,
                             hiddifyConfig: Provider.of<PannelChangeController>(
                                     context,

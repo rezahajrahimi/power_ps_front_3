@@ -171,7 +171,7 @@ Future batchExistSubscriptionJobDayOpr(
     {required String action,
     required int panelId,
     required int day,
-    required double vol,
+    required String vol,
     required List<HiddifyConfig> hiddifyConfig}) async {
   var formData = FormData.fromMap({
     'action': action,
