@@ -626,7 +626,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               ElevatedButton(
                 onPressed: () {
                   final actionEn =
-                      selectedOption == "روز" ? "inc_days" : "inc_volums";
+                      selectedOption == "روز" ? "inc_days" : "inc_vol";
                   int pannelID = 1;
                   if (_selectedPannelName != "") {
                     pannelID = int.parse(_selectedPannelName.split(":")[0]);
@@ -637,6 +637,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                     batchExistSubscriptionJobDayOpr(
                             action: actionEn,
                             day: int.parse(input.text),
+                            vol: double.parse(input.text),
                             panelId: pannelID,
                             hiddifyConfig: Provider.of<PannelChangeController>(
                                     context,
