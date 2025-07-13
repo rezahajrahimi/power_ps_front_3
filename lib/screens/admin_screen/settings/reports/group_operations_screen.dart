@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -174,7 +175,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           ),
         ),
         onPressed: () async {
-          await _submitData(context);
+          await _submitIncOprDialog(context);
         },
         icon: const Icon(Icons.add),
         label: const Text("افزایش روز/حجم"),
@@ -419,6 +420,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
             "کانفیگ‌های موجود در پنل",
             style: Theme.of(context).textTheme.titleMedium,
           ),
+          SizedBox(height: AppStyle.defaultPadding),
           _selectionOptions(context),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
@@ -563,6 +565,92 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               childAspectRatio: 4.5,
               crossAxisCount: 6),
         ));
+  }
+
+  _submitIncOprDialog(BuildContext context) async {
+    TextEditingController input = TextEditingController();
+    List<String> options = ["روز", "حجم"];
+    String selectedOption = "روز";
+    final formKey = GlobalKey<FormState>();
+    // show dialog
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Form(
+          key: formKey,
+          child: AlertDialog(
+            title: Text("افزایش روز یا حجم کانفیگ های انتخابی"),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
+              spacing: AppStyle.defaultPadding,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: options.first,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    labelText: "یک گزینه را انتخاب کنید",
+                    border: OutlineInputBorder(),
+                  ),
+                  items: options.map((option) {
+                    return DropdownMenuItem<String>(
+                      value: option,
+                      child: Text(option),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    selectedOption = value!;
+                  },
+                ),
+                CustomTextFromFieldWidget(
+                  controller: input,
+                  textHint: "مقدار",
+                  validationError: "مقدار را وارد کنید.",
+                  validatorType: "text",
+                  keyboardType: TextInputType.text,
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("لغو"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final actionEn =
+                      selectedOption == "روز" ? "inc_days" : "inc_volums";
+                  int pannelID = 1;
+                  if (_selectedPannelName != "") {
+                    pannelID = int.parse(_selectedPannelName.split(":")[0]);
+                  }
+
+                  if (formKey.currentState!.validate()) {
+                    batchExistSubscriptionJobDayOpr(
+                        action: actionEn,
+                        day: int.parse(input.text),
+                        panelId: pannelID,
+                        hiddifyConfig: Provider.of<PannelChangeController>(
+                                context,
+                                listen: false)
+                            .obtinedConfigList);
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text("اعمال"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   _submitData(BuildContext context) async {
