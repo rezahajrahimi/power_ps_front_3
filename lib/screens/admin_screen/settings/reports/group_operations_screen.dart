@@ -538,42 +538,71 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     ));
     // group config by capacity
     // اضافه کردن packageDays بدون تکرار
-    List<int> dayGroup = _usersList.map((e) => e.packageDays).toSet().toList()
-      ..sort();
-    for (var i in dayGroup) {
-      widgetList.add(ElevatedButton.icon(
-        onPressed: () {
-          Provider.of<PannelChangeController>(context, listen: false)
-              .clearConfigList();
-          for (HiddifyConfig config in _usersList) {
-            if (config.packageDays == i) {
-              Provider.of<PannelChangeController>(context, listen: false)
-                  .addNewConfig(config);
+    widgetList.add(
+      ElevatedButton.icon(
+      onPressed: () {
+        showModalBottomSheet(
+          
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          builder: (context) {
+          List<Widget> advancedOptions = [];
+
+          List<int> dayGroup = _usersList.map((e) => e.packageDays).toSet().toList()..sort();
+          for (var i in dayGroup) {
+          advancedOptions.add(ListTile(
+            leading: const Icon(Icons.calendar_today),
+            title: Text("کانفیگ های با $i روز"),
+            onTap: () {
+            Navigator.pop(context);
+            Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
+            for (HiddifyConfig config in _usersList) {
+              if (config.packageDays == i) {
+              Provider.of<PannelChangeController>(context, listen: false).addNewConfig(config);
+              }
             }
+            },
+          ));
           }
-        },
-        icon: const Icon(Icons.check_box),
-        label: Text("کانفیگ های با $i روز"),
-      ));
-    }
-    List<double> capacityGroup =
-        _usersList.map((e) => e.usageLimitGB).toSet().toList()..sort();
-    for (var i in capacityGroup) {
-      widgetList.add(ElevatedButton.icon(
-        onPressed: () {
-          Provider.of<PannelChangeController>(context, listen: false)
-              .clearConfigList();
-          for (HiddifyConfig config in _usersList) {
-            if (config.packageDays == i) {
-              Provider.of<PannelChangeController>(context, listen: false)
-                  .addNewConfig(config);
+
+          List<double> capacityGroup = _usersList.map((e) => e.usageLimitGB).toSet().toList()..sort();
+          for (var i in capacityGroup) {
+          advancedOptions.add(ListTile(
+            leading: const Icon(Icons.storage),
+            title: Text("کانفیگ های با $i گیگابایت"),
+            onTap: () {
+            Navigator.pop(context);
+            Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
+            for (HiddifyConfig config in _usersList) {
+              if (config.usageLimitGB == i) {
+              Provider.of<PannelChangeController>(context, listen: false).addNewConfig(config);
+              }
             }
+            },
+          ));
           }
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("انتخاب پیشرفته", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  ...advancedOptions,
+                ],
+              ),
+            ),
+          );
         },
-        icon: const Icon(Icons.check_box),
-        label: Text("کانفیگ های با $i گیگابایت"),
-      ));
-    }
+        );
+      },
+      icon: const Icon(Icons.tune),
+      label: const Text("انتخاب پیشرفته"),
+      ),
+    );
 
     return SizedBox(
         width: double.infinity,
