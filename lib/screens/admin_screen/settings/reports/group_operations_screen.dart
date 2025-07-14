@@ -76,50 +76,6 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
             ),
           ),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
-      ),
-    );
-  }
-
-  _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: 50.0,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          Flexible(
-            flex: 1,
-            child: ElevatedButton(
-              onPressed: () async {
-                await _submitData(context);
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppStyle.secondaryColor),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.send,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 4.0,
-                    ),
-                    Text(
-                      "ارسال پیام",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -138,7 +94,13 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                   SizedBox(width: AppStyle.defaultPadding),
                   if (_showPannelData) _usersListInfoTabCard(context),
                   if (Responsive.isMobile(context))
-                    _existConfigsListInfoCard(context)
+                    Column(
+                      children: [
+                        _operationInfoCard(context),
+                        SizedBox(width: AppStyle.defaultPadding),
+                        _existConfigsListInfoCard(context)
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -194,6 +156,34 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         icon: const Icon(Icons.remove),
         label: const Text("کاهش روز/حجم"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _submitIncOprDialog(context, opr: "dec");
+        },
+        icon: const Icon(Icons.start),
+        label: const Text("فعالسازی/غیرفعال‌سازی"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _submitIncOprDialog(context, opr: "dec");
+        },
+        icon: const Icon(Icons.delete_forever),
+        label: const Text("حذف"),
+      ));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -215,12 +205,12 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               mobile: widgetsGridview(
                   childAspectRatio: 2.9,
                   context: context,
-                  crossAxisCount: 1,
+                  crossAxisCount: 2,
                   importedList: actionsWidgetList),
               tablet: widgetsGridview(
                   context: context,
                   childAspectRatio: 2.5,
-                  crossAxisCount: 1,
+                  crossAxisCount: 2,
                   importedList: actionsWidgetList),
               desktop: widgetsGridview(
                   importedList: actionsWidgetList,
@@ -546,6 +536,45 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       icon: const Icon(Icons.clear),
       label: const Text("پاک کردن لیست"),
     ));
+    // group config by capacity
+    // اضافه کردن packageDays بدون تکرار
+    List<int> dayGroup = _usersList.map((e) => e.packageDays).toSet().toList()
+      ..sort();
+    for (var i in dayGroup) {
+      widgetList.add(ElevatedButton.icon(
+        onPressed: () {
+          Provider.of<PannelChangeController>(context, listen: false)
+              .clearConfigList();
+          for (HiddifyConfig config in _usersList) {
+            if (config.packageDays == i) {
+              Provider.of<PannelChangeController>(context, listen: false)
+                  .addNewConfig(config);
+            }
+          }
+        },
+        icon: const Icon(Icons.check_box),
+        label: Text("کانفیگ های با $i روز"),
+      ));
+    }
+    List<double> capacityGroup =
+        _usersList.map((e) => e.usageLimitGB).toSet().toList()..sort();
+    for (var i in capacityGroup) {
+      widgetList.add(ElevatedButton.icon(
+        onPressed: () {
+          Provider.of<PannelChangeController>(context, listen: false)
+              .clearConfigList();
+          for (HiddifyConfig config in _usersList) {
+            if (config.packageDays == i) {
+              Provider.of<PannelChangeController>(context, listen: false)
+                  .addNewConfig(config);
+            }
+          }
+        },
+        icon: const Icon(Icons.check_box),
+        label: Text("کانفیگ های با $i گیگابایت"),
+      ));
+    }
+
     return SizedBox(
         width: double.infinity,
         child: Responsive(
@@ -684,46 +713,6 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         );
       },
     );
-  }
-
-  _submitData(BuildContext context) async {
-    EasyLoading.show();
-
-    if (_selectedPannelName.isEmpty) {
-      EasyLoading.dismiss();
-      showMsg(msg: "لطفا یک پنل راانتخاب کنید.", context: context);
-      return;
-    }
-    int pannelID = 1;
-    if (_selectedPannelName != "") {
-      pannelID = int.parse(_selectedPannelName.split(":")[0]);
-    }
-    int selectedUserTelID = 0;
-
-    await obtainBatchOfExistProductsToUser(
-            accountID: selectedUserTelID,
-            pannelID: pannelID,
-            hiddifyConfig:
-                Provider.of<PannelChangeController>(context, listen: false)
-                    .obtinedConfigList)
-        .then((value) {
-      if (!context.mounted) return;
-
-      if (value) {
-        Provider.of<PannelChangeController>(context, listen: false)
-            .clearConfigList();
-        EasyLoading.dismiss();
-        showMsg(msg: "تغییرات با موفقیت اعمال شد.", context: context);
-        return;
-      }
-      EasyLoading.dismiss();
-      showMsg(msg: "خطا", context: context, type: "error");
-      return;
-    }).onError((e, s) {
-      if (!context.mounted) return;
-      EasyLoading.dismiss();
-      showMsg(msg: "خطا", context: context, type: "error");
-    });
   }
 }
 
