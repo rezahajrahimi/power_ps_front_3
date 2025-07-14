@@ -165,7 +165,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           ),
         ),
         onPressed: () async {
-          await _submitIncOprDialog(context, opr: "dec");
+          _showChangeActivationDialog(context);
         },
         icon: const Icon(Icons.start),
         label: const Text("فعالسازی/غیرفعال‌سازی"),
@@ -179,7 +179,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           ),
         ),
         onPressed: () async {
-          await _submitIncOprDialog(context, opr: "dec");
+          await _showDeleteDialog(context);
         },
         icon: const Icon(Icons.delete_forever),
         label: const Text("حذف"),
@@ -540,67 +540,79 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     // اضافه کردن packageDays بدون تکرار
     widgetList.add(
       ElevatedButton.icon(
-      onPressed: () {
-        showModalBottomSheet(
-          
-          context: context,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          builder: (context) {
-          List<Widget> advancedOptions = [];
-
-          List<int> dayGroup = _usersList.map((e) => e.packageDays).toSet().toList()..sort();
-          for (var i in dayGroup) {
-          advancedOptions.add(ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: Text("کانفیگ های با $i روز"),
-            onTap: () {
-            Navigator.pop(context);
-            Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
-            for (HiddifyConfig config in _usersList) {
-              if (config.packageDays == i) {
-              Provider.of<PannelChangeController>(context, listen: false).addNewConfig(config);
-              }
-            }
-            },
-          ));
-          }
-
-          List<double> capacityGroup = _usersList.map((e) => e.usageLimitGB).toSet().toList()..sort();
-          for (var i in capacityGroup) {
-          advancedOptions.add(ListTile(
-            leading: const Icon(Icons.storage),
-            title: Text("کانفیگ های با $i گیگابایت"),
-            onTap: () {
-            Navigator.pop(context);
-            // Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
-            for (HiddifyConfig config in _usersList) {
-              if (config.usageLimitGB == i) {
-              Provider.of<PannelChangeController>(context, listen: false).addNewConfig(config);
-              }
-            }
-            },
-          ));
-          }
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("انتخاب پیشرفته", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  ...advancedOptions,
-                ],
-              ),
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
+            builder: (context) {
+              List<Widget> advancedOptions = [];
+
+              List<int> dayGroup =
+                  _usersList.map((e) => e.packageDays).toSet().toList()..sort();
+              for (var i in dayGroup) {
+                advancedOptions.add(ListTile(
+                  leading: const Icon(Icons.calendar_today),
+                  title: Text("کانفیگ های با $i روز"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Provider.of<PannelChangeController>(context, listen: false)
+                        .clearConfigList();
+                    for (HiddifyConfig config in _usersList) {
+                      if (config.packageDays == i) {
+                        Provider.of<PannelChangeController>(context,
+                                listen: false)
+                            .addNewConfig(config);
+                      }
+                    }
+                  },
+                ));
+              }
+
+              List<double> capacityGroup = _usersList
+                  .map((e) => e.usageLimitGB)
+                  .toSet()
+                  .toList()
+                ..sort();
+              for (var i in capacityGroup) {
+                advancedOptions.add(ListTile(
+                  leading: const Icon(Icons.storage),
+                  title: Text("کانفیگ های با $i گیگابایت"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
+                    for (HiddifyConfig config in _usersList) {
+                      if (config.usageLimitGB == i) {
+                        Provider.of<PannelChangeController>(context,
+                                listen: false)
+                            .addNewConfig(config);
+                      }
+                    }
+                  },
+                ));
+              }
+
+              return Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text("انتخاب پیشرفته",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18)),
+                      ...advancedOptions,
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
-        );
-      },
-      icon: const Icon(Icons.tune),
-      label: const Text("انتخاب پیشرفته"),
+        icon: const Icon(Icons.tune),
+        label: const Text("انتخاب پیشرفته"),
       ),
     );
 
@@ -636,112 +648,265 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       builder: (context) {
         return Form(
           key: formKey,
-          child: AlertDialog(
-            title: opr == "inc"
-                ? Text("افزایش روز یا حجم کانفیگ های انتخابی")
-                : Text("کاهش روز یا حجم کانفیگ های انتخابی"),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.start,
-              spacing: AppStyle.defaultPadding,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: options.first,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                  decoration: InputDecoration(
-                    labelText: "یک گزینه را انتخاب کنید",
-                    border: OutlineInputBorder(),
-                  ),
-                  items: options.map((option) {
-                    return DropdownMenuItem<String>(
-                      value: option,
-                      child: Text(option),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    selectedOption = value!;
-                  },
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: opr == "inc"
+                  ? Text("افزایش روز یا حجم کانفیگ های انتخابی")
+                  : Text("کاهش روز یا حجم کانفیگ های انتخابی"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: options.first,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'یک گزینه را انتخاب کنید';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        labelText: "یک گزینه را انتخاب کنید",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: options.map((option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        selectedOption = value!;
+                      },
+                    ),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    CustomTextFromFieldWidget(
+                      controller: input,
+                      textHint: "مقدار",
+                      validationError: "مقدار را وارد کنید.",
+                      validatorType: "text",
+                      keyboardType: TextInputType.text,
+                    )
+                  ],
                 ),
-                CustomTextFromFieldWidget(
-                  controller: input,
-                  textHint: "مقدار",
-                  validationError: "مقدار را وارد کنید.",
-                  validatorType: "text",
-                  keyboardType: TextInputType.text,
-                )
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("لغو"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    String actionEn = "inc_days";
+                    switch (opr) {
+                      case "inc":
+                        actionEn =
+                            selectedOption == "روز" ? "inc_days" : "inc_vol";
+                        break;
+                      case "dec":
+                        actionEn =
+                            selectedOption == "روز" ? "dec_days" : "dec_vol";
+                        break;
+                    }
+                    int pannelID = 1;
+                    if (_selectedPannelName != "") {
+                      pannelID = int.parse(_selectedPannelName.split(":")[0]);
+                    }
+
+                    if (formKey.currentState!.validate()) {
+                      EasyLoading.show();
+                      batchExistSubscriptionJobDayOpr(
+                              action: actionEn,
+                              day: int.tryParse(input.text) ?? 0,
+                              vol: input.text,
+                              panelId: pannelID,
+                              hiddifyConfig:
+                                  Provider.of<PannelChangeController>(context,
+                                          listen: false)
+                                      .obtinedConfigList)
+                          .then((value) {
+                        EasyLoading.dismiss();
+                        if (!context.mounted) return;
+
+                        if (value == true) {
+                          showMsg(msg: "با موفقیت انجام شد", context: context);
+                        } else {
+                          showMsg(msg: "خطا", context: context, type: "error");
+                        }
+                      }).onError((e, s) {
+                        EasyLoading.dismiss();
+                        if (!context.mounted) return;
+                        debugPrint("Error: $e");
+
+                        showMsg(msg: "خطا", context: context, type: "error");
+                      });
+                    } else {
+                      showMsg(
+                          msg: "اطلاعات درخواستی را وارد کنید.",
+                          context: context);
+                    }
+                  },
+                  child: const Text("اعمال"),
+                ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text("لغو"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  String actionEn = "inc_days";
-                  switch (opr) {
-                    case "inc":
-                      actionEn =
-                          selectedOption == "روز" ? "inc_days" : "inc_vol";
-                      break;
-                    case "dec":
-                      actionEn =
-                          selectedOption == "روز" ? "dec_days" : "dec_vol";
-                      break;
-                  }
-                  int pannelID = 1;
-                  if (_selectedPannelName != "") {
-                    pannelID = int.parse(_selectedPannelName.split(":")[0]);
-                  }
-
-                  if (formKey.currentState!.validate()) {
-                    EasyLoading.show();
-                    batchExistSubscriptionJobDayOpr(
-                            action: actionEn,
-                            day: int.tryParse(input.text) ?? 0,
-                            vol: input.text,
-                            panelId: pannelID,
-                            hiddifyConfig: Provider.of<PannelChangeController>(
-                                    context,
-                                    listen: false)
-                                .obtinedConfigList)
-                        .then((value) {
-                      EasyLoading.dismiss();
-                      if (!context.mounted) return;
-
-                      if (value == true) {
-                        showMsg(msg: "با موفقیت انجام شد", context: context);
-                      } else {
-                        showMsg(msg: "خطا", context: context, type: "error");
-                      }
-                    }).onError((e, s) {
-                      EasyLoading.dismiss();
-                      if (!context.mounted) return;
-                      debugPrint("Error: $e");
-
-                      showMsg(msg: "خطا", context: context, type: "error");
-                    });
-                    // Navigator.of(context).pop();
-                  } else {
-                    showMsg(
-                        msg: "اطلاعات درخواستی را وارد کنید.",
-                        context: context);
-                  }
-                },
-                child: const Text("اعمال"),
-              ),
-            ],
           ),
         );
       },
     );
+  }
+
+  void _showChangeActivationDialog(BuildContext context) async {
+    List<String> options = ["فعال سازی", "غیر فعال سازی"];
+    String selectedOption = "فعال سازی";
+
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: Text("تغییر وضعیت کانفیگ ها"),
+              content: DropdownButtonFormField<String>(
+                value: options.first,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'یک گزینه را انتخاب کنید';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: "یک گزینه را انتخاب کنید",
+                  border: OutlineInputBorder(),
+                ),
+                items: options.map((option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  selectedOption = value!;
+                },
+              ),
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    EasyLoading.show();
+                    int pannelID = 1;
+                    if (_selectedPannelName != "") {
+                      pannelID = int.parse(_selectedPannelName.split(":")[0]);
+                    }
+                    await batchExistSubscriptionJobDayOpr(
+                            action: selectedOption == "فعال سازی"
+                                ? "active"
+                                : "deactive",
+                            day: 0,
+                            panelId: pannelID,
+                            vol: "0",
+                            hiddifyConfig: Provider.of<PannelChangeController>(
+                                    context,
+                                    listen: false)
+                                .obtinedConfigList)
+                        .then((val) {
+                      EasyLoading.dismiss();
+                      if (!context.mounted) return;
+
+                      if (val) {
+                        Navigator.pop(context);
+
+                        showMsg(msg: "انجام شد.", context: context);
+                      } else {
+                        Navigator.pop(context);
+
+                        showMsg(msg: "خطا", context: context);
+                      }
+                    }).onError((e, s) {
+                      if (!context.mounted) return;
+                      EasyLoading.dismiss();
+                      debugPrint(e.toString());
+                      showMsg(msg: "خطا", context: context);
+                      return;
+                    });
+                  },
+                  label: Text("بله"),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
+                  label: Text("خیر"),
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
+  _showDeleteDialog(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: Text("حذف کانفیگ ها"),
+              content: Text(
+                  "این عمل غیرقابل بازگشت است. آیا مطمئن هستید که می‌خواهید کانفیگ‌های انتخاب شده را حذف کنید؟"),
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    EasyLoading.show();
+                    int pannelID = 1;
+                    if (_selectedPannelName != "") {
+                      pannelID = int.parse(_selectedPannelName.split(":")[0]);
+                    }
+                    await batchExistSubscriptionJobDayOpr(
+                            action: "delete",
+                            day: 0,
+                            panelId: pannelID,
+                            vol: "0",
+                            hiddifyConfig: Provider.of<PannelChangeController>(
+                                    context,
+                                    listen: false)
+                                .obtinedConfigList)
+                        .then((val) {
+                      EasyLoading.dismiss();
+                      if (!context.mounted) return;
+
+                      if (val) {
+                        Navigator.pop(context);
+
+                        showMsg(msg: "انجام شد.", context: context);
+                      } else {
+                        Navigator.pop(context);
+
+                        showMsg(msg: "خطا", context: context);
+                      }
+                    }).onError((e, s) {
+                      if (!context.mounted) return;
+                      EasyLoading.dismiss();
+                      debugPrint(e.toString());
+                      showMsg(msg: "خطا", context: context);
+                      return;
+                    });
+                  },
+                  label: Text("بله", style: TextStyle(color: (Colors.red))),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
+                  label: Text("خیر"),
+                ),
+              ],
+            ),
+          );
+        });
   }
 }
 
