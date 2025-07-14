@@ -175,7 +175,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           ),
         ),
         onPressed: () async {
-          await _submitIncOprDialog(context);
+          await _submitIncOprDialog(context, opr: "inc");
         },
         icon: const Icon(Icons.add),
         label: const Text("افزایش روز/حجم"),
@@ -189,7 +189,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           ),
         ),
         onPressed: () async {
-          await _submitData(context);
+          await _submitIncOprDialog(context, opr: "dec");
         },
         icon: const Icon(Icons.remove),
         label: const Text("کاهش روز/حجم"),
@@ -567,7 +567,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         ));
   }
 
-  _submitIncOprDialog(BuildContext context) async {
+  _submitIncOprDialog(BuildContext context, {required String opr}) async {
     TextEditingController input = TextEditingController();
     List<String> options = ["روز", "حجم"];
     String selectedOption = "روز";
@@ -579,7 +579,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         return Form(
           key: formKey,
           child: AlertDialog(
-            title: Text("افزایش روز یا حجم کانفیگ های انتخابی"),
+            title: opr == "inc"
+                ? Text("افزایش روز یا حجم کانفیگ های انتخابی")
+                : Text("کاهش روز یا حجم کانفیگ های انتخابی"),
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.start,
@@ -625,8 +627,17 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  final actionEn =
-                      selectedOption == "روز" ? "inc_days" : "inc_vol";
+                  String actionEn = "inc_days";
+                  switch (opr) {
+                    case "inc":
+                      actionEn =
+                          selectedOption == "روز" ? "inc_days" : "inc_vol";
+                      break;
+                    case "dec":
+                      actionEn =
+                          selectedOption == "روز" ? "dec_days" : "dec_vol";
+                      break;
+                  }
                   int pannelID = 1;
                   if (_selectedPannelName != "") {
                     pannelID = int.parse(_selectedPannelName.split(":")[0]);
