@@ -13,7 +13,9 @@ class PannelChangeController extends ChangeNotifier {
   }
 
   bool addNewConfig(HiddifyConfig config) {
-    _obtinedConfigList.add(config);
+    if (!_obtinedConfigList.contains(config)) {
+      _obtinedConfigList.add(config);
+    }
     notifyListeners(); // Notify listeners of the state change
     return true;
   }

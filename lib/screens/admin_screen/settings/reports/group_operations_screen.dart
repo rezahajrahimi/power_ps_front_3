@@ -476,8 +476,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     List<Widget> widgetList = [];
     widgetList.add(ElevatedButton.icon(
       onPressed: () {
-        Provider.of<PannelChangeController>(context, listen: false)
-            .clearConfigList();
+        // Provider.of<PannelChangeController>(context, listen: false)
+        //     .clearConfigList();
         for (HiddifyConfig config in _usersList) {
           Provider.of<PannelChangeController>(context, listen: false)
               .addNewConfig(config);
@@ -488,8 +488,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     ));
     widgetList.add(ElevatedButton.icon(
       onPressed: () {
-        Provider.of<PannelChangeController>(context, listen: false)
-            .clearConfigList();
+        // Provider.of<PannelChangeController>(context, listen: false)
+        //     .clearConfigList();
         for (HiddifyConfig config in _usersList) {
           if (config.isActive == false) {
             Provider.of<PannelChangeController>(context, listen: false)
@@ -502,8 +502,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     ));
     widgetList.add(ElevatedButton.icon(
       onPressed: () {
-        Provider.of<PannelChangeController>(context, listen: false)
-            .clearConfigList();
+        // Provider.of<PannelChangeController>(context, listen: false)
+        // //     .clearConfigList();
         for (HiddifyConfig config in _usersList) {
           if (config.isActive == true) {
             Provider.of<PannelChangeController>(context, listen: false)
@@ -516,8 +516,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     ));
     widgetList.add(ElevatedButton.icon(
       onPressed: () {
-        Provider.of<PannelChangeController>(context, listen: false)
-            .clearConfigList();
+        // Provider.of<PannelChangeController>(context, listen: false)
+        //     .clearConfigList();
         for (HiddifyConfig config in _usersList) {
           if (config.currentUsageGB == 0) {
             Provider.of<PannelChangeController>(context, listen: false)
@@ -574,7 +574,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
             title: Text("کانفیگ های با $i گیگابایت"),
             onTap: () {
             Navigator.pop(context);
-            Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
+            // Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
             for (HiddifyConfig config in _usersList) {
               if (config.usageLimitGB == i) {
               Provider.of<PannelChangeController>(context, listen: false).addNewConfig(config);
