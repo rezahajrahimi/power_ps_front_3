@@ -557,8 +557,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                   title: Text("کانفیگ های با $i روز"),
                   onTap: () {
                     Navigator.pop(context);
-                    Provider.of<PannelChangeController>(context, listen: false)
-                        .clearConfigList();
+
                     for (HiddifyConfig config in _usersList) {
                       if (config.packageDays == i) {
                         Provider.of<PannelChangeController>(context,
@@ -734,6 +733,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
 
                         if (value == true) {
                           showMsg(msg: "با موفقیت انجام شد", context: context);
+                          Navigator.pop(context);
                         } else {
                           showMsg(msg: "خطا", context: context, type: "error");
                         }

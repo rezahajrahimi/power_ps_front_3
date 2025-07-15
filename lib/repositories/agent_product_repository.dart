@@ -192,8 +192,8 @@ Future batchExistSubscriptionJobDayOpr(
               "Charset": "utf-8",
               'Access-Control-Allow-Origin': '*'
             }));
-    debugPrint("response ${response.statusCode}");
-    debugPrint("status code:=>${response.statusMessage}");
+    // debugPrint("response ${response.statusCode}");
+    // debugPrint("status code:=>${response.statusMessage}");
     if (response.statusCode == 200 && response.data != null) {
       return true;
     } else if (response.statusCode == 201) {
