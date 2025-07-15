@@ -179,6 +179,34 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           ),
         ),
         onPressed: () async {
+          await _showChangeDialog(context);
+        },
+        icon: const Icon(Icons.update),
+        label: const Text("تغییر روز/حجم"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _showResetDialog(context);
+        },
+        icon: const Icon(Icons.rebase_edit),
+        label: const Text("ریست روز/حجم"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
           await _showDeleteDialog(context);
         },
         icon: const Icon(Icons.delete_forever),
@@ -896,6 +924,182 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                     });
                   },
                   label: Text("بله", style: TextStyle(color: (Colors.red))),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
+                  label: Text("خیر"),
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
+  _showChangeDialog(BuildContext context) {
+    TextEditingController input = TextEditingController();
+    List<String> options = ["روز", "حجم"];
+    String selectedOption = "روز";
+    final formKey = GlobalKey<FormState>();
+    // show dialog
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Form(
+          key: formKey,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: Text("تغییر روز یا حجم کانفیگ های انتخابی"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: options.first,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'یک گزینه را انتخاب کنید';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        labelText: "یک گزینه را انتخاب کنید",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: options.map((option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        selectedOption = value!;
+                      },
+                    ),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    CustomTextFromFieldWidget(
+                      controller: input,
+                      textHint: "مقدار",
+                      validationError: "مقدار را وارد کنید.",
+                      validatorType: "text",
+                      keyboardType: TextInputType.text,
+                    )
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("لغو"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    String actionEn =
+                        selectedOption == "روز" ? "modify_days" : "modify_vol";
+
+                    int pannelID = 1;
+                    if (_selectedPannelName != "") {
+                      pannelID = int.parse(_selectedPannelName.split(":")[0]);
+                    }
+
+                    if (formKey.currentState!.validate()) {
+                      EasyLoading.show();
+                      batchExistSubscriptionJobDayOpr(
+                              action: actionEn,
+                              day: int.tryParse(input.text) ?? 0,
+                              vol: input.text,
+                              panelId: pannelID,
+                              hiddifyConfig:
+                                  Provider.of<PannelChangeController>(context,
+                                          listen: false)
+                                      .obtinedConfigList)
+                          .then((value) {
+                        EasyLoading.dismiss();
+                        if (!context.mounted) return;
+
+                        if (value == true) {
+                          showMsg(msg: "با موفقیت انجام شد", context: context);
+                          Navigator.pop(context);
+                        } else {
+                          showMsg(msg: "خطا", context: context, type: "error");
+                        }
+                      }).onError((e, s) {
+                        EasyLoading.dismiss();
+                        if (!context.mounted) return;
+                        debugPrint("Error: $e");
+
+                        showMsg(msg: "خطا", context: context, type: "error");
+                      });
+                    } else {
+                      showMsg(
+                          msg: "اطلاعات درخواستی را وارد کنید.",
+                          context: context);
+                    }
+                  },
+                  child: const Text("اعمال"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  _showResetDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: Text("ریست کانفیگ ها"),
+              content: Text(
+                  "این عمل روز و حجم کانفیگ‌ها را به صفر باز می‌گرداند. آیا مطمئن هستید که می‌خواهید این کار را انجام دهید؟"),
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    EasyLoading.show();
+                    int pannelID = 1;
+                    if (_selectedPannelName != "") {
+                      pannelID = int.parse(_selectedPannelName.split(":")[0]);
+                    }
+                    await batchExistSubscriptionJobDayOpr(
+                            action: "reset",
+                            day: 0,
+                            panelId: pannelID,
+                            vol: "0",
+                            hiddifyConfig: Provider.of<PannelChangeController>(
+                                    context,
+                                    listen: false)
+                                .obtinedConfigList)
+                        .then((val) {
+                      EasyLoading.dismiss();
+                      if (!context.mounted) return;
+
+                      if (val) {
+                        Navigator.pop(context);
+
+                        showMsg(msg: "انجام شد.", context: context);
+                      } else {
+                        Navigator.pop(context);
+
+                        showMsg(msg: "خطا", context: context);
+                      }
+                    }).onError((e, s) {
+                      if (!context.mounted) return;
+                      EasyLoading.dismiss();
+                      debugPrint(e.toString());
+                      showMsg(msg: "خطا", context: context);
+                      return;
+                    });
+                  },
+                  label: Text("بله"),
                 ),
                 ElevatedButton.icon(
                   onPressed: () async {
