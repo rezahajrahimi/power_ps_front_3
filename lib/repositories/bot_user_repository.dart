@@ -153,6 +153,27 @@ Future getBotUserByID({required int id}) async {
     return null;
   }
 }
+Future syncUserProductsHistoryByAccountIDwithPanels({required int id}) async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/syncUserProductsHistoryByAccountIDwithPanels/$id",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data != null) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
 
 Future getProductBoughtedByProductId({required int productID}) async {
   try {

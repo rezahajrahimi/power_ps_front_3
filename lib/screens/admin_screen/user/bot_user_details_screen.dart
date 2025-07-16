@@ -199,7 +199,56 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           ),
         ),
         onPressed: () async {
-          await _showAddNewProductDialog(context);
+          showDialog(
+              context: context,
+              builder: (context) {
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    title: Text("حذف کانفیگ ها"),
+                    content: Text(
+                        "این درخواست کانفیگ های موجود در powerps را با کانفیگ های موجود در پنل شما بررسی می کنید و در صورت ناموجود بودن، آنها را حذف می کند، آیا از انجام این کار اطمینان دارید؟"),
+                    actions: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          EasyLoading.show();
+
+                          await syncUserProductsHistoryByAccountIDwithPanels(
+                                  id: widget.id.toInt())
+                              .then((val) {
+                            EasyLoading.dismiss();
+                            if (!context.mounted) return;
+
+                            if (val) {
+                              Navigator.pop(context);
+
+                              showMsg(msg: "انجام شد.", context: context);
+                            } else {
+                              Navigator.pop(context);
+
+                              showMsg(msg: "خطا", context: context);
+                            }
+                          }).onError((e, s) {
+                            if (!context.mounted) return;
+                            EasyLoading.dismiss();
+                            debugPrint(e.toString());
+                            showMsg(msg: "خطا", context: context);
+                            return;
+                          });
+                        },
+                        label:
+                            Text("بله", style: TextStyle(color: (Colors.red))),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                        },
+                        label: Text("خیر"),
+                      ),
+                    ],
+                  ),
+                );
+              });
         },
         icon: const Icon(Icons.sync),
         label: const Text("همگام سازی کانفیگ ها"),
