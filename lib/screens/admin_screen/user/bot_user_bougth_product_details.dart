@@ -170,17 +170,6 @@ class _BotUserBoughtProductDetailsScreenState
         setState(() {
           _showdata = true;
         });
-        // await checkAProductHasReservedConfigByProductId(
-        //   productID: widget.productDetails.id.toInt(),
-        // ).then((res) {
-        //   setState(() {
-        //     _hasReservetion = res;
-        //   });
-        // }).whenComplete(() {
-        //   setState(() {
-        //     _showdata = true;
-        //   });
-        // });
       });
     } catch (e) {
       debugPrint(e.toString());

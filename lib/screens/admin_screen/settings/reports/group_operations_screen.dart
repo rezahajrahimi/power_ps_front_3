@@ -57,7 +57,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "عملیات گروهی"),
+        appBar: appBarWithBackButton(
+            context: context, title: "عملیات گروهی (اکانتهای نقره ای و طلایی)"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,

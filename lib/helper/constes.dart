@@ -1,5 +1,5 @@
 const String projectName = " Power Proxy Seller ";
-const String projectVersion = "6.5.0";
+const String projectVersion = "6.6.0";
 const String projectDescription =
     "Best soloution for selling v2ray vpn by telegram with advanced tools";
 const String appLink =

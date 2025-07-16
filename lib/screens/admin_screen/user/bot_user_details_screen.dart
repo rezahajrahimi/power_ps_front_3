@@ -199,6 +199,34 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           ),
         ),
         onPressed: () async {
+          await _showAddNewProductDialog(context);
+        },
+        icon: const Icon(Icons.sync),
+        label: const Text("همگام سازی کانفیگ ها"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          await _showAddNewProductDialog(context);
+        },
+        icon: const Icon(Icons.send),
+        label: const Text("ارسال پیام به کاربر"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
           if (_showBlockedUser) {
             if (!context.mounted) return;
             // show a toooltip that show the reason, if be blocked
@@ -215,7 +243,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                         await unblockUser(_botUser!.accountId.toString())
                             .then((value) {
                           if (value) {
-                            if(!context.mounted) return;
+                            if (!context.mounted) return;
                             EasyLoading.dismiss();
                             Navigator.of(context).pop();
                             setStateIfMounted(() {
@@ -289,7 +317,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               await blockUser(_botUser!.accountId.toString(), reason)
                   .then((value) {
                 if (value) {
-                  if(!context.mounted) return;
+                  if (!context.mounted) return;
                   EasyLoading.dismiss();
                   setStateIfMounted(() {
                     _showData = false;
@@ -1050,8 +1078,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                             ballance: double.parse(_ballanceController.text),
                             userID: _botUser!.id.toInt(),
                             type: type,
-                            isRequestByAdmin: true
-                            )
+                            isRequestByAdmin: true)
                         .then((value) {
                       if (!context.mounted) return;
                       if (value.toString() != "false" &&
