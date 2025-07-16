@@ -79,6 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _fillData() async {
     await getBotSetting().then((value) {
+      if (!mounted) return;
       if (null != value) {
         setState(() {
           _setting = value;
@@ -97,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     });
     await getBotAdvancedSetting().then((value) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       if (value.isNotEmpty && value != null) {
         for (var item in value) {
           _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
