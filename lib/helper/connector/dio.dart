@@ -18,7 +18,7 @@ class GenaralApi {
       return status! < 500;
     },
     connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 300),
   );
   static Dio dio = Dio(_baseOptions);
 

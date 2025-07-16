@@ -262,8 +262,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           ),
         ),
         onPressed: () async {
-          final message = TextEditingController();          
-            showDialog(
+          final message = TextEditingController();
+          showDialog(
               context: context,
               builder: (context) {
                 return Directionality(
@@ -274,51 +274,46 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                       spacing: 8,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                        "متن پیام را وارد کنید."),
+                        Text("متن پیام را وارد کنید."),
                         TextField(
                           controller: message,
                           maxLength: 400,
                           maxLines: 5,
                           textDirection: TextDirection.rtl,
-                          
                         )
-
-                        
                       ],
                     ),
                     actions: [
                       ElevatedButton.icon(
-                        onPressed: () async {
-                          EasyLoading.show();
-                          debugPrint(message.text);
+                          onPressed: () async {
+                            EasyLoading.show();
+                            debugPrint(message.text);
 
-                          // await syncUserProductsHistoryByAccountIDwithPanels(
-                          //         id: widget.id.toInt())
-                          //     .then((val) {
-                          //   EasyLoading.dismiss();
-                          //   if (!context.mounted) return;
+                            await sendAdminMessageToUser(
+                                    userID: widget.id.toInt(),
+                                    message: message.text)
+                                .then((val) {
+                              EasyLoading.dismiss();
+                              if (!context.mounted) return;
 
-                          //   if (val) {
-                          //     Navigator.pop(context);
+                              if (val) {
+                                Navigator.pop(context);
 
-                          //     showMsg(msg: "انجام شد.", context: context);
-                          //   } else {
-                          //     Navigator.pop(context);
+                                showMsg(msg: "انجام شد.", context: context);
+                              } else {
+                                Navigator.pop(context);
 
-                          //     showMsg(msg: "خطا", context: context);
-                          //   }
-                          // }).onError((e, s) {
-                          //   if (!context.mounted) return;
-                          //   EasyLoading.dismiss();
-                          //   debugPrint(e.toString());
-                          //   showMsg(msg: "خطا", context: context);
-                          //   return;
-                          // });
-                        },
-                        label:
-                            Text("ارسال")
-                      ),
+                                showMsg(msg: "خطا", context: context);
+                              }
+                            }).onError((e, s) {
+                              if (!context.mounted) return;
+                              EasyLoading.dismiss();
+                              debugPrint(e.toString());
+                              showMsg(msg: "خطا", context: context);
+                              return;
+                            });
+                          },
+                          label: Text("ارسال")),
                       ElevatedButton.icon(
                         onPressed: () async {
                           Navigator.pop(context);

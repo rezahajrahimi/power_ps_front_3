@@ -153,9 +153,12 @@ Future getBotUserByID({required int id}) async {
     return null;
   }
 }
-Future syncUserProductsHistoryByAccountIDwithPanels({required int id}) async {
+
+Future sendAdminMessageToUser(
+    {required int userID, required String message}) async {
   try {
-    Response response = await GenaralApi.dio.get("/api/syncUserProductsHistoryByAccountIDwithPanels/$id",
+    Response response = await GenaralApi.dio.post("/api/sendAdminMessageToUser",
+        data: {"userID": userID, "message": message},
         options: Options(headers: {
           'Accept': 'application/json',
           'Connection': 'keep-alive',
@@ -163,6 +166,29 @@ Future syncUserProductsHistoryByAccountIDwithPanels({required int id}) async {
           "Charset": "utf-8",
           'Access-Control-Allow-Origin': '*'
         }));
+
+    if (response.statusCode == 200) {
+      return true;
+    }  else {
+      return false;
+    }
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future syncUserProductsHistoryByAccountIDwithPanels({required int id}) async {
+  try {
+    Response response = await GenaralApi.dio
+        .get("/api/syncUserProductsHistoryByAccountIDwithPanels/$id",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
 
     if (response.statusCode == 200 && response.data != null) {
       return true;
