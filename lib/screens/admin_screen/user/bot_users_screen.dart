@@ -4,6 +4,7 @@ import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:pagination_flutter/pagination.dart';
+import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/users/bot_users_info_card_widget.dart';
 
 class BotUsersScreen extends StatefulWidget {
@@ -161,6 +162,7 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
                           flex: 2,
                           child: Column(
                             children: [
+                              _operationInfoCard(context),
                               SizedBox(height: AppStyle.defaultPadding),
                             ],
                           ),
@@ -173,6 +175,79 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
           ],
         )
       ],
+    );
+  }
+
+  _operationInfoCard(BuildContext context) {
+    List<Widget> operationWidgetList = [];
+    setState(() {
+      operationWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          // await _submitIncOprDialog(context, opr: "inc");
+        },
+        icon: const Icon(Icons.send),
+        label: const Text("ارسال پیام به تمام کاربران"),
+      ));
+      operationWidgetList.add(Tooltip(
+        message: "ارسال پیام به تمام کاربرانی که هیچ بسته فعالی ندارند.",
+          child: ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          // await _submitIncOprDialog(context, opr: "inc");
+        },
+        icon: const Icon(Icons.send),
+        label: const Text("ارسال پیام به کاربران فاقد بسته"),
+      )));
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "عملیات گروهی",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  crossAxisCount: 2,
+                  importedList: operationWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 2,
+                  importedList: operationWidgetList),
+              desktop: widgetsGridview(
+                  importedList: operationWidgetList,
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

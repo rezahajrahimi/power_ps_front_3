@@ -287,8 +287,6 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                       ElevatedButton.icon(
                           onPressed: () async {
                             EasyLoading.show();
-                            debugPrint(message.text);
-
                             await sendAdminMessageToUser(
                                     userID: widget.id.toInt(),
                                     message: message.text)
