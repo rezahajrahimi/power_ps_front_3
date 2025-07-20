@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
@@ -190,27 +191,196 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
           ),
         ),
         onPressed: () async {
-          // await _submitIncOprDialog(context, opr: "inc");
+          final message = TextEditingController();
+          showDialog(
+              context: context,
+              builder: (context) {
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    title: Text("ارسال پیام به تمامی کاربران"),
+                    content: Column(
+                      spacing: 8,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("متن پیام را وارد کنید."),
+                        TextField(
+                          controller: message,
+                          maxLength: 400,
+                          maxLines: 5,
+                          textDirection: TextDirection.rtl,
+                        )
+                      ],
+                    ),
+                    actions: [
+                      ElevatedButton.icon(
+                          onPressed: () async {
+                            EasyLoading.show();
+                            await sendAdminMessageToAllUsers(
+                                    message: message.text)
+                                .then((val) {
+                              EasyLoading.dismiss();
+                              if (!context.mounted) return;
+
+                              if (val) {
+                                Navigator.pop(context);
+
+                                showMsg(msg: "انجام شد.", context: context);
+                              } else {
+                                Navigator.pop(context);
+
+                                showMsg(msg: "خطا", context: context);
+                              }
+                            }).onError((e, s) {
+                              if (!context.mounted) return;
+                              EasyLoading.dismiss();
+                              debugPrint(e.toString());
+                              showMsg(msg: "خطا", context: context);
+                              return;
+                            });
+                          },
+                          label: Text("ارسال")),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                        },
+                        label: Text("لغو"),
+                      ),
+                    ],
+                  ),
+                );
+              });
         },
         icon: const Icon(Icons.send),
         label: const Text("ارسال پیام به تمام کاربران"),
       ));
       operationWidgetList.add(Tooltip(
-        message: "ارسال پیام به تمام کاربرانی که هیچ بسته فعالی ندارند.",
+          message: "ارسال پیام به تمام کاربرانی که هیچ بسته فعالی ندارند.",
           child: ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          // await _submitIncOprDialog(context, opr: "inc");
-        },
-        icon: const Icon(Icons.send),
-        label: const Text("ارسال پیام به کاربران فاقد بسته"),
-      )));
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppStyle.defaultPadding * 1.5,
+                vertical: AppStyle.defaultPadding /
+                    (Responsive.isMobile(context) ? 2 : 1),
+              ),
+            ),
+            onPressed: () async {
+              final message = TextEditingController();
+          showDialog(
+              context: context,
+              builder: (context) {
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    title: Text("ارسال پیام به تمام کاربرانی که هیچ بسته فعالی ندارند"),
+                    content: Column(
+                      spacing: 8,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("متن پیام را وارد کنید."),
+                        TextField(
+                          controller: message,
+                          maxLength: 400,
+                          maxLines: 5,
+                          textDirection: TextDirection.rtl,
+                        )
+                      ],
+                    ),
+                    actions: [
+                      ElevatedButton.icon(
+                          onPressed: () async {
+                            EasyLoading.show();
+                            await sendAdminMessageToAllUsersWithoutConfigs(
+                                    message: message.text)
+                                .then((val) {
+                              EasyLoading.dismiss();
+                              if (!context.mounted) return;
+
+                              if (val) {
+                                Navigator.pop(context);
+
+                                showMsg(msg: "انجام شد.", context: context);
+                              } else {
+                                Navigator.pop(context);
+
+                                showMsg(msg: "خطا", context: context);
+                              }
+                            }).onError((e, s) {
+                              if (!context.mounted) return;
+                              EasyLoading.dismiss();
+                              debugPrint(e.toString());
+                              showMsg(msg: "خطا", context: context);
+                              return;
+                            });
+                          },
+                          label: Text("ارسال")),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                        },
+                        label: Text("لغو"),
+                      ),
+                    ],
+                  ),
+                );
+              });
+            },
+            icon: const Icon(Icons.send),
+            label: const Text("ارسال پیام به کاربران فاقد بسته"),
+          )));
+      operationWidgetList.add(Tooltip(
+          message:
+              "ارسال پیام به تمام کاربرانی که موجودی کیف پول ریالی آنها صفر است.",
+          child: ElevatedButton.icon(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppStyle.defaultPadding * 1.5,
+                vertical: AppStyle.defaultPadding /
+                    (Responsive.isMobile(context) ? 2 : 1),
+              ),
+            ),
+            onPressed: () async {
+              // await _submitIncOprDialog(context, opr: "inc");
+            },
+            icon: const Icon(Icons.send),
+            label: const Text("ارسال پیام به کاربران دارای موجودی صفر"),
+          )));
+      operationWidgetList.add(Tooltip(
+          message: "میزان موجودی کیف کاربران را به مقدار دلخواه افزایش بدهید.",
+          child: ElevatedButton.icon(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppStyle.defaultPadding * 1.5,
+                vertical: AppStyle.defaultPadding /
+                    (Responsive.isMobile(context) ? 2 : 1),
+              ),
+            ),
+            onPressed: () async {
+              // await _submitIncOprDialog(context, opr: "inc");
+            },
+            icon: const Icon(Icons.wallet),
+            label: const Text("افزایش کیف پول تمام کاربران"),
+          )));
+      operationWidgetList.add(Tooltip(
+          message:
+              "حذف تمامی کاربران عضو شده در ربات همراه با کانفیگ های خریداری شده.",
+          child: ElevatedButton.icon(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppStyle.defaultPadding * 1.5,
+                vertical: AppStyle.defaultPadding /
+                    (Responsive.isMobile(context) ? 2 : 1),
+              ),
+            ),
+            onPressed: () async {
+              // await _submitIncOprDialog(context, opr: "inc");
+            },
+            icon: const Icon(
+              Icons.delete_forever,
+              color: Colors.red,
+            ),
+            label: const Text("حذف تمام کاربران"),
+          )));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -222,7 +392,7 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "عملیات گروهی",
+            "عملیات گروهی (اکانت طلایی و نقره ای)",
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: AppStyle.defaultPadding),

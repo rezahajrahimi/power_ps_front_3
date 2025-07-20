@@ -267,6 +267,9 @@ class _BotUserBoughtProductDetailsScreenState
   }
 
   _hiddifyConfigCardData(BuildContext context) {
+    if (_hiddifyInfo == null) {
+    return const SizedBox(); // or a loading indicator
+  }
     final Size size = MediaQuery.of(context).size;
 
     List<Widget> pannelWidgetList = [];

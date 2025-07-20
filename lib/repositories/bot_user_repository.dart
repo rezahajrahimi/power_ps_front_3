@@ -177,6 +177,52 @@ Future sendAdminMessageToUser(
     return null;
   }
 }
+Future sendAdminMessageToAllUsers(
+    {required String message}) async {
+  try {
+    Response response = await GenaralApi.dio.post("/api/sendAdminMessageToAllUsers",
+        data: {"message": message},
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200) {
+      return true;
+    }  else {
+      return false;
+    }
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+Future sendAdminMessageToAllUsersWithoutConfigs(
+    {required String message}) async {
+  try {
+    Response response = await GenaralApi.dio.post("/api/sendAdminMessageToAllUsersWithoutConfigs",
+        data: {"message": message},
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200) {
+      return true;
+    }  else {
+      return false;
+    }
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
 
 Future syncUserProductsHistoryByAccountIDwithPanels({required int id}) async {
   try {
