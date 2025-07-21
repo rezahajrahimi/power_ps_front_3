@@ -526,13 +526,57 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
             ),
           ),
           onPressed: () async {
-            // await _submitIncOprDialog(context, opr: "inc");
+            EasyLoading.show();
+              setState(() {
+                _lastPage = 1;
+                _showData = false;
+              });
+
+            await getUsersWithZeroConfigs().then((val) {
+            }).whenComplete(() {
+              setState(() {
+                _showData = true;
+              });
+            }).onError((e, s) {
+              debugPrint(e.toString());
+            });
+            EasyLoading.dismiss();
           },
-          icon: const Icon(Icons.wallet),
+          icon: const Icon(Icons.filter_alt),
           label: const Text("کاربران فاقد اکانت"),
         )));
     operationWidgetList.add(Tooltip(
-        message: "کاربران فاقد اکانت",
+        message: "کاربرانی که موجودی کیف پول آنها صفر یا منفی می باشد.",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+             EasyLoading.show();
+              setState(() {
+                _lastPage = 1;
+                _showData = false;
+              });
+
+            await getUsersWithZeroBallance().then((val) {
+            }).whenComplete(() {
+              setState(() {
+                _showData = true;
+              });
+            }).onError((e, s) {
+              debugPrint(e.toString());
+            });
+            EasyLoading.dismiss();
+          },
+          icon: const Icon(Icons.wallet),
+          label: const Text("کاربران با موجودی کیف پول منفی یا صفر"),
+        )));
+    operationWidgetList.add(Tooltip(
+        message: "دستیاران فروش",
         child: ElevatedButton.icon(
           style: TextButton.styleFrom(
             padding: EdgeInsets.symmetric(
@@ -544,8 +588,8 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
           onPressed: () async {
             // await _submitIncOprDialog(context, opr: "inc");
           },
-          icon: const Icon(Icons.wallet),
-          label: const Text("کاربران فاقد اکانت"),
+          icon: const Icon(Icons.support_agent),
+          label: const Text("دستیاران فروش"),
         )));
 
     return Container(
