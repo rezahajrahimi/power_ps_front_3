@@ -88,6 +88,7 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
                         flex: 5,
                         child: Column(
                           children: [
+                            __filtersCardWidget(context),
                             BotUsersInfoCardWidget(
                               title: "کاربران",
                               botUsers: botUserList,
@@ -266,64 +267,65 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
             ),
             onPressed: () async {
               final message = TextEditingController();
-          showDialog(
-              context: context,
-              builder: (context) {
-                return Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: AlertDialog(
-                    title: Text("ارسال پیام به تمام کاربرانی که هیچ بسته فعالی ندارند"),
-                    content: Column(
-                      spacing: 8,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text("متن پیام را وارد کنید."),
-                        TextField(
-                          controller: message,
-                          maxLength: 400,
-                          maxLines: 5,
-                          textDirection: TextDirection.rtl,
-                        )
-                      ],
-                    ),
-                    actions: [
-                      ElevatedButton.icon(
-                          onPressed: () async {
-                            EasyLoading.show();
-                            await sendAdminMessageToAllUsersWithoutConfigs(
-                                    message: message.text)
-                                .then((val) {
-                              EasyLoading.dismiss();
-                              if (!context.mounted) return;
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: AlertDialog(
+                        title: Text(
+                            "ارسال پیام به تمام کاربرانی که هیچ بسته فعالی ندارند"),
+                        content: Column(
+                          spacing: 8,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text("متن پیام را وارد کنید."),
+                            TextField(
+                              controller: message,
+                              maxLength: 400,
+                              maxLines: 5,
+                              textDirection: TextDirection.rtl,
+                            )
+                          ],
+                        ),
+                        actions: [
+                          ElevatedButton.icon(
+                              onPressed: () async {
+                                EasyLoading.show();
+                                await sendAdminMessageToAllUsersWithoutConfigs(
+                                        message: message.text)
+                                    .then((val) {
+                                  EasyLoading.dismiss();
+                                  if (!context.mounted) return;
 
-                              if (val) {
-                                Navigator.pop(context);
+                                  if (val) {
+                                    Navigator.pop(context);
 
-                                showMsg(msg: "انجام شد.", context: context);
-                              } else {
-                                Navigator.pop(context);
+                                    showMsg(msg: "انجام شد.", context: context);
+                                  } else {
+                                    Navigator.pop(context);
 
-                                showMsg(msg: "خطا", context: context);
-                              }
-                            }).onError((e, s) {
-                              if (!context.mounted) return;
-                              EasyLoading.dismiss();
-                              debugPrint(e.toString());
-                              showMsg(msg: "خطا", context: context);
-                              return;
-                            });
-                          },
-                          label: Text("ارسال")),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                        },
-                        label: Text("لغو"),
+                                    showMsg(msg: "خطا", context: context);
+                                  }
+                                }).onError((e, s) {
+                                  if (!context.mounted) return;
+                                  EasyLoading.dismiss();
+                                  debugPrint(e.toString());
+                                  showMsg(msg: "خطا", context: context);
+                                  return;
+                                });
+                              },
+                              label: Text("ارسال")),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                            },
+                            label: Text("لغو"),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              });
+                    );
+                  });
             },
             icon: const Icon(Icons.send),
             label: const Text("ارسال پیام به کاربران فاقد بسته"),
@@ -414,6 +416,170 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
                   context: context,
                   childAspectRatio: 2.5,
                   crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  __filtersCardWidget(BuildContext context) {
+    List<Widget> operationWidgetList = [];
+    operationWidgetList.add(Tooltip(
+        message: "10 کاربر آخر",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+            EasyLoading.show();
+              setState(() {
+                _lastPage = 1;
+                _showData = false;
+              });
+
+            await getLast10BotUser().then((val) {
+            }).whenComplete(() {
+              setState(() {
+                _showData = true;
+              });
+            }).onError((e, s) {
+              debugPrint(e.toString());
+            });
+            EasyLoading.dismiss();
+          },
+          icon: const Icon(Icons.filter_alt),
+          label: const Text("10 کاربر آخر"),
+        )));
+    operationWidgetList.add(Tooltip(
+        message: "ثبت نام در هفته گذشته",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+            EasyLoading.show();
+              setState(() {
+                _lastPage = 1;
+                _showData = false;
+              });
+
+            await getUsersByPastDays(days: 7).then((val) {
+            }).whenComplete(() {
+              setState(() {
+                _showData = true;
+              });
+            }).onError((e, s) {
+              debugPrint(e.toString());
+            });
+            EasyLoading.dismiss();
+          },
+          icon: const Icon(Icons.wallet),
+          label: const Text("هفته گذشته"),
+        )));
+    operationWidgetList.add(Tooltip(
+        message: "ماه گذشته",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+            EasyLoading.show();
+              setState(() {
+                _lastPage = 1;
+                _showData = false;
+              });
+
+            await getUsersByPastDays(days: 30).then((val) {
+            }).whenComplete(() {
+              setState(() {
+                _showData = true;
+              });
+            }).onError((e, s) {
+              debugPrint(e.toString());
+            });
+            EasyLoading.dismiss();
+          },
+          icon: const Icon(Icons.wallet),
+          label: const Text("ماه گذشته"),
+        )));
+    operationWidgetList.add(Tooltip(
+        message: "کاربران فاقد اکانت",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+            // await _submitIncOprDialog(context, opr: "inc");
+          },
+          icon: const Icon(Icons.wallet),
+          label: const Text("کاربران فاقد اکانت"),
+        )));
+    operationWidgetList.add(Tooltip(
+        message: "کاربران فاقد اکانت",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+            // await _submitIncOprDialog(context, opr: "inc");
+          },
+          icon: const Icon(Icons.wallet),
+          label: const Text("کاربران فاقد اکانت"),
+        )));
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "فیلتر کاربران",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  crossAxisCount: 2,
+                  importedList: operationWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 2,
+                  importedList: operationWidgetList),
+              desktop: widgetsGridview(
+                  importedList: operationWidgetList,
+                  context: context,
+                  childAspectRatio: 2.5,
+                  crossAxisCount: 6),
             ),
           ),
         ],
