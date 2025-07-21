@@ -163,6 +163,33 @@ Future getUsersWithZeroBallance() async {
     return null;
   }
 }
+Future getAgentRoleBotUsers() async {
+  try {
+    Response response =
+        await GenaralApi.dio.get("/api/getAgentRoleBotUsers",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
+
+    if (response.statusCode == 200) {
+
+      botUserList.clear();
+      for (var i in response.data) {
+        botUserList.add(BotUser.fromJson(i));
+      }
+      return botUserList;
+    }  else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
 
 Future getBotUserList() async {
   try {

@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
+import 'package:powerps/repositories/panel_user_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:pagination_flutter/pagination.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -586,7 +587,21 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
             ),
           ),
           onPressed: () async {
-            // await _submitIncOprDialog(context, opr: "inc");
+             EasyLoading.show();
+              setState(() {
+                _lastPage = 1;
+                _showData = false;
+              });
+
+            await getAgentRoleBotUsers().then((val) {
+            }).whenComplete(() {
+              setState(() {
+                _showData = true;
+              });
+            }).onError((e, s) {
+              debugPrint(e.toString());
+            });
+            EasyLoading.dismiss();
           },
           icon: const Icon(Icons.support_agent),
           label: const Text("دستیاران فروش"),
