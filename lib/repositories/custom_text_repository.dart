@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/custom_text_model.dart';
 
@@ -30,9 +29,6 @@ Future<CustomTextModel> getCustomText(String key) async {
 
 Future<bool> updateCustomText(
     {required String key, required String text}) async {
-  debugPrint("updateCustomText: $key, $text");
-  // Route::post('/set-text/{key}/{text}', [CustomTextController::class, 'setText']);
-
   Response response = await GenaralApi.dio.post("/api/set-text", data: {
     "key": key,
     "text": text,

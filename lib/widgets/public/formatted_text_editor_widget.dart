@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/repositories/custom_text_repository.dart'
@@ -173,11 +175,11 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
     return url;
   }
 
-  void _addBlock(Map<String, dynamic> block) {
-    setState(() {
-      _blocks.add(block);
-    });
-  }
+  // void _addBlock(Map<String, dynamic> block) {
+  //   setState(() {
+  //     _blocks.add(block);
+  //   });
+  // }
 
   String _blocksToDisplayText() {
     // فقط برای نمایش ساده، می‌توانید این را با توجه به نیاز خود تغییر دهید
