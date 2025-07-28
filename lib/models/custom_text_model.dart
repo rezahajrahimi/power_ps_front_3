@@ -2,6 +2,23 @@
 import 'dart:convert';
 
 class CustomTextModel {
+  /// تبدیل لیست بلاک‌ها به رشته JSON
+  static String encodeJsonBlocks(List<Map<String, dynamic>> blocks) {
+    return json.encode(blocks);
+  }
+
+  /// تبدیل رشته JSON به لیست بلاک‌ها
+  static List<Map<String, dynamic>> decodeJsonBlocks(String text) {
+    final decoded = json.decode(text);
+    if (decoded is List) {
+      return List<Map<String, dynamic>>.from(
+        decoded.map((e) => Map<String, dynamic>.from(e)),
+      );
+    } else {
+      throw FormatException('JSON is not a List');
+    }
+  }
+
   BigInt id;
   String defaultText;
   String key;
@@ -154,7 +171,10 @@ class CustomTextModel {
 
         // اگر متن قبل از الگو وجود دارد، آن را به عنوان متن ساده اضافه می‌کنیم
         if (firstMatch != null && firstMatch.start > 0) {
-          blocks.add({'type': 'text', 'text': remainingText.substring(0, firstMatch.start)});
+          blocks.add({
+            'type': 'text',
+            'text': remainingText.substring(0, firstMatch.start)
+          });
         }
 
         if (firstMatch != null) {
@@ -166,8 +186,12 @@ class CustomTextModel {
               blocks.add({'type': 'italic', 'text': firstMatch.group(1)!});
               break;
             case 'link':
-              blocks.add({'type': 'link', 'text': firstMatch.group(1)!, 'url': firstMatch.group(2)!});
-              break ;
+              blocks.add({
+                'type': 'link',
+                'text': firstMatch.group(1)!,
+                'url': firstMatch.group(2)!
+              });
+              break;
             case 'code':
               blocks.add({'type': 'code', 'text': firstMatch.group(1)!});
               break;

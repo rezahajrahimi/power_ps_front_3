@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/repositories/custom_text_repository.dart'
     as custom_text_repository;
 import 'package:powerps/styles/app_theme.dart';
+import 'dart:convert';
 import '../../models/custom_text_model.dart';
 
 class FormattedTextEditorWidget extends StatefulWidget {
@@ -26,83 +27,123 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
   late TextEditingController _controller;
   late bool _isJsonFormat;
   late CustomTextModel _customTextModel;
+  List<Map<String, dynamic>> _blocks = [];
 
   @override
   void initState() {
     super.initState();
-    _isJsonFormat = widget.isJsonFormat;
+    _isJsonFormat = true;
+    _customTextModel = widget.customTextModel;
     String initialText = widget.customTextModel.customText.isNotEmpty
         ? widget.customTextModel.customText
         : widget.customTextModel.defaultText;
-    _customTextModel = widget.customTextModel;
 
-    // اضافه کردن تشخیص خودکار فرمت JSON
-    if (initialText.startsWith('[') && initialText.endsWith(']')) {
+    // اگر داده JSON است، پارس کن و در _blocks بریز
+    if (initialText.trim().startsWith('[') &&
+        initialText.trim().endsWith(']')) {
       try {
-        initialText = CustomTextModel(
-          id: BigInt.from(0),
-          defaultText: '',
-          key: _customTextModel.key,
-          customText: initialText,
-          description: _customTextModel.description,
-        ).parseFormattedText({});
-        _isJsonFormat = false;
+        _blocks = List<Map<String, dynamic>>.from(
+            (CustomTextModel.decodeJsonBlocks(initialText)));
+        _controller = TextEditingController(text: _blocksToDisplayText());
       } catch (e) {
-        // در صورت خطا، متن اصلی را نمایش می‌دهیم
         debugPrint('Error parsing JSON: $e');
+        _blocks = [];
+        _controller = TextEditingController(text: initialText);
       }
+    } else {
+      // اگر متن ساده است، یک بلاک متنی بساز
+      _blocks = [
+        {'type': 'text', 'text': initialText}
+      ];
+      _controller = TextEditingController(text: initialText);
     }
-
-    _controller = TextEditingController(text: initialText);
   }
 
-  void _formatSelection(String type) {
+  void _formatSelection(String type) async {
     final TextSelection selection = _controller.selection;
-    if (!selection.isValid) return;
+    String selectedText = selection.isValid
+        ? _controller.text.substring(selection.start, selection.end)
+        : '';
 
-    String selectedText = _controller.text.substring(
-      selection.start,
-      selection.end,
-    );
-    String newText;
+    if (selection.isValid && selectedText.isNotEmpty) {
+      // متن قبل، انتخاب‌شده و بعد را جدا کن
+      String before = _controller.text.substring(0, selection.start);
+      String after = _controller.text.substring(selection.end);
 
-    switch (type) {
-      case 'bold':
-        newText = '**$selectedText**';
-        break;
-      case 'italic':
-        newText = '*$selectedText*';
-        break;
-      case 'code':
-        newText = '`$selectedText`';
-        break;
-      case 'link':
-        _showLinkDialog(selectedText);
-        return;
-      case 'newLine':
-        newText = '\n';
-        break;
-      default:
-        return;
+      // بلاک جدید با استایل مناسب بساز
+      Map<String, dynamic> newBlock;
+      switch (type) {
+        case 'bold':
+          newBlock = {'type': 'bold', 'text': selectedText};
+          break;
+        case 'italic':
+          newBlock = {'type': 'italic', 'text': selectedText};
+          break;
+        case 'code':
+          newBlock = {'type': 'code', 'text': selectedText};
+          break;
+        case 'link':
+          String url = await _showLinkDialog(selectedText);
+          if (url.isEmpty) return;
+          newBlock = {'type': 'link', 'text': selectedText, 'url': url};
+          break;
+        case 'newLine':
+          newBlock = {'type': 'newline'};
+          break;
+        default:
+          return;
+      }
+
+      // بلاک‌های جدید را بساز
+      List<Map<String, dynamic>> newBlocks = [];
+      if (before.isNotEmpty) newBlocks.add({'type': 'text', 'text': before});
+      newBlocks.add(newBlock);
+      if (after.isNotEmpty) newBlocks.add({'type': 'text', 'text': after});
+
+      setState(() {
+        _blocks = newBlocks;
+        _controller.text = _blocksToDisplayText();
+        // کرسر را بعد از بلاک جدید قرار بده
+        int cursorPos =
+            before.length + _blocksToDisplayText().length - after.length;
+        _controller.selection = TextSelection.collapsed(offset: cursorPos);
+      });
+      widget.onTextChanged(_controller.text);
+    } else {
+      // اگر متنی انتخاب نشده بود، بلاک جدید به انتها اضافه شود
+      Map<String, dynamic> newBlock;
+      switch (type) {
+        case 'bold':
+          newBlock = {'type': 'bold', 'text': 'متن پررنگ'};
+          break;
+        case 'italic':
+          newBlock = {'type': 'italic', 'text': 'متن مورب'};
+          break;
+        case 'code':
+          newBlock = {'type': 'code', 'text': 'کد'};
+          break;
+        case 'link':
+          String url = await _showLinkDialog('لینک');
+          if (url.isEmpty) return;
+          newBlock = {'type': 'link', 'text': 'لینک', 'url': url};
+          break;
+        case 'newLine':
+          newBlock = {'type': 'newline'};
+          break;
+        default:
+          return;
+      }
+      setState(() {
+        _blocks.add(newBlock);
+        _controller.text = _blocksToDisplayText();
+        _controller.selection =
+            TextSelection.collapsed(offset: _controller.text.length);
+      });
+      widget.onTextChanged(_controller.text);
     }
-
-    final int cursorPosition = selection.start;
-    _controller.text = _controller.text.replaceRange(
-      selection.start,
-      selection.end,
-      newText,
-    );
-
-    // تنظیم موقعیت کرسر بعد از فرمت‌گذاری
-    _controller.selection = TextSelection(
-      baseOffset: cursorPosition,
-      extentOffset: cursorPosition + newText.length,
-    );
-
-    widget.onTextChanged(_controller.text);
   }
 
-  Future<void> _showLinkDialog(String selectedText) async {
+  Future<String> _showLinkDialog(String selectedText) async {
     String url = '';
     await showDialog(
       context: context,
@@ -123,58 +164,41 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              final String newText = '[$selectedText]($url)';
-              final TextSelection selection = _controller.selection;
-              _controller.text = _controller.text.replaceRange(
-                selection.start,
-                selection.end,
-                newText,
-              );
-              widget.onTextChanged(_controller.text);
             },
             child: const Text('تایید'),
           ),
         ],
       ),
     );
+    return url;
   }
 
-  // void _toggleFormat() {
-  //   setState(() {
-  //     if (_isJsonFormat) {
-  //       // تبدیل JSON به مارک‌داون
-  //       try {
-  //         final String markdownText = CustomTextModel(
-  //           id: BigInt.from(0),
-  //           defaultText: _customTextModel.defaultText,
-  //           key: _customTextModel.key,
-  //           customText: _controller.text,
-  //           description: _customTextModel.description,
-  //         ).parseFormattedText({});
-  //         _controller.text = markdownText;
-  //       } catch (e) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           const SnackBar(content: Text('خطا در تبدیل فرمت JSON')),
-  //         );
-  //         return;
-  //       }
-  //     } else {
-  //       // تبدیل مارک‌داون به JSON
-  //       try {
-  //         final String jsonText =
-  //             CustomTextModel.convertMarkdownToJsonText(_controller.text);
-  //         _controller.text = jsonText;
-  //       } catch (e) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           const SnackBar(content: Text('خطا در تبدیل فرمت مارک‌داون')),
-  //         );
-  //         return;
-  //       }
-  //     }
-  //     _isJsonFormat = !_isJsonFormat;
-  //     widget.onTextChanged(_controller.text);
-  //   });
-  // }
+  void _addBlock(Map<String, dynamic> block) {
+    setState(() {
+      _blocks.add(block);
+    });
+  }
+
+  String _blocksToDisplayText() {
+    // فقط برای نمایش ساده، می‌توانید این را با توجه به نیاز خود تغییر دهید
+    return _blocks.map((b) {
+      switch (b['type']) {
+        case 'bold':
+          return ' **${b['text'] ?? ''}** ';
+        case 'italic':
+          return ' *${b['text'] ?? ''}* ';
+        case 'code':
+          return ' `${b['text'] ?? ''}` ';
+        case 'link':
+          return ' [${b['text'] ?? ''}](${b['url'] ?? ''}) ';
+        case 'newline':
+          return '\n';
+        case 'text':
+        default:
+          return b['text'] ?? '';
+      }
+    }).join('');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,9 +215,11 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
       child: Column(
         children: [
           Center(
-            child: Text(widget.customTextModel.key,style: AppStyle.thirdTitleStyle,),
+            child: Text(
+              widget.customTextModel.key,
+              style: AppStyle.thirdTitleStyle,
+            ),
           ),
-      
           Row(
             children: [
               IconButton(
@@ -269,19 +295,18 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
   }
 
   void _saveText() async {
-    if (_controller.text.isEmpty) {
+    String text = _controller.text.trim();
+    if (text.isEmpty) {
       EasyLoading.showError('متن خالی است');
       return;
     }
-    // chcek is json format
-    if (_isJsonFormat) {
-      // make _controller.text json valid
-      _controller.text =
-          CustomTextModel.convertMarkdownToJsonText(_controller.text);
-    }
+    // همیشه متن فعلی را به بلاک تبدیل کن
+    List<Map<String, dynamic>> blocks = List<Map<String, dynamic>>.from(
+        json.decode(CustomTextModel.convertMarkdownToJsonText(text)));
+    String jsonText = CustomTextModel.encodeJsonBlocks(blocks);
     EasyLoading.show(status: 'ذخیره سازی...');
     await custom_text_repository
-        .updateCustomText(key: _customTextModel.key, text: _controller.text)
+        .updateCustomText(key: _customTextModel.key, text: jsonText)
         .then((value) {
       if (value) {
         EasyLoading.showSuccess('متن با موفقیت ذخیره شد');
@@ -293,50 +318,24 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
 
   void _resetText() {
     String defaultText = widget.customTextModel.defaultText;
-
-    // بررسی اینکه آیا متن دو بار JSON encode شده است
-    if (defaultText.startsWith('[{"type":"text","text":"[') &&
-        defaultText.endsWith('"}]')) {
+    if (defaultText.trim().startsWith('[') &&
+        defaultText.trim().endsWith(']')) {
       try {
-        // حذف لایه اول JSON
-        defaultText = CustomTextModel(
-          id: BigInt.from(0),
-          defaultText: '',
-          key: '',
-          customText: defaultText,
-          description: '',
-        ).parseFormattedText({});
-
-        // حالا متن را به حالت مارک‌داون تبدیل می‌کنیم
-        _controller.text = CustomTextModel(
-          id: BigInt.from(0),
-          defaultText: '',
-          key: '',
-          customText: defaultText,
-          description: '',
-        ).parseFormattedText({});
-        return;
+        _blocks = List<Map<String, dynamic>>.from(
+            (CustomTextModel.decodeJsonBlocks(defaultText)));
+        _controller.text = _blocksToDisplayText();
       } catch (e) {
-        debugPrint('Error parsing double encoded JSON: $e');
-      }
-    }
-
-    // اگر متن JSON ساده باشد
-    if (defaultText.startsWith('[') && defaultText.endsWith(']')) {
-      try {
-        _controller.text = CustomTextModel(
-          id: BigInt.from(0),
-          defaultText: '',
-          key: '',
-          customText: defaultText,
-          description: '',
-        ).parseFormattedText({});
-      } catch (e) {
+        debugPrint('Error parsing JSON: $e');
+        _blocks = [];
         _controller.text = defaultText;
       }
     } else {
+      _blocks = [
+        {'type': 'text', 'text': defaultText}
+      ];
       _controller.text = defaultText;
     }
+    setState(() {});
   }
 
   void _showDescription() {
