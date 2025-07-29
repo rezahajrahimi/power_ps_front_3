@@ -6,6 +6,7 @@ import 'package:powerps/models/details_info.dart';
 import 'package:powerps/models/setting_model.dart';
 import 'package:powerps/screens/admin_screen/settings/admins/manage_admins_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/agent/agents_manage_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/appinfo/app_info_manage_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/applications/applications_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/bot_details/edit_bot_details_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/channel_lock/channel_lock_screen.dart';
@@ -551,6 +552,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: const Icon(Icons.report),
         label: const Text("عملیات گروهی"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AppInfoManageScreen(),
+              )).then((value) => {});
+        },
+        icon: const Icon(Icons.info),
+        label: const Text("اطلاعات وب اپلیکیشن"),
+      ));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -590,7 +609,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
 
   _advancedSettingTabCard(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
