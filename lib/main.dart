@@ -1,5 +1,4 @@
 import 'package:powerps/helper/connector/dio.dart';
-import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
@@ -11,6 +10,7 @@ import 'package:powerps/provider/paymeny_provider.dart';
 import 'package:powerps/provider/prodct_provider.dart';
 import 'package:powerps/provider/product_category_provider.dart';
 import 'package:powerps/provider/transaction_provider.dart';
+import 'package:powerps/provider/app_info_provider.dart';
 import 'package:powerps/provider/user_admin_provider.dart';
 import 'package:powerps/provider/user_provider.dart';
 import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
@@ -25,6 +25,8 @@ import 'package:flutter/material.dart';
 
 Future main() async {
   // await dotenv.load(fileName: ".env");
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppInfoPreference().init();
   runApp(const MyApp());
 }
 
@@ -40,39 +42,19 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
         key: stateKey,
         providers: [
+          ChangeNotifierProvider(create: (context) => AppInfoProvider()),
+          ChangeNotifierProvider(create: (context) => MenuAppController()),
+          ChangeNotifierProvider(create: (context) => PannelChangeController()),
+          ChangeNotifierProvider(create: (context) => TransactionProvider()),
+          ChangeNotifierProvider(create: (context) => AuthChangeController()),
+          ChangeNotifierProvider(create: (context) => AgentProvider()),
+          ChangeNotifierProvider(create: (context) => UserProvider()),
+          ChangeNotifierProvider(create: (context) => AgentBallanceProvider()),
+          ChangeNotifierProvider(create: (context) => ProductProvider()),
           ChangeNotifierProvider(
-            create: (context) => MenuAppController(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => PannelChangeController(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => TransactionProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => AuthChangeController(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => AgentProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => UserProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => AgentBallanceProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => ProductProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => ProductCategoryProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => UserAdminProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => PaymentProvider(),
-          ),
+              create: (context) => ProductCategoryProvider()),
+          ChangeNotifierProvider(create: (context) => UserAdminProvider()),
+          ChangeNotifierProvider(create: (context) => PaymentProvider()),
         ],
         child: Consumer<AuthChangeController>(
           builder: (context, authController, child) {
@@ -81,7 +63,7 @@ class MyApp extends StatelessWidget {
 
             return MaterialApp(
               builder: EasyLoading.init(),
-              title: projectName,
+              title: AppInfoPreference().getAppName().toString(),
               onGenerateRoute: (setting) {
                 if (setting.name!.contains("/login/")) {
                   String url =

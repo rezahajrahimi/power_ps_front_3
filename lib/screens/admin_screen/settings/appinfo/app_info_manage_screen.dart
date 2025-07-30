@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/app_info_model.dart';
 import 'package:powerps/repositories/app_info_repository.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,7 +36,7 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
       final info = await fetchAppInfo();
       _nameController.text = info.name;
       _versionController.text = info.version;
-      _imageUrl = info.image;
+      _imageUrl = imageURL + info.image;
     } catch (e) {
       if (!mounted) return;
       _nameController.text = '';
@@ -72,21 +72,52 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
     }
   }
 
+  Future<void> _uploadImage() async {
+    if (_imageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ابتدا یک تصویر انتخاب کنید.')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final result = await uploadImage(imageBytes: _imageBytes!);
+      if (!mounted) return;
+      if (result) {
+        // فرض بر این است که پس از آپلود، سرور url جدید را در fetchAppInfo بازمی‌گرداند یا باید به صورت جداگانه دریافت شود
+        await _fetchAppInfo();
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('تصویر با موفقیت آپلود شد.')),
+        );
+        setState(() {
+          _imageBytes = null;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطا در آپلود تصویر')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطا در آپلود تصویر')),
+      );
+    } finally {
+      setState(() => _saving = false);
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
-      String imageField = _imageUrl ?? '';
-      // اگر تصویر جدید انتخاب شده، باید آپلود شود یا به صورت base64 ذخیره شود
-      if (_imageBytes != null) {
-        imageField = 'data:image/png;base64,${base64Encode(_imageBytes!)}';
-      }
       final appInfo = AppInfoModel(
         name: _nameController.text,
         version: _versionController.text,
-        image: imageField,
+        image: _imageUrl ?? '',
       );
-      final result = await updateAppInfo(appInfo);
+      final result = await updateAppInfo(appInfo: appInfo);
       if (!mounted) return;
       if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -115,113 +146,144 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('مدیریت اطلاعات اپلیکیشن')),
-      body: _loading
-          ? Center(child: CircularProgressIndicator())
-          : Center(
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: 420,
-                    minWidth: 280,
-                  ),
-                  child: Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(title: Text('مدیریت اطلاعات اپلیکیشن')),
+        body: _loading
+            ? Center(child: CircularProgressIndicator())
+            : Center(
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: 420,
+                      minWidth: 280,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 32),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextFormField(
-                              controller: _nameController,
-                              decoration:
-                                  InputDecoration(labelText: 'نام اپلیکیشن'),
-                              validator: (v) => v == null || v.isEmpty
-                                  ? 'نام را وارد کنید'
-                                  : null,
-                            ),
-                            SizedBox(height: 16),
-                            TextFormField(
-                              controller: _versionController,
-                              decoration: InputDecoration(labelText: 'نسخه'),
-                              validator: (v) => v == null || v.isEmpty
-                                  ? 'نسخه را وارد کنید'
-                                  : null,
-                            ),
-                            SizedBox(height: 16),
-                            Text('تصویر اپلیکیشن:',
-                                style: TextStyle(fontWeight: FontWeight.w500)),
-                            SizedBox(height: 8),
-                            Center(
-                              child: _imageBytes != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.memory(_imageBytes!,
-                                          width: 120,
-                                          height: 120,
-                                          fit: BoxFit.cover),
-                                    )
-                                  : (_imageUrl != null && _imageUrl!.isNotEmpty)
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          child: Image.network(_imageUrl!,
-                                              width: 120,
-                                              height: 120,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (c, e, s) => Icon(
-                                                  Icons.broken_image,
-                                                  size: 80)),
-                                        )
-                                      : Icon(Icons.image, size: 80),
-                            ),
-                            SizedBox(height: 8),
-                            ElevatedButton.icon(
-                              onPressed: _pickImage,
-                              icon: Icon(Icons.upload),
-                              label: Text('انتخاب تصویر'),
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                textStyle: TextStyle(fontSize: 16),
+                    child: Card(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 32),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextFormField(
+                                controller: _nameController,
+                                decoration:
+                                    InputDecoration(labelText: 'نام اپلیکیشن'),
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'نام را وارد کنید'
+                                    : null,
                               ),
-                            ),
-                            SizedBox(height: 24),
-                            SizedBox(
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _saving ? null : _save,
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                              SizedBox(height: 16),
+                              TextFormField(
+                                controller: _versionController,
+                                decoration: InputDecoration(labelText: 'نسخه'),
+                                validator: (v) => v == null || v.isEmpty
+                                    ? 'نسخه را وارد کنید'
+                                    : null,
+                              ),
+                              SizedBox(height: 24),
+                              SizedBox(
+                                height: 48,
+                                child: ElevatedButton(
+                                  onPressed: _saving ? null : _save,
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
+                                  child: _saving
+                                      ? SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        )
+                                      : Text('ذخیره',
+                                          style: TextStyle(fontSize: 17)),
                                 ),
-                                child: _saving
-                                    ? SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
-                                      )
-                                    : Text('ذخیره',
-                                        style: TextStyle(fontSize: 17)),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 16),
+                              Text('تصویر اپلیکیشن:',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w500)),
+                              SizedBox(height: 8),
+                              Center(
+                                child: _imageBytes != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.memory(_imageBytes!,
+                                            width: 120,
+                                            height: 120,
+                                            fit: BoxFit.cover),
+                                      )
+                                    : (_imageUrl != null &&
+                                            _imageUrl!.isNotEmpty)
+                                        ? ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            child: Image.network(_imageUrl!,
+                                                width: 120,
+                                                height: 120,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (c, e, s) => Icon(
+                                                    Icons.broken_image,
+                                                    size: 80)),
+                                          )
+                                        : Icon(Icons.image, size: 80),
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _pickImage,
+                                      icon: Icon(Icons.upload),
+                                      label: Text('انتخاب تصویر'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 12),
+                                        textStyle: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed:
+                                          (_imageBytes != null && !_saving)
+                                              ? _uploadImage
+                                              : null,
+                                      icon: Icon(Icons.cloud_upload),
+                                      label: Text('آپلود تصویر'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 12),
+                                        textStyle: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

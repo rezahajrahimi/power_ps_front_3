@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:provider/provider.dart';
-import 'package:powerps/helper/constes.dart';
 import 'package:powerps/provider/auth_provider.dart';
 import 'package:powerps/screens/admin_screen/auth/forget_password_screen.dart';
 import 'package:powerps/repositories/authenticatiom_repository.dart';
@@ -17,6 +17,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  String projectVersion = "";
+  String projectName = "";
+
   bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
   String? accountID;
@@ -35,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void initState() {
+    _fillProjectInfo();
     if (widget.accountID != "0") {
       _autoLogin();
     }
@@ -56,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 Theme.of(context).primaryColor,
-                Theme.of(context).primaryColor.withValues(alpha:0.8),
+                Theme.of(context).primaryColor.withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -75,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: AppStyle.defaultPadding,
                         ),
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(bottom: 30),
                           child: Text(
                             projectName,
@@ -98,11 +102,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: isDesktop ? 500 : double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 30),
                               decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha:0.7),
+                                  color: Colors.black.withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha:0.3),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.3),
                                       blurRadius: 15,
                                       offset: const Offset(0, 10),
                                     )
@@ -313,10 +318,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ),
                                               style: ButtonStyle(
                                                   backgroundColor:
-                                                      WidgetStateProperty 
+                                                      WidgetStateProperty
                                                           .resolveWith<Color>(
-                                                    (Set<WidgetState>
-                                                        states) {
+                                                    (Set<WidgetState> states) {
                                                       if (states.contains(
                                                           WidgetState
                                                               .disabled)) {
@@ -327,9 +331,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                                           .secondary;
                                                     },
                                                   ),
-                                                  elevation:
-                                                      WidgetStateProperty.all(
-                                                          5),
+                                                  elevation: WidgetStateProperty
+                                                      .all(5),
                                                   shape: WidgetStateProperty.all<
                                                           RoundedRectangleBorder>(
                                                       RoundedRectangleBorder(
@@ -364,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               )),
                         ),
                         const SizedBox(height: 30),
-                        const Text(
+                        Text(
                           "version: $projectVersion",
                           style: TextStyle(color: Colors.white54, fontSize: 12),
                         ),
@@ -446,6 +449,15 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     _login();
+  }
+
+  void _fillProjectInfo() async {
+    String name = await AppInfoPreference().getAppName();
+    String version = await AppInfoPreference().getAppVersion();
+    setState(() {
+      projectName = name;
+      projectVersion = version;
+    });
   }
 
   void setStateIfMounted(f) {

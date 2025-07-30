@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
@@ -22,9 +21,12 @@ class SideMenu extends StatefulWidget {
 }
 
 class _SideMenuState extends State<SideMenu> {
+  String projectVersion = "1.0.0";
+  String projectName = "";
   @override
   void initState() {
     super.initState();
+    _fillProjectInfo();
   }
 
   @override
@@ -297,5 +299,14 @@ class _SideMenuState extends State<SideMenu> {
 
   void _callBack(String selectedItem) {
     widget.callback!(selectedItem);
+  }
+
+  void _fillProjectInfo() async {
+    String name = await AppInfoPreference().getAppName();
+    String version = await AppInfoPreference().getAppVersion();
+    setState(() {
+      projectName = name;
+      projectVersion = version;
+    });
   }
 }
