@@ -55,6 +55,8 @@ class MyApp extends StatelessWidget {
               create: (context) => ProductCategoryProvider()),
           ChangeNotifierProvider(create: (context) => UserAdminProvider()),
           ChangeNotifierProvider(create: (context) => PaymentProvider()),
+          ChangeNotifierProvider(create: (context) => AppInfoProvider()),
+          ChangeNotifierProvider(create: (context) => AuthChangeController()),
         ],
         child: Consumer<AuthChangeController>(
           builder: (context, authController, child) {

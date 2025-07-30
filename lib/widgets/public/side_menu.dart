@@ -43,6 +43,9 @@ class _SideMenuState extends State<SideMenu> {
   }
 
   _sliderItemsTypeAdmin(BuildContext context) {
+    Future.microtask(() {
+      _fillProjectInfo();
+    });
     return Drawer(
       child: Column(
         children: [

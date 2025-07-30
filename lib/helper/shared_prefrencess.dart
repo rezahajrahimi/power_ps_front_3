@@ -119,11 +119,6 @@ class AppInfoPreference {
   }
 
   void _fillProjectInfo() async {
-    String name = await getAppName();
-    String version = await getAppVersion();
-    String image = await getAppImage();
-    AppInfoModel appInfo =
-        AppInfoModel(name: name, version: version, image: image);
-    await saveAppInfo(appInfo);
+    await getAppInfo();
   }
 }

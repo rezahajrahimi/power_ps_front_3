@@ -36,6 +36,9 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 600;
+    // Future.microtask(() {
+    //   _fillProjectInfo();
+    // });
 
     return Scaffold(
         backgroundColor: Theme.of(context).primaryColor,
