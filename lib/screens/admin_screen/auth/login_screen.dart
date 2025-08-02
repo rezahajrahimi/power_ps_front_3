@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:powerps/helper/constes.dart';
 import 'package:powerps/models/user_model.dart';
-import 'package:powerps/repositories/app_info_repository.dart';
+// import 'package:powerps/repositories/app_info_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/provider/auth_provider.dart';
 import 'package:powerps/screens/admin_screen/auth/forget_password_screen.dart';
@@ -17,9 +18,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String projectVersion = "";
-  String projectName = "";
-  bool _showData = false;
+  // String projectName = "";
+  final _showData = true;
 
   bool _isLoading = false;
 
@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void initState() {
-    _fillProjectInfo();
+    // _fillProjectInfo();
     if (widget.accountID != "0") {
       _autoLogin();
     }
@@ -481,21 +481,20 @@ class _LoginScreenState extends State<LoginScreen> {
     _login();
   }
 
-  void _fillProjectInfo() async {
-    fetchAppInfo().then((appInfo) {
-      if (!mounted) return;
-      setStateIfMounted(() {
-        projectName = appInfo.name;
-        projectVersion = appInfo.version;
-        _showData = true;
-      });
-    }).catchError((error) {
-      debugPrint("Error fetching app info: $error");
-      setStateIfMounted(() {
-        _showData = true;
-      });
-    });
-  }
+  // void _fillProjectInfo() async {
+  //   fetchAppInfo().then((appInfo) {
+  //     if (!mounted) return;
+  //     setStateIfMounted(() {
+  //       projectName = appInfo.name;
+  //       _showData = true;
+  //     });
+  //   }).catchError((error) {
+  //     debugPrint("Error fetching app info: $error");
+  //     setStateIfMounted(() {
+  //       _showData = true;
+  //     });
+  //   });
+  // }
 
   void setStateIfMounted(f) {
     if (mounted) setState(f);

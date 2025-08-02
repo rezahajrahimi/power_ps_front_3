@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/public.dart';
-import 'package:powerps/helper/shared_prefrencess.dart';
+// import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
 import 'package:powerps/repositories/authenticatiom_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -16,8 +17,7 @@ class ForgetPasswordScreen extends StatefulWidget {
 
 class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  String projectVersion = "";
-  String projectName = "";
+  // String projectName = "";
 
   String? accountId;
   String? password;
@@ -28,7 +28,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
 
   @override
   void initState() {
-    _fillProjectInfo();
+    // _fillProjectInfo();
     super.initState();
   }
 
@@ -480,12 +480,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     }
   }
 
-  void _fillProjectInfo() async {
-    String name = await AppInfoPreference().getAppName();
-    String version = await AppInfoPreference().getAppVersion();
-    setState(() {
-      projectName = name;
-      projectVersion = version;
-    });
-  }
+  // void _fillProjectInfo() async {
+  //   String name = await AppInfoPreference().getAppName();
+  //   setState(() {
+  //     projectName = name;
+  //   });
+  // }
 }

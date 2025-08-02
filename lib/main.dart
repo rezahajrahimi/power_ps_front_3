@@ -19,14 +19,14 @@ import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/material.dart';
 
 Future main() async {
-  // await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
-  await AppInfoPreference().init();
+  // await AppInfoPreference().init();
   runApp(const MyApp());
 }
 
@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
 
             return MaterialApp(
               builder: EasyLoading.init(),
-              title: AppInfoPreference().getAppName().toString(),
+              title: "PowerPS",
               onGenerateRoute: (setting) {
                 if (setting.name!.contains("/login/")) {
                   String url =
