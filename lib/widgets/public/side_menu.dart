@@ -325,7 +325,7 @@ class _SideMenuState extends State<SideMenu> {
           case "TRIAL":
             _licennseType = "آزمایشی";
             break;
-          case "BRONZE":
+          case "FREE":
             _licennseType = "برنز";
             break;
           case "SILVER":
