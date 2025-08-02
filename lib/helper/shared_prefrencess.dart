@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:flutter/widgets.dart';
+import 'package:powerps/models/app_info_model.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -33,29 +34,29 @@ class DarkThemePreference {
 class LoggingPreference {
   static const String TOKEN_KEY = 'auth_token';
   static const String USER_DATA_KEY = 'user_data';
-  
+
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(TOKEN_KEY, token);
   }
-  
+
   Future<String> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(TOKEN_KEY) ?? 'void';
     return token;
   }
-  
+
   Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(TOKEN_KEY);
     await prefs.remove(USER_DATA_KEY);
   }
-  
+
   Future<void> saveUserData(User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(USER_DATA_KEY, jsonEncode(user.toJson()));
   }
-  
+
   Future<User?> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     String? userData = prefs.getString(USER_DATA_KEY);
@@ -64,5 +65,60 @@ class LoggingPreference {
       return User.fromJson(jsonDecode(userData));
     }
     return null;
+  }
+}
+
+class AppInfoPreference {
+  Future<void> saveAppInfo(AppInfoModel appInfo) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("APP_Name", appInfo.name);
+    await prefs.setString("APP_Version", appInfo.version);
+    await prefs.setString("APP_Image", appInfo.image);
+  }
+
+  Future<AppInfoModel?> getAppInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? appName = prefs.getString("APP_Name");
+    String? appVersion = prefs.getString("APP_Version");
+    String? appImage = prefs.getString("APP_Image");
+
+    if (appName != null && appVersion != null && appImage != null) {
+      return AppInfoModel(
+        name: appName,
+        version: appVersion,
+        image: appImage,
+      );
+    }
+    return null;
+  }
+
+  Future<String> getAppName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("APP_Name") ?? "";
+  }
+
+  Future<String> getAppVersion() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("APP_Version") ?? "";
+  }
+
+  Future<String> getAppImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("APP_Image") ?? "";
+  }
+
+  Future<void> removeAppInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("APP_Name");
+    await prefs.remove("APP_Version");
+    await prefs.remove("APP_Image");
+  }
+
+  init() {
+    _fillProjectInfo();
+  }
+
+  void _fillProjectInfo() async {
+    await getAppInfo();
   }
 }

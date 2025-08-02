@@ -17,6 +17,7 @@ class CustomTextFromFieldWidget extends StatefulWidget {
       this.labelText,
       this.textDirection,
       this.enable = true,
+
       this.formKey,
       this.callback});
 

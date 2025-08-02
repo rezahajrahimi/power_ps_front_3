@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/public.dart';
+// import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
 import 'package:powerps/repositories/authenticatiom_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -16,6 +17,8 @@ class ForgetPasswordScreen extends StatefulWidget {
 
 class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  // String projectName = "";
+
   String? accountId;
   String? password;
   int _timerCountDown = 60;
@@ -24,9 +27,18 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   bool _showeResendCode = false;
 
   @override
+  void initState() {
+    // _fillProjectInfo();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 600;
+    // Future.microtask(() {
+    //   _fillProjectInfo();
+    // });
 
     return Scaffold(
         backgroundColor: Theme.of(context).primaryColor,
@@ -56,7 +68,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                         SizedBox(
                           height: AppStyle.defaultPadding,
                         ),
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(bottom: 30),
                           child: Text(
                             projectName,
@@ -377,7 +389,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                               )),
                         ),
                         const SizedBox(height: 30),
-                        const Text(
+                        Text(
                           "version: $projectVersion",
                           style: TextStyle(color: Colors.white54, fontSize: 12),
                         ),
@@ -428,7 +440,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       print(e);
     }
 
-    setState(() {});
+    // setState(() {});
   }
 
   _startTimer() {
@@ -467,4 +479,11 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       debugPrint(e.toString());
     }
   }
+
+  // void _fillProjectInfo() async {
+  //   String name = await AppInfoPreference().getAppName();
+  //   setState(() {
+  //     projectName = name;
+  //   });
+  // }
 }

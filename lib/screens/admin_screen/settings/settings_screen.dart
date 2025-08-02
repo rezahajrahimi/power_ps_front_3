@@ -15,6 +15,7 @@ import 'package:powerps/screens/admin_screen/settings/main_menu_item/main_menu_i
 import 'package:powerps/screens/admin_screen/settings/pannel/pannel_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/payment_type/payment_type_details_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/reports/group_operations_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/test_accounts/edit_test_account_details_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
@@ -78,6 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _fillData() async {
     await getBotSetting().then((value) {
+      if (!mounted) return;
       if (null != value) {
         setState(() {
           _setting = value;
@@ -96,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     });
     await getBotAdvancedSetting().then((value) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       if (value.isNotEmpty && value != null) {
         for (var item in value) {
           _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
@@ -529,8 +531,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
               )).then((value) => {});
         },
         icon: const Icon(Icons.text_fields),
-        label: const Text("متن و پیام ها"),
+        label: const Text("متن ها"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const GroupOperationsScreen(),
+              )).then((value) => {});
+        },
+        icon: const Icon(Icons.report),
+        label: const Text("عملیات گروهی"),
+      ));
+      // actionsWidgetList.add(ElevatedButton.icon(
+      //   style: TextButton.styleFrom(
+      //     padding: EdgeInsets.symmetric(
+      //       horizontal: AppStyle.defaultPadding * 1.5,
+      //       vertical: AppStyle.defaultPadding /
+      //           (Responsive.isMobile(context) ? 2 : 1),
+      //     ),
+      //   ),
+      //   onPressed: () async {
+      //     Navigator.push(
+      //         context,
+      //         MaterialPageRoute(
+      //           builder: (context) => const AppInfoManageScreen(),
+      //         )).then((value) => {});
+      //   },
+      //   icon: const Icon(Icons.info),
+      //   label: const Text("اطلاعات وب اپلیکیشن"),
+      // ));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -570,7 +608,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
 
   _advancedSettingTabCard(BuildContext context) {
     final Size size = MediaQuery.of(context).size;

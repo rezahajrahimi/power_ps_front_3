@@ -1,5 +1,4 @@
 import 'package:powerps/helper/connector/dio.dart';
-import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
@@ -11,6 +10,7 @@ import 'package:powerps/provider/paymeny_provider.dart';
 import 'package:powerps/provider/prodct_provider.dart';
 import 'package:powerps/provider/product_category_provider.dart';
 import 'package:powerps/provider/transaction_provider.dart';
+import 'package:powerps/provider/app_info_provider.dart';
 import 'package:powerps/provider/user_admin_provider.dart';
 import 'package:powerps/provider/user_provider.dart';
 import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
@@ -25,6 +25,8 @@ import 'package:flutter/material.dart';
 
 Future main() async {
   await dotenv.load(fileName: ".env");
+  WidgetsFlutterBinding.ensureInitialized();
+  // await AppInfoPreference().init();
   runApp(const MyApp());
 }
 
@@ -40,85 +42,67 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
         key: stateKey,
         providers: [
+          ChangeNotifierProvider(create: (context) => AppInfoProvider()),
+          ChangeNotifierProvider(create: (context) => MenuAppController()),
+          ChangeNotifierProvider(create: (context) => PannelChangeController()),
+          ChangeNotifierProvider(create: (context) => TransactionProvider()),
+          ChangeNotifierProvider(create: (context) => AuthChangeController()),
+          ChangeNotifierProvider(create: (context) => AgentProvider()),
+          ChangeNotifierProvider(create: (context) => UserProvider()),
+          ChangeNotifierProvider(create: (context) => AgentBallanceProvider()),
+          ChangeNotifierProvider(create: (context) => ProductProvider()),
           ChangeNotifierProvider(
-            create: (context) => MenuAppController(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => PannelChangeController(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => TransactionProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => AuthChangeController(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => AgentProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => UserProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => AgentBallanceProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => ProductProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => ProductCategoryProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => UserAdminProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => PaymentProvider(),
-          ),
+              create: (context) => ProductCategoryProvider()),
+          ChangeNotifierProvider(create: (context) => UserAdminProvider()),
+          ChangeNotifierProvider(create: (context) => PaymentProvider()),
+          ChangeNotifierProvider(create: (context) => AppInfoProvider()),
+          ChangeNotifierProvider(create: (context) => AuthChangeController()),
         ],
         child: Consumer<AuthChangeController>(
           builder: (context, authController, child) {
             // فراخوانی متد checkAuthStatus
             authController.checkAuthStatus();
-            
+
             return MaterialApp(
-                builder: EasyLoading.init(),
-                title: projectName,
-                onGenerateRoute: (setting) {
-                  if (setting.name!.contains("/login/")) {
-                    String url =
-                        setting.name!.substring(setting.name!.indexOf("login/"));
-                    var inputs = url.split("/");
-                    // print(inputs);
+              builder: EasyLoading.init(),
+              title: "PowerPS",
+              onGenerateRoute: (setting) {
+                if (setting.name!.contains("/login/")) {
+                  String url =
+                      setting.name!.substring(setting.name!.indexOf("login/"));
+                  var inputs = url.split("/");
+                  // print(inputs);
 
-                    // print("acc: ${inputs[1].trim()} pass: ${inputs[2].trim()}");
-                    return MaterialPageRoute(
-                        builder: (_) => LoginScreen(
-                              accountID: inputs[1],
-                              password: inputs[2],
-                            ));
-                  }
+                  // print("acc: ${inputs[1].trim()} pass: ${inputs[2].trim()}");
+                  return MaterialPageRoute(
+                      builder: (_) => LoginScreen(
+                            accountID: inputs[1],
+                            password: inputs[2],
+                          ));
+                }
 
-                  return null;
-                },
-                theme: ThemeData.dark().copyWith(
-                  scaffoldBackgroundColor: AppStyle.bgColor,
-                  textTheme:
-                      GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
-                          .apply(bodyColor: Colors.white),
-                  canvasColor: AppStyle.secondaryColor,
-                ),
-                routes: {
-                  '/': (context) => const Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: CheckAuth(),
-                      ),
-                  '/home': (context) => const HomeScreen(
-                        selectedPage: 0,
-                      ),
-                  '/login': (context) => const LoginScreen(),
-                },
-                debugShowCheckedModeBanner: false,
-                navigatorKey: navigatorKey,
-                );
+                return null;
+              },
+              theme: ThemeData.dark().copyWith(
+                scaffoldBackgroundColor: AppStyle.bgColor,
+                textTheme:
+                    GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
+                        .apply(bodyColor: Colors.white),
+                canvasColor: AppStyle.secondaryColor,
+              ),
+              routes: {
+                '/': (context) => const Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: CheckAuth(),
+                    ),
+                '/home': (context) => const HomeScreen(
+                      selectedPage: 0,
+                    ),
+                '/login': (context) => const LoginScreen(),
+              },
+              debugShowCheckedModeBanner: false,
+              navigatorKey: navigatorKey,
+            );
           },
         ));
   }
@@ -150,7 +134,7 @@ class _CheckAuthState extends State<CheckAuth> {
         ),
       );
     }
-    
+
     Widget child;
     if (isAuth) {
       child = const Directionality(
@@ -171,19 +155,21 @@ class _CheckAuthState extends State<CheckAuth> {
   void _checkLogin() async {
     try {
       // فراخوانی متد checkAuthStatus در AuthChangeController
-      await Provider.of<AuthChangeController>(context, listen: false).checkAuthStatus();
-      
+      await Provider.of<AuthChangeController>(context, listen: false)
+          .checkAuthStatus();
+
       // بررسی وضعیت کاربر
-      if(!mounted) return;
-      User user = Provider.of<AuthChangeController>(context, listen: false).user;
-      
+      if (!mounted) return;
+      User user =
+          Provider.of<AuthChangeController>(context, listen: false).user;
+
       String token = await LoggingPreference().getToken();
-      
+
       if (token != 'void' && token.isNotEmpty && user.id != 0) {
         // تنظیم هدرهای درخواست
         GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
         GenaralApi.dio.options.headers['x-access-token'] = token;
-        
+
         setState(() {
           isAuth = true;
           isLoading = false;

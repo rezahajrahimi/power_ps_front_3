@@ -2,6 +2,23 @@
 import 'dart:convert';
 
 class CustomTextModel {
+  /// تبدیل لیست بلاک‌ها به رشته JSON
+  static String encodeJsonBlocks(List<Map<String, dynamic>> blocks) {
+    return json.encode(blocks);
+  }
+
+  /// تبدیل رشته JSON به لیست بلاک‌ها
+  static List<Map<String, dynamic>> decodeJsonBlocks(String text) {
+    final decoded = json.decode(text);
+    if (decoded is List) {
+      return List<Map<String, dynamic>>.from(
+        decoded.map((e) => Map<String, dynamic>.from(e)),
+      );
+    } else {
+      throw FormatException('JSON is not a List');
+    }
+  }
+
   BigInt id;
   String defaultText;
   String key;

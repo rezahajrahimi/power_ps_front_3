@@ -170,17 +170,6 @@ class _BotUserBoughtProductDetailsScreenState
         setState(() {
           _showdata = true;
         });
-        // await checkAProductHasReservedConfigByProductId(
-        //   productID: widget.productDetails.id.toInt(),
-        // ).then((res) {
-        //   setState(() {
-        //     _hasReservetion = res;
-        //   });
-        // }).whenComplete(() {
-        //   setState(() {
-        //     _showdata = true;
-        //   });
-        // });
       });
     } catch (e) {
       debugPrint(e.toString());
@@ -278,6 +267,9 @@ class _BotUserBoughtProductDetailsScreenState
   }
 
   _hiddifyConfigCardData(BuildContext context) {
+    if (_hiddifyInfo == null) {
+    return const SizedBox(); // or a loading indicator
+  }
     final Size size = MediaQuery.of(context).size;
 
     List<Widget> pannelWidgetList = [];

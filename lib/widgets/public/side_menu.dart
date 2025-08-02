@@ -5,6 +5,7 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/repositories/authenticatiom_repository.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -22,9 +23,13 @@ class SideMenu extends StatefulWidget {
 }
 
 class _SideMenuState extends State<SideMenu> {
+  // String projectName = "";
+  String _licennseType = "Trial";
+  bool _showLicenseData = false;
   @override
   void initState() {
     super.initState();
+    _fillProjectInfo();
   }
 
   @override
@@ -41,6 +46,9 @@ class _SideMenuState extends State<SideMenu> {
   }
 
   _sliderItemsTypeAdmin(BuildContext context) {
+    // Future.microtask(() {
+    //   _fillProjectInfo();
+    // });
     return Drawer(
       child: Column(
         children: [
@@ -178,6 +186,17 @@ class _SideMenuState extends State<SideMenu> {
               ),
             ),
           ),
+          _showLicenseData
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      "نوع لایسنس: $_licennseType",
+                      style: TextStyle(color: AppStyle.deactiveStatus),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ],
       ),
     );
@@ -297,5 +316,36 @@ class _SideMenuState extends State<SideMenu> {
 
   void _callBack(String selectedItem) {
     widget.callback!(selectedItem);
+  }
+
+  void _fillProjectInfo() async {
+    await getLicenseType().then((value) {
+      if (value.isNotEmpty) {
+        switch (value.toUpperCase()) {
+          case "TRIAL":
+            _licennseType = "آزمایشی";
+            break;
+          case "FREE":
+            _licennseType = "برنز";
+            break;
+          case "SILVER":
+            _licennseType = "نقره‌ای";
+            break;
+          case "GOLD":
+            _licennseType = "طلایی";
+            break;
+          default:
+            _licennseType = "آزمایشی";
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _showLicenseData = true;
+      });
+    });
+    // String name = await AppInfoPreference().getAppName();
+    // setState(() {
+    //   projectName = name;
+    // });
   }
 }

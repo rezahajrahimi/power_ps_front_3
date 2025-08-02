@@ -95,7 +95,7 @@ Future obtainBatchOfExistProductsToUser({
   var formData = FormData.fromMap({
     'accountID': accountID,
     'pannelID': pannelID,
-    'selectedExistConfig': json.encode(hiddifyConfig),
+    'configs': json.encode(hiddifyConfig),
   });
 
   try {
@@ -165,6 +165,49 @@ Future deleteBatchOfUserAgentProduct({
   //   debugPrint(e.message.toString());
   //   return null;
   // }
+}
+
+Future batchExistSubscriptionJobDayOpr(
+    {required String action,
+    required int panelId,
+    required int day,
+    required String vol,
+    required List<HiddifyConfig> hiddifyConfig}) async {
+  var formData = FormData.fromMap({
+    'action': action,
+    'panel_id': panelId,
+    'days': day,
+    'vol': vol,
+    'configs': json.encode(hiddifyConfig),
+  });
+
+  try {
+    await GenaralApi.dio.post("/api/batchExistSubscriptionJob",
+        data: formData,
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+    // debugPrint("response ${response.statusCode}");
+    // debugPrint("status code:=>${response.statusMessage}");
+    // if (response.statusCode == 200 && response.data != null) {
+    return true;
+    // } else if (response.statusCode == 201) {
+    //   return false;
+    // } else if (response.statusCode == 401) {
+    //   return false;
+    // } else if (response.statusCode == 500) {
+    //   return false;
+    // } else {
+    //   return false;
+    // }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
 }
 
 Future getAgentProductsWithNotSelectedByUserID({required int userID}) async {

@@ -289,3 +289,23 @@ Future createNewAgentDollarBillUrl({required int amount}) async {
     return null;
   }
 }
+Future<String> getLicenseType() async {
+  try {
+    Response response =
+        await GenaralApi.dio.get("/api/get-license-type",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*',
+            }));
+    if (response.statusCode == 200 && response.data != null) {
+      return response.data;
+    }
+    return "Trial";
+  } catch (e) {
+    debugPrint(e.toString());
+    return "Trial";
+  }
+}

@@ -199,6 +199,142 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           ),
         ),
         onPressed: () async {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    title: Text("حذف کانفیگ ها"),
+                    content: Text(
+                        "این درخواست کانفیگ های موجود در powerps را با کانفیگ های موجود در پنل شما بررسی می کنید و در صورت ناموجود بودن، آنها را حذف می کند، آیا از انجام این کار اطمینان دارید؟"),
+                    actions: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          EasyLoading.show();
+
+                          await syncUserProductsHistoryByAccountIDwithPanels(
+                                  id: widget.id.toInt())
+                              .then((val) {
+                            EasyLoading.dismiss();
+                            if (!context.mounted) return;
+
+                            if (val) {
+                              Navigator.pop(context);
+
+                              showMsg(msg: "انجام شد.", context: context);
+                            } else {
+                              Navigator.pop(context);
+
+                              showMsg(msg: "خطا", context: context);
+                            }
+                          }).onError((e, s) {
+                            if (!context.mounted) return;
+                            EasyLoading.dismiss();
+                            debugPrint(e.toString());
+                            showMsg(msg: "خطا", context: context);
+                            return;
+                          });
+                        },
+                        label:
+                            Text("بله", style: TextStyle(color: (Colors.red))),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                        },
+                        label: Text("خیر"),
+                      ),
+                    ],
+                  ),
+                );
+              });
+        },
+        icon: const Icon(Icons.sync),
+        label: const Text("همگام سازی کانفیگ ها"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          final message = TextEditingController();
+          showDialog(
+              context: context,
+              builder: (context) {
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    title: Text("ارسال پیام به کاربر"),
+                    content: Column(
+                      spacing: 8,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("متن پیام را وارد کنید."),
+                        TextField(
+                          controller: message,
+                          maxLength: 400,
+                          maxLines: 5,
+                          textDirection: TextDirection.rtl,
+                        )
+                      ],
+                    ),
+                    actions: [
+                      ElevatedButton.icon(
+                          onPressed: () async {
+                            EasyLoading.show();
+                            await sendAdminMessageToUser(
+                                    userID: widget.id.toInt(),
+                                    message: message.text)
+                                .then((val) {
+                              EasyLoading.dismiss();
+                              if (!context.mounted) return;
+
+                              if (val) {
+                                Navigator.pop(context);
+
+                                showMsg(msg: "انجام شد.", context: context);
+                              } else {
+                                Navigator.pop(context);
+
+                                showMsg(msg: "خطا", context: context);
+                              }
+                            }).onError((e, s) {
+                              if (!context.mounted) return;
+                              EasyLoading.dismiss();
+                              debugPrint(e.toString());
+                              showMsg(msg: "خطا", context: context);
+                              return;
+                            });
+                          },
+                          label: Text("ارسال")),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                        },
+                        label: Text("لغو"),
+                      ),
+                    ],
+                  ),
+                );
+              });
+        },
+        icon: const Icon(Icons.send),
+        label: const Text("ارسال پیام به کاربر"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
           if (_showBlockedUser) {
             if (!context.mounted) return;
             // show a toooltip that show the reason, if be blocked
@@ -215,7 +351,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                         await unblockUser(_botUser!.accountId.toString())
                             .then((value) {
                           if (value) {
-                            if(!context.mounted) return;
+                            if (!context.mounted) return;
                             EasyLoading.dismiss();
                             Navigator.of(context).pop();
                             setStateIfMounted(() {
@@ -289,7 +425,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               await blockUser(_botUser!.accountId.toString(), reason)
                   .then((value) {
                 if (value) {
-                  if(!context.mounted) return;
+                  if (!context.mounted) return;
                   EasyLoading.dismiss();
                   setStateIfMounted(() {
                     _showData = false;
@@ -1050,8 +1186,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                             ballance: double.parse(_ballanceController.text),
                             userID: _botUser!.id.toInt(),
                             type: type,
-                            isRequestByAdmin: true
-                            )
+                            isRequestByAdmin: true)
                         .then((value) {
                       if (!context.mounted) return;
                       if (value.toString() != "false" &&
