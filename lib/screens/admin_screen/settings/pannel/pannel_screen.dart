@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
-import 'package:powerps/screens/admin_screen/settings/pannel/add_new_panel_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/obtain_exist_panel_users_to_agents_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -49,84 +50,10 @@ class _PannelScreenState extends State<PannelScreen> {
                 : _content(context),
           ),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }
 
-  _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: 50.0,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          Flexible(
-            flex: 0,
-            child: ElevatedButton(
-              onPressed: () async {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AddNewPanelScreen(),
-                    )).then((value) => {});
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppStyle.secondaryColor),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 4.0,
-                    ),
-                    Text(
-                      "افزودن پنل",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const ObtainExistPanelUsersToAgentsScreen(),
-                  )).then((value) => {_fillData()});
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppStyle.secondaryColor),
-            child: const Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(FontAwesomeIcons.indent),
-                  SizedBox(
-                    width: 4.0,
-                  ),
-                  Text(
-                    "ورود کانفیگهای موجود",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _fillData() async {
     if (context.mounted) {
@@ -174,10 +101,15 @@ class _PannelScreenState extends State<PannelScreen> {
                   children: [
                     _pannelListCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
+                    if(Responsive.isMobile(context))
+              
+                    _operationInfoCard(context),
+                  
                   ],
                 )),
             if (!Responsive.isMobile(context))
               SizedBox(width: AppStyle.defaultPadding),
+            
             // side windows
             if (!Responsive.isMobile(context))
               Expanded(
@@ -189,8 +121,10 @@ class _PannelScreenState extends State<PannelScreen> {
                   ],
                 ),
               ),
+            
           ],
         ),
+        
       ],
     );
   }
@@ -263,11 +197,29 @@ class _PannelScreenState extends State<PannelScreen> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const AddNewPanelScreen(),
+                builder: (context) => const AddNewHiddifyPanelScreen(),
               )).then((value) => {_fillData()});
         },
         icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل"),
+        label: const Text("افزودن پنل هیدیفای"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () async {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddNewSanaeiPanelScreen(),
+              )).then((value) => {_fillData()});
+        },
+        icon: const Icon(Icons.add),
+        label: const Text("افزودن پنل سنایی"),
       ));
       if (_pannelList.isNotEmpty) {
         actionsWidgetList.add(ElevatedButton.icon(

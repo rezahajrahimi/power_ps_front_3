@@ -12,14 +12,14 @@ import 'package:powerps/widgets/public/custom_switch_widget.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
-class AddNewPanelScreen extends StatefulWidget {
-  const AddNewPanelScreen({super.key});
+class AddNewHiddifyPanelScreen extends StatefulWidget {
+  const AddNewHiddifyPanelScreen({super.key});
 
   @override
-  State<AddNewPanelScreen> createState() => _AddNewPanelScreenState();
+  State<AddNewHiddifyPanelScreen> createState() => _AddNewHiddifyPanelScreenState();
 }
 
-class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
+class _AddNewHiddifyPanelScreenState extends State<AddNewHiddifyPanelScreen> {
   bool _showData = false;
   bool _showHiddifyData = true;
   bool _showMarzbanData = false;
@@ -78,7 +78,7 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "افزودن پنل"),
+        appBar: appBarWithBackButton(context: context, title: "هیدیفای افزودن پنل"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -196,7 +196,7 @@ class _AddNewPanelScreenState extends State<AddNewPanelScreen> {
           _submitData(context);
         },
         icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل"),
+        label: const Text("هیدیفای افزودن پنل"),
       ));
     });
     return Container(

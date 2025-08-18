@@ -328,6 +328,9 @@ class _SideMenuState extends State<SideMenu> {
           case "FREE":
             _licennseType = "برنز";
             break;
+          case "BORONZE":
+            _licennseType = "برنز";
+            break;
           case "SILVER":
             _licennseType = "نقره‌ای";
             break;
