@@ -4,7 +4,6 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
-import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
@@ -20,25 +19,11 @@ class AddNewSanaeiPanelScreen extends StatefulWidget {
 class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
   bool _showData = false;
 
-
-  final List<String> _pannelTypes = [
-    "Sanaei",
-  ];
-  // final List<String> _pannelTypes = [
-  //   "MarzBan",
-  //   "Hiddify",
-  //   "دیگر",
-  // ];
-  String _selectedPannelType = "Sanaei";
-  final _sanaeiTokenEditTxt = TextEditingController();
-  final List<Widget> _selectPannelTypesWidgetList = [];
-  final List<Widget> _otherWidgetList = [];
   final List<Widget> _sanaeiWidgetList = [];
   final _locationEditTxt = TextEditingController();
   final _capacityEditTxt = TextEditingController();
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
-  final _urlPortEditTxt = TextEditingController();
   final _adminUrlEditTxt = TextEditingController();
   final _secretCodeEditTxt = TextEditingController();
   final _userLinkEditTxt = TextEditingController();
@@ -59,7 +44,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "سنایی افزودن پنل"),
+        appBar: appBarWithBackButton(context: context, title: "افزودن پنل سنایی"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -174,7 +159,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
           _submitData(context);
         },
         icon: const Icon(Icons.add),
-        label: const Text("سنایی افزودن پنل"),
+        label: const Text("افزودن پنل سنایی"),
       ));
     });
     return Container(
@@ -216,79 +201,9 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     );
   }
 
-  // _selectPannelTypeCard(BuildContext context) {
-  //   return Container(
-  //     padding: EdgeInsets.all(AppStyle.defaultPadding),
-  //     decoration: BoxDecoration(
-  //       color: AppStyle.secondaryColor,
-  //       borderRadius: const BorderRadius.all(Radius.circular(10)),
-  //     ),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           "انتخاب نوع پنل",
-  //           style: Theme.of(context).textTheme.titleMedium,
-  //         ),
-  //         SizedBox(height: AppStyle.defaultPadding),
-  //         SizedBox(
-  //             width: double.infinity,
-  //             child: Responsive(
-  //               mobile: widgetsGridview(
-  //                   childAspectRatio: 2.9,
-  //                   context: context,
-  //                   importedList: _selectPannelTypesWidgetList),
-  //               tablet: widgetsGridview(
-  //                   context: context,
-  //                   childAspectRatio: 4.5,
-  //                   importedList: _selectPannelTypesWidgetList),
-  //               desktop: widgetsGridview(
-  //                   importedList: _selectPannelTypesWidgetList,
-  //                   context: context,
-  //                   childAspectRatio: 4.5,
-  //                   crossAxisCount: 2),
-  //             )),
-  //       ],
-  //     ),
-  //   );
-  // }
 
-  _otherPannelInfoCard(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "اطلاعات پنل",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                    childAspectRatio: 2.9,
-                    context: context,
-                    importedList: _otherWidgetList),
-                tablet: widgetsGridview(
-                    context: context,
-                    childAspectRatio: 4.5,
-                    importedList: _otherWidgetList),
-                desktop: widgetsGridview(
-                    importedList: _otherWidgetList,
-                    context: context,
-                    childAspectRatio: 4.5,
-                    crossAxisCount: 2),
-              )),
-        ],
-      ),
-    );
-  }
+
+
 
   _sanaeiPannelInfoCard(BuildContext context) {
     return Container(
@@ -381,52 +296,37 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
 
   void _fillData() {
     setState(() {
-      _selectPannelTypesWidgetList.add(Container(
-        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        decoration: BoxDecoration(
-          border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
-          ),
-        ),
-        child: DropdownButtonFormField(
-          isExpanded: true,
-          hint: const Text('نوع پنل'),
-          value: _selectedPannelType,
-          alignment: Alignment.centerLeft,
-          onChanged: (newValue) {
-            setState(() {
-              _selectedPannelType = newValue.toString();
-              _showData = true;
-            });
-          },
-          items: _pannelTypes.map((clType) {
-            return DropdownMenuItem(
-              value: clType,
-              alignment: Alignment.centerRight,
-              child: Text(clType),
-            );
-          }).toList(),
-        ),
-      ));
-      _otherWidgetList.add(CustomTextFromFieldWidget(
+
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _locationEditTxt,
         textHint: "موقعیت جغرافیایی سرور",
         validationError: "کشوری که سرور در آن قرار گرفته است را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
-      _otherWidgetList.add(CustomTextFromFieldWidget(
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _capacityEditTxt,
         textHint: "ظرفیت سرور",
         validationError: "مقدار کاربری که می توانند از این سرور استفاده کنند.",
         keyboardType: TextInputType.text,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
-        controller: _sanaeiTokenEditTxt,
-        textHint: "توکن سنایی",
-        validationError: "توکن سنایی را وارد کنید.",
+        controller: _adminUrlEditTxt,
+        textHint: "لینک ادمین سرور",
+        textDirection: TextDirection.ltr,
+        validationError:
+            "آدرس لینکی که با آن وارد صفحه داشبورد سرور می شوید را وارد کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _userNameEditTxt,
+        textHint: "نام کاربری",
+        validationError: "نام کاربری را وارد کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _userPasswordEditTxt,
+        textHint: "رمز عبور",
+        validationError: "رمز عبور را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
       _showData = true;
@@ -435,32 +335,9 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
 
 
 
-  _submitOtherSection(BuildContext context) async {
-    EasyLoading.show();
 
-    var res = await addNewPannel(
-        pannel: Pannel(
-            id: "1",
-            type: "custome",
-            location: _locationEditTxt.text,
-            capacity: int.parse(_capacityEditTxt.text)));
-    if (res) {
-      if (context.mounted) {
-        showMsg(msg: "با موفقیت ثبت شد.", context: context);
-        Navigator.pop(context);
-      }
-    } else {
-      if (context.mounted) {
-        showMsg(
-            msg: "خطا، اطلاعات وارد شده را بررسی کنید.",
-            context: context,
-            type: "error");
-      }
-    }
-    EasyLoading.dismiss();
-  }
 
-  _submitHiddifySection(BuildContext context) async {
+  _submitData(BuildContext context) async {
     EasyLoading.show();
 
     await addHiddifyPannel(
@@ -503,25 +380,4 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
   }
 
 
-  _submitData(BuildContext context) async {
-    switch (_selectedPannelType) {
-      case "دیگر":
-        if (context.mounted) {
-          await _submitOtherSection(context);
-        }
-        break;
-      case "Sanaei":
-        if (context.mounted) {
-          // await _submitSanaeiSection(context);
-        }
-        break;
-      
-
-      default:
-        if (context.mounted) {
-          await _submitOtherSection(context);
-        }
-    }
-    EasyLoading.dismiss();
-  }
 }
