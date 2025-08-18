@@ -4,6 +4,7 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
+import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
@@ -340,13 +341,14 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
   _submitData(BuildContext context) async {
     EasyLoading.show();
 
-    await addHiddifyPannel(
+    await addNewPannel(
       pannel: Pannel(
           id: "1",
-          type: "hiddify",
+          type: "sanaei",
           location: _locationEditTxt.text,
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
-          secretCode: _secretCodeEditTxt.text,
+          username: _userNameEditTxt.text,
+          password: _userPasswordEditTxt.text,
           userLink: _userLinkEditTxt.text,
           capacity: int.parse(_capacityEditTxt.text)),
     ).then((res) {
