@@ -6,6 +6,7 @@ import 'package:powerps/models/pannel_model.dart';
 class ProductCategory {
   int id;
   int pannelId;
+  int? categoryTypeId;
   String categoryName;
   int price;
   double priceInDollar;
@@ -21,6 +22,7 @@ class ProductCategory {
   ProductCategory({
     required this.id,
     required this.pannelId,
+    this.categoryTypeId,
     required this.categoryName,
     required this.price,
     required this.priceInDollar,
@@ -37,6 +39,7 @@ class ProductCategory {
   ProductCategory copyWith({
     int? id,
     int? pannelId,
+    int? categoryType,
     String? categoryName,
     int? price,
     double? priceInDollar,
@@ -52,6 +55,7 @@ class ProductCategory {
     return ProductCategory(
       id: id ?? this.id,
       pannelId: pannelId ?? this.pannelId,
+      categoryTypeId: categoryTypeId ?? categoryTypeId,
       categoryName: categoryName ?? this.categoryName,
       price: price ?? this.price,
       priceInDollar: priceInDollar ?? this.priceInDollar,
@@ -71,6 +75,7 @@ class ProductCategory {
     return {
       'id': id,
       'pannelId': pannelId,
+      'categoryTypeId': categoryTypeId,
       'categoryName': categoryName,
       'price': price,
       'priceInDollar': priceInDollar,
@@ -89,6 +94,7 @@ class ProductCategory {
     return ProductCategory(
         id: map['id']?.toInt() ?? 0,
         pannelId: map['pannel_id']?.toInt() ?? 0,
+        categoryTypeId: map['category_type_id']?.toInt() ?? 0,
         categoryName: map['category_name'] ?? '',
         price: map['price']?.toInt() ?? 0,
         priceInDollar: map['price_in_dollar']?.toDouble() ?? 0.0,
@@ -119,6 +125,7 @@ class ProductCategory {
     return other is ProductCategory &&
         other.id == id &&
         other.pannelId == pannelId &&
+        other.categoryTypeId == categoryTypeId &&
         other.categoryName == categoryName &&
         other.price == price &&
         other.priceInDollar == priceInDollar &&
@@ -135,6 +142,7 @@ class ProductCategory {
   int get hashCode {
     return id.hashCode ^
         pannelId.hashCode ^
+        categoryTypeId.hashCode ^
         categoryName.hashCode ^
         price.hashCode ^
         priceInDollar.hashCode ^

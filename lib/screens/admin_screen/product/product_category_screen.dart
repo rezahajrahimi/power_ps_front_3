@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/models/category_type_model.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
+import 'package:powerps/repositories/product_category_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/screens/admin_screen/product/fast_edit_product_categories_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -26,6 +28,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final List _selectedPanelIDFiltered = [];
   final List<String> _pannelNameList = [];
   String _selectedPannelName = "";
+
+  final List<String> _categoryTypeListName = [];
+  String _selectedCategoryType = "";
+  List<CategoryTypeModel> _fetchedCategoryType = [];
   final _nameEditText = TextEditingController();
   final _priceEditText = TextEditingController();
   final _priceInDollarEditText = TextEditingController();
@@ -54,6 +60,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _volumeEditText.dispose();
     _selectedPannelName = "";
     _pannelNameList.clear();
+    _categoryTypeListName.clear();
+    _selectedCategoryType = "";
     _productCatWidgetLIst.clear();
     _productCategoryList.clear();
     _showData = false;
@@ -93,6 +101,20 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   }
 
   void _fillData() async {
+    await getAllCategoryType().then((resCategoryType) {
+      setStateIfMounted(() {
+        if (resCategoryType.isNotEmpty) {
+          setStateIfMounted(() {
+            _fetchedCategoryType = resCategoryType;
+            _categoryTypeListName.clear();
+            for (var i in resCategoryType) {
+              _categoryTypeListName.add(i.name);
+            }
+            _selectedCategoryType = resCategoryType[0].name;
+          });
+        }
+      });
+    });
     if (mounted) {
       await getAllProdctCategory().then((res) {
         if (res != null && res != false) {
@@ -126,22 +148,19 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                 _selectedPanelIDFiltered.add(i.pannelId.toString());
               }
             }
-
-            _showData = true;
           });
         }
       }).onError((error, stackTrace) {
         debugPrint(error.toString());
         if (mounted) {
-          setStateIfMounted(() {
-            _showData = false;
-          });
           showMsg(msg: "خطا", context: context, type: "error");
         }
       }).whenComplete(() async {
         await getPannels().then((resPannel) {
           setStateIfMounted(() {
-            if (resPannel != false && resPannel != null && resPannel.isNotEmpty) {
+            if (resPannel != false &&
+                resPannel != null &&
+                resPannel.isNotEmpty) {
               setStateIfMounted(() {
                 _pannelNameList.clear();
                 for (var i in resPannel) {
@@ -152,7 +171,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                     "${resPannel[0].id}: ${getPannelName(name: resPannel[0].type)} - ${resPannel[0].location}";
               });
             }
-            _showFilters = true;
+            setStateIfMounted(() {
+              _showData = true;
+              _showFilters = true;
+            });
           });
         });
       });
@@ -427,24 +449,47 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   }
 
   _openAddNewProductCategoryDialog({required BuildContext context}) {
-    showDialog(
-        context: context,
-        builder: (context) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: StatefulBuilder(
+    final theme = Theme.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final dialogWidth = screenSize.width > 600 ? 550.0 : screenSize.width * 0.9;
+
+    return showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding:
+            const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: dialogWidth,
+            maxHeight: screenSize.height * 0.9,
+          ),
+          child: SingleChildScrollView(
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: StatefulBuilder(
                 builder: (BuildContext context, StateSetter setState) {
-              return Form(
-                key: _formKey,
-                child: AlertDialog(
-                  scrollable: true,
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text("بسته جدید"),
-                  content: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SizedBox(
+                  return Container(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Form(
+                      key: _formKey,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text("نام بسته جدید را وارد کنید."),
+                          Text(
+                            'بسته جدید',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16.0),
+                          const Text(
+                            'نام بسته جدید را وارد کنید.',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4.0),
                           TextFormField(
                             controller: _nameEditText,
                             keyboardType: TextInputType.text,
@@ -456,13 +501,23 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               }
                               return null;
                             },
-                            decoration: const InputDecoration(
-                                labelText: "نام بسته جدید"),
+                            decoration: InputDecoration(
+                              labelText: 'نام بسته جدید',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                            ),
                           ),
-                          const SizedBox(
-                            height: 8,
+                          const SizedBox(height: 16.0),
+                          const Text(
+                            'قیمت بسته جدید را به تومان وارد کنید.',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
-                          const Text("قیمت بسته جدید را به تومان وارد کنید."),
+                          const SizedBox(height: 4.0),
                           TextFormField(
                             controller: _priceEditText,
                             keyboardType: TextInputType.number,
@@ -474,12 +529,25 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               }
                               return null;
                             },
-                            decoration: const InputDecoration(
-                                labelText: "قیمت بسته جدید"),
+                            decoration: InputDecoration(
+                              labelText: 'قیمت بسته جدید',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                              prefixIcon: const Icon(Icons.attach_money_rounded,
+                                  size: 20),
+                            ),
                           ),
-                          const SizedBox(
-                            height: 8,
+                          const SizedBox(height: 16.0),
+                          const Text(
+                            'قیمت دلاری بسته جدید را وارد کنید.',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
+                          const SizedBox(height: 4.0),
                           TextFormField(
                             controller: _priceInDollarEditText,
                             keyboardType: TextInputType.number,
@@ -491,14 +559,24 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               }
                               return null;
                             },
-                            decoration: const InputDecoration(
-                                labelText: "قیمت دلاری بسته جدید"),
+                            decoration: InputDecoration(
+                              labelText: 'قیمت دلاری بسته جدید',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                              prefixText: '\$ ',
+                            ),
                           ),
-                          const SizedBox(
-                            height: 8,
-                          ),
+                          const SizedBox(height: 16.0),
                           const Text(
-                              "مدت زمان اعتبار (روز) بسته را وارد کنید."),
+                            'مدت زمان اعتبار (روز) بسته را وارد کنید.',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4.0),
                           TextFormField(
                             controller: _expireDayEditText,
                             keyboardType: TextInputType.number,
@@ -510,13 +588,25 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               }
                               return null;
                             },
-                            decoration: const InputDecoration(
-                                labelText: "مدت زمان اعتبار (روز)"),
+                            decoration: InputDecoration(
+                              labelText: 'مدت زمان اعتبار (روز)',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                              suffixIcon:
+                                  const Icon(Icons.calendar_today, size: 20),
+                            ),
                           ),
-                          const SizedBox(
-                            height: 8,
+                          const SizedBox(height: 16.0),
+                          const Text(
+                            'حجم بسته را به گیگابایت وارد کنید',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
-                          const Text("حجم بسته را به گیگابایت وارد کنید"),
+                          const SizedBox(height: 4.0),
                           TextFormField(
                             controller: _volumeEditText,
                             keyboardType: TextInputType.number,
@@ -528,18 +618,71 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               }
                               return null;
                             },
-                            decoration: const InputDecoration(
-                                labelText: "حجم بسته (گیگابایت)"),
+                            decoration: InputDecoration(
+                              labelText: 'حجم بسته (گیگابایت)',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                              suffixText: 'GB',
+                            ),
                           ),
-                          const SizedBox(
-                            height: 8,
+                          const SizedBox(height: 16.0),
+                          const Text(
+                            'نوع دسته را انتخاب کنید',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
-                          const Text("پنل را انتخاب کنید"),
+                          const SizedBox(height: 4.0),
+                          DropdownButtonFormField(
+                            isExpanded: true,
+                            hint: const Text('نوع دسته'),
+                            value: _selectedCategoryType,
+                            alignment: Alignment.centerRight,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 8.0,
+                              ),
+                            ),
+                            onChanged: (newValue) {
+                              setState(() {
+                                _selectedCategoryType = newValue.toString();
+                              });
+                            },
+                            items: _categoryTypeListName.map((clType) {
+                              return DropdownMenuItem(
+                                value: clType,
+                                alignment: Alignment.centerRight,
+                                child: Text(clType),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 16.0),
+                          const Text(
+                            'پنل را انتخاب کنید',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4.0),
                           DropdownButtonFormField(
                             isExpanded: true,
                             hint: const Text('پنل'),
                             value: _selectedPannelName,
                             alignment: Alignment.centerRight,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 8.0,
+                              ),
+                            ),
                             onChanged: (newValue) {
                               setState(() {
                                 _selectedPannelName = newValue.toString();
@@ -553,86 +696,128 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               );
                             }).toList(),
                           ),
-                          const SizedBox(
-                            height: 8,
+                          const SizedBox(height: 16.0),
+                          Card(
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text(
+                                        'نمایش لینک سابسکریپشن به کاربر'),
+                                    value: _selectedPannelName
+                                                .contains("Hiddify") !=
+                                            true
+                                        ? _showSubscriptionLink
+                                        : true,
+                                    onChanged: _selectedPannelName
+                                                .contains("Hiddify") !=
+                                            true
+                                        ? (bool value) {
+                                            setState(() {
+                                              _showSubscriptionLink = value;
+                                            });
+                                          }
+                                        : null,
+                                  ),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title:
+                                        const Text('نمایش لینک پنل به کاربر'),
+                                    value: _showPannelLink,
+                                    onChanged: (bool value) {
+                                      setState(() {
+                                        _showPannelLink = value;
+                                      });
+                                    },
+                                  ),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text(
+                                        'قابلیت شارژ مجدد توسط ربات'),
+                                    value:
+                                        _selectedPannelName.contains("دیگر") !=
+                                                true
+                                            ? _rechargable
+                                            : false,
+                                    onChanged:
+                                        _selectedPannelName.contains("دیگر") !=
+                                                true
+                                            ? (bool value) {
+                                                setState(() {
+                                                  _rechargable = value;
+                                                });
+                                              }
+                                            : null,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          SwitchListTile(
-                            value:
-                                _selectedPannelName.contains("Hiddify") != true
-                                    ? _showSubscriptionLink
-                                    : true,
-                            onChanged:
-                                _selectedPannelName.contains("Hiddify") != true
-                                    ? (bool value) {
-                                        setState(() {
-                                          _showSubscriptionLink = value;
-                                        });
-                                      }
-                                    : null,
-                            title: const Text("نمایش لینک سابسکریپشن به کاربر"),
-                          ),
-                          const SizedBox(
-                            height: 8,
-                          ),
-                          SwitchListTile(
-                            value: _showPannelLink,
-                            onChanged: (bool value) {
-                              setState(() {
-                                _showPannelLink = value;
-                              });
-                            },
-                            title: const Text("نمایش لینک پنل به کاربر"),
-                          ),
-                          const SizedBox(
-                            height: 8,
-                          ),
-                          SwitchListTile(
-                            value: _selectedPannelName.contains("دیگر") != true
-                                ? _rechargable
-                                : false,
-                            onChanged:
-                                _selectedPannelName.contains("دیگر") != true
-                                    ? (bool value) {
-                                        setState(() {
-                                          _rechargable = value;
-                                        });
-                                      }
-                                    : null,
-                            title: const Text("قابلیت شارژ مجدد توسط ربات"),
+                          const SizedBox(height: 24.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    side: BorderSide(color: theme.primaryColor),
+                                  ),
+                                  child: const Text('انصراف'),
+                                ),
+                              ),
+                              const SizedBox(width: 12.0),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    if (_formKey.currentState!.validate()) {
+                                      EasyLoading.show();
+
+                                      await _submitData(context);
+                                      _formKey.currentState!.save();
+                                      _nameEditText.clear();
+                                      _priceEditText.clear();
+                                      _priceInDollarEditText.clear();
+                                      _expireDayEditText.clear();
+                                      _volumeEditText.clear();
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                  ),
+                                  child: const Text('افزودن'),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  actions: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        TextButton(
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                await _submitData(context);
-
-                                _formKey.currentState!.save();
-                                _nameEditText.clear();
-                                _priceEditText.clear();
-                                _priceInDollarEditText.clear();
-                                _expireDayEditText.clear();
-                                _volumeEditText.clear();
-                              }
-                            },
-                            child: const Text(
-                              "افزودن",
-                            )),
-                        TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("لغو")),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            })));
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   _submitData(BuildContext context) async {
@@ -647,6 +832,9 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       price: int.parse(_priceEditText.text),
       priceInDollar: double.parse(_priceInDollarEditText.text),
       pannelID: pannelID,
+      categoryTypeId: _fetchedCategoryType
+          .firstWhere((element) => element.name == _selectedCategoryType)
+          .id,
       expDay: int.parse(_expireDayEditText.text),
       volume: int.parse(_volumeEditText.text),
       rechargable: _rechargable,

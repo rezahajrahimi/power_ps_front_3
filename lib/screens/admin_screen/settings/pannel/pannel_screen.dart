@@ -4,7 +4,7 @@ import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
-import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
+// import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/obtain_exist_panel_users_to_agents_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -54,7 +54,6 @@ class _PannelScreenState extends State<PannelScreen> {
     );
   }
 
-
   void _fillData() async {
     if (context.mounted) {
       await getPannels().then((res) {
@@ -101,15 +100,13 @@ class _PannelScreenState extends State<PannelScreen> {
                   children: [
                     _pannelListCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
-                    if(Responsive.isMobile(context))
-              
-                    _operationInfoCard(context),
-                  
+                    if (Responsive.isMobile(context))
+                      _operationInfoCard(context),
                   ],
                 )),
             if (!Responsive.isMobile(context))
               SizedBox(width: AppStyle.defaultPadding),
-            
+
             // side windows
             if (!Responsive.isMobile(context))
               Expanded(
@@ -121,10 +118,8 @@ class _PannelScreenState extends State<PannelScreen> {
                   ],
                 ),
               ),
-            
           ],
         ),
-        
       ],
     );
   }
@@ -203,24 +198,24 @@ class _PannelScreenState extends State<PannelScreen> {
         icon: const Icon(Icons.add),
         label: const Text("افزودن پنل هیدیفای"),
       ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddNewSanaeiPanelScreen(),
-              )).then((value) => {_fillData()});
-        },
-        icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل سنایی"),
-      ));
+      // actionsWidgetList.add(ElevatedButton.icon(
+      //   style: TextButton.styleFrom(
+      //     padding: EdgeInsets.symmetric(
+      //       horizontal: AppStyle.defaultPadding * 1.5,
+      //       vertical: AppStyle.defaultPadding /
+      //           (Responsive.isMobile(context) ? 2 : 1),
+      //     ),
+      //   ),
+      //   onPressed: () async {
+      //     Navigator.push(
+      //         context,
+      //         MaterialPageRoute(
+      //           builder: (context) => const AddNewSanaeiPanelScreen(),
+      //         )).then((value) => {_fillData()});
+      //   },
+      //   icon: const Icon(Icons.add),
+      //   label: const Text("افزودن پنل سنایی"),
+      // ));
       if (_pannelList.isNotEmpty) {
         actionsWidgetList.add(ElevatedButton.icon(
           style: TextButton.styleFrom(

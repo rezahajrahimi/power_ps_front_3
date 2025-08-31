@@ -4,7 +4,7 @@ import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/service_type_model.dart';
 
 List<ServiceType> serviceTypeList = [];
-Future getServiceType() async {
+Future getServiceTypies() async {
   try {
     Response response = await GenaralApi.dio.get("/api/getServiceTypes",
         options: Options(headers: {
