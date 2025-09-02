@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+
 class CategoryTypeModel {
   int id;
   String name;
@@ -38,4 +39,8 @@ class CategoryTypeModel {
       isActive: map['is_active'] == 1 ? true : false,
     );
   }
+  // static Future<List<CategoryTypeModel>> getCategoryTypeList() async {
+  //   final response = await getAllCategoryType();
+  //   return response;
+  // }
 }

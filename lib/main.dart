@@ -4,6 +4,7 @@ import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
 import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/provider/auth_provider.dart';
+import 'package:powerps/provider/category_type_provider.dart';
 import 'package:powerps/provider/panel_controller.dart';
 import 'package:powerps/provider/menu_provider.dart';
 import 'package:powerps/provider/paymeny_provider.dart';
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (context) => PaymentProvider()),
           ChangeNotifierProvider(create: (context) => AppInfoProvider()),
           ChangeNotifierProvider(create: (context) => AuthChangeController()),
+          ChangeNotifierProvider(create: (context) => CategoryTypeProvider()),
         ],
         child: Consumer<AuthChangeController>(
           builder: (context, authController, child) {

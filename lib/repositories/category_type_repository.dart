@@ -33,4 +33,27 @@ Future<List<CategoryTypeModel>> getAllCategoryType() async {
     debugPrint(e.message.toString());
     return categoryTypeList;
   }
+
 }
+  Future<bool> deleteCategoryType(int categoryTypeId) async {
+    try {
+      Response response = await GenaralApi.dio.delete("/api/delete-category-type/$categoryTypeId",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+    if (response.statusCode == 200 && response.data != null) {
+      return true;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.toString());
+    return false;
+  }
+}
+    
+  

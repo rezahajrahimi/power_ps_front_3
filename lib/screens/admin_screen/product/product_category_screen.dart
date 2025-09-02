@@ -5,7 +5,7 @@ import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/category_type_model.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
-import 'package:powerps/repositories/product_category_repository.dart';
+import 'package:powerps/repositories/category_type_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/screens/admin_screen/product/fast_edit_product_categories_screen.dart';
 import 'package:powerps/styles/app_theme.dart';

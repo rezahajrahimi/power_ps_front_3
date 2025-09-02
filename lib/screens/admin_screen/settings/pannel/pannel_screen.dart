@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
+import 'package:powerps/provider/category_type_provider.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 // import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/obtain_exist_panel_users_to_agents_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/category_type_item_widget.dart';
 import 'package:powerps/widgets/public/pannel_card_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:provider/provider.dart';
 
 class PannelScreen extends StatefulWidget {
   const PannelScreen({super.key});
@@ -55,6 +58,9 @@ class _PannelScreenState extends State<PannelScreen> {
   }
 
   void _fillData() async {
+        if (!mounted) return;
+    await context.read<CategoryTypeProvider>().init();
+
     if (context.mounted) {
       await getPannels().then((res) {
         if (res != null && res != false) {
@@ -81,7 +87,8 @@ class _PannelScreenState extends State<PannelScreen> {
                 },
               ));
             }
-            _showData = true;
+                _showData = true;
+
           });
         }
       });
@@ -100,6 +107,7 @@ class _PannelScreenState extends State<PannelScreen> {
                   children: [
                     _pannelListCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
+                    _categoryTypeListCard(context),
                     if (Responsive.isMobile(context))
                       _operationInfoCard(context),
                   ],
@@ -163,6 +171,65 @@ class _PannelScreenState extends State<PannelScreen> {
                         crossAxisCount: 2),
                   );
                 }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _categoryTypeListCard(BuildContext context) {
+    // add notifier
+    context.read<CategoryTypeProvider>().addListener(() {
+    });
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("نوع های محصولات",
+              style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                childAspectRatio: 2.9,
+                context: context,
+                importedList: context
+                    .read<CategoryTypeProvider>()
+                    .categoryTypeList
+                    .map((e) => CategoryItemWidgetInfo(
+                          categoryType: e,
+                        ))
+                    .toList(),
+              ),
+              tablet: widgetsGridview(
+                context: context,
+                childAspectRatio: 4.5,
+                importedList: context
+                    .read<CategoryTypeProvider>()
+                    .categoryTypeList
+                    .map((e) => CategoryItemWidgetInfo(
+                          categoryType: e,
+                        ))
+                    .toList(),
+              ),
+              desktop: widgetsGridview(
+                  importedList: context
+                    .read<CategoryTypeProvider>()
+                    .categoryTypeList
+                    .map((e) => CategoryItemWidgetInfo(
+                          categoryType: e,
+                        ))
+                    .toList(),
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2),
+            ),
           ),
         ],
       ),
