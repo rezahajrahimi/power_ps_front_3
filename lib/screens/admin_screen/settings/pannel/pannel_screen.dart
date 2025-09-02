@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/provider/category_type_provider.dart';
+import 'package:powerps/repositories/category_type_repository.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 // import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
@@ -313,6 +316,20 @@ class _PannelScreenState extends State<PannelScreen> {
           icon: const Icon(FontAwesomeIcons.indent),
           label: const Text("ورود کانفیگهای موجود به اپلیکیشن"),
         ));
+        actionsWidgetList.add(ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+            await _shodAddNewCategoryType(context);
+          },
+          icon: const Icon(Icons.add),
+          label: const Text("افزودن نوع محصول"),
+        ));
       }
     });
     return Container(
@@ -353,4 +370,102 @@ class _PannelScreenState extends State<PannelScreen> {
       ),
     );
   }
+  
+    _shodAddNewCategoryType(BuildContext context) async {
+    final nameCntrl = TextEditingController();
+    bool isActive = true;
+
+    return showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: const Text("افزودن نوع محصول"),
+              content: SizedBox(
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: "نام",
+                        hintText: "نام نوع محصول را وارد کنید",
+                        border: OutlineInputBorder(),
+                      ),
+                      controller: nameCntrl,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Text("وضعیت: "),
+                        const Spacer(),
+                        const Text("فعال"),
+                        Switch(
+                          activeColor: Colors.green,
+                          inactiveThumbColor: Colors.red,
+                          value: isActive,
+                          onChanged: (value) {
+                            setState(() {
+                              isActive = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    TextButton(
+                        onPressed: () async {
+                          EasyLoading.show();
+                          var res = await addCategoryType(
+                              name: nameCntrl.text,
+                              isActive: isActive);
+
+                          if (res == true) {
+                            if (context.mounted) {
+                              context.read<CategoryTypeProvider>().reFillData();
+                              showMsg(msg: "افزوده شد.", context: context);
+                              // widget.callback!;
+
+                              Navigator.pop(context);
+                            }
+                          } else if (res == false) {
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              showMsg(
+                                  msg: "خطا.", context: context, type: "error");
+                            }
+                          } else {
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              showMsg(
+                                  msg: "$res", context: context, type: "error");
+                            }
+                          }
+
+                          EasyLoading.dismiss();
+                        },
+                        child: const Text(
+                          "افزودن",
+                        )),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("لغو")),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
 }
