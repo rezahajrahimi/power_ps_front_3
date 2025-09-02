@@ -41,4 +41,8 @@ class CategoryTypeProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+  void reFillData(){
+    _initialized = false;
+    init();
+  }
 }

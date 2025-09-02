@@ -76,23 +76,7 @@ class CategoryItemWidgetInfoState extends State<CategoryItemWidgetInfo> {
             children: [
               GestureDetector(
                 onTap: () async {
-                  // create a alert dialog for edit
-                  // showDialog(
-                  //   context: context,
-                  //   builder: (context) => EditCategoryTypeScreen(
-                  //   builder: (context) => AlertDialog(
-                  //     title: const Text("ویرایش نوع کاتگوری"),
-                  //     content: const SizedBox(
-                  //       height: 200,
-                  //       child: EditCategoryTypeScreen(categoryType: widget.categoryType,),
-                  //     ),
-                  //   ),
-                  // );
-                  // if (context.mounted) {
-                  //   setState(() {
-                      
-                  //   });
-                  // }
+                  await _showEditDialog(context);
                 },
                 child: const SizedBox(
                   height: 20,
@@ -116,6 +100,105 @@ class CategoryItemWidgetInfoState extends State<CategoryItemWidgetInfo> {
             ],
           )
         ],
+      ),
+    );
+  }
+
+  _showEditDialog(BuildContext context) async {
+    final nameCntrl = TextEditingController();
+    nameCntrl.text = widget.categoryType.name;
+    bool isActive = widget.categoryType.isActive;
+
+    return showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: const Text("ویرایش نوع کاتگوری"),
+              content: SizedBox(
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: "نام",
+                        hintText: "نام نوع کاتگوری را وارد کنید",
+                        border: OutlineInputBorder(),
+                      ),
+                      controller: nameCntrl,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Text("وضعیت: "),
+                        const Spacer(),
+                        const Text("فعال"),
+                        Switch(
+                          activeColor: Colors.green,
+                          inactiveThumbColor: Colors.red,
+                          value: isActive,
+                          onChanged: (value) {
+                            setState(() {
+                              isActive = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    TextButton(
+                        onPressed: () async {
+                          EasyLoading.show();
+                          var res = await updateCategoryType(
+                              categoryTypeId: widget.categoryType.id,
+                              name: nameCntrl.text,
+                              isActive: isActive);
+
+                          if (res == true) {
+                            if (context.mounted) {
+                              context.read<CategoryTypeProvider>().reFillData();
+                              showMsg(msg: "ویرایش شد.", context: context);
+                              // widget.callback!;
+
+                              Navigator.pop(context);
+                            }
+                          } else if (res == false) {
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              showMsg(
+                                  msg: "خطا.", context: context, type: "error");
+                            }
+                          } else {
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              showMsg(
+                                  msg: "$res", context: context, type: "error");
+                            }
+                          }
+
+                          EasyLoading.dismiss();
+                        },
+                        child: const Text(
+                          "ویرایش",
+                        )),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("لغو")),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -152,10 +235,11 @@ class CategoryItemWidgetInfoState extends State<CategoryItemWidgetInfo> {
 
                           if (res == true) {
                             if (context.mounted) {
-                              context
-                                  .read<CategoryTypeProvider>()
-                                  .removeCategoryType(widget.categoryType);
+                              context.read<CategoryTypeProvider>().reFillData();
+
                               showMsg(msg: "حذف شد.", context: context);
+                              // execute callback
+                              // widget.callback!;
 
                               Navigator.pop(context);
                             }

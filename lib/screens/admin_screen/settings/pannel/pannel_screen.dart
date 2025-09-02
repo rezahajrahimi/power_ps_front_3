@@ -59,6 +59,9 @@ class _PannelScreenState extends State<PannelScreen> {
 
   void _fillData() async {
         if (!mounted) return;
+        setState(() {
+          _showData = false;
+        });
     await context.read<CategoryTypeProvider>().init();
 
     if (context.mounted) {
@@ -178,9 +181,7 @@ class _PannelScreenState extends State<PannelScreen> {
   }
 
   _categoryTypeListCard(BuildContext context) {
-    // add notifier
-    context.read<CategoryTypeProvider>().addListener(() {
-    });
+
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
@@ -200,10 +201,13 @@ class _PannelScreenState extends State<PannelScreen> {
                 childAspectRatio: 2.9,
                 context: context,
                 importedList: context
-                    .read<CategoryTypeProvider>()
+                    .watch<CategoryTypeProvider>()
                     .categoryTypeList
                     .map((e) => CategoryItemWidgetInfo(
                           categoryType: e,
+                           callback: (e){
+                            _fillData();
+                          },
                         ))
                     .toList(),
               ),
@@ -211,19 +215,25 @@ class _PannelScreenState extends State<PannelScreen> {
                 context: context,
                 childAspectRatio: 4.5,
                 importedList: context
-                    .read<CategoryTypeProvider>()
+                    .watch<CategoryTypeProvider>()
                     .categoryTypeList
                     .map((e) => CategoryItemWidgetInfo(
                           categoryType: e,
+                           callback: (e){
+                            _fillData();
+                          },
                         ))
                     .toList(),
               ),
               desktop: widgetsGridview(
                   importedList: context
-                    .read<CategoryTypeProvider>()
+                    .watch<CategoryTypeProvider>()
                     .categoryTypeList
                     .map((e) => CategoryItemWidgetInfo(
                           categoryType: e,
+                          // callback: (e){
+                          //   _fillData();
+                          // },
                         ))
                     .toList(),
                   context: context,

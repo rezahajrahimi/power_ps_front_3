@@ -55,5 +55,34 @@ Future<List<CategoryTypeModel>> getAllCategoryType() async {
     return false;
   }
 }
+  Future<bool> updateCategoryType({required int categoryTypeId, required String name,
+  required bool isActive,
+  }) async {
+    try {
+      Response response = await GenaralApi.dio.put("/api/update-category-type",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }),
+        data: {
+          "id": categoryTypeId,
+          "name": name,
+          "is_active": isActive,
+        });
+    if (response.statusCode == 200 && response.data != null) {
+      debugPrint(response.data.toString());
+      return true;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.toString());
+    return false;
+  }
+}
+
     
   
