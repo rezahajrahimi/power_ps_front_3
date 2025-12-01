@@ -107,7 +107,7 @@ class _EditTestAccountDetailsScreenState
               _infoWidgetList.add(DropdownButtonFormField(
                 isExpanded: true,
                 hint: const Text('نوع پنل'),
-                value: _selectedPannelName,
+                initialValue: _selectedPannelName,
                 alignment: Alignment.centerRight,
                 onChanged: (newValue) {
                   setState(() {
@@ -129,7 +129,11 @@ class _EditTestAccountDetailsScreenState
       } else {
         if (!mounted) return;
         showMsg(msg: "خطا", context: context, type: "error");
-        showMsg(msg: "در صورتیکه به تازگی ربات را راه‌اندازی کرده اید، ابتدا می بایست یک پنل ایجاد کنید.", context: context, type: "error");
+        showMsg(
+            msg:
+                "در صورتیکه به تازگی ربات را راه‌اندازی کرده اید، ابتدا می بایست یک پنل ایجاد کنید.",
+            context: context,
+            type: "error");
 
         Navigator.pop(context);
       }

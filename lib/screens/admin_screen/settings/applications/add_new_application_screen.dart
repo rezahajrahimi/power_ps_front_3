@@ -134,7 +134,7 @@ class _AddNewApplicationScreenState extends State<AddNewApplicationScreen> {
         child: DropdownButtonFormField(
           isExpanded: true,
           hint: const Text('سیستم عامل'),
-          value: _selectedOsName,
+          initialValue: _selectedOsName,
           alignment: Alignment.centerLeft,
           onChanged: (newValue) {
             setState(() {

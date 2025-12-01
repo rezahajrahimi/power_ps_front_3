@@ -268,8 +268,8 @@ class _BotUserBoughtProductDetailsScreenState
 
   _hiddifyConfigCardData(BuildContext context) {
     if (_hiddifyInfo == null) {
-    return const SizedBox(); // or a loading indicator
-  }
+      return const SizedBox(); // or a loading indicator
+    }
     final Size size = MediaQuery.of(context).size;
 
     List<Widget> pannelWidgetList = [];
@@ -787,7 +787,7 @@ class _ChangeCurrentProductToNewOneState
                   DropdownButtonFormField(
                     isExpanded: true,
                     hint: const Text('بسته'),
-                    value: _selectedItem,
+                    initialValue: _selectedItem,
                     alignment: Alignment.centerRight,
                     onChanged: (newValue) {
                       setState(() {

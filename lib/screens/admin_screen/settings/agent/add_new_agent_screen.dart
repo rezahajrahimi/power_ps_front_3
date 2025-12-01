@@ -312,7 +312,7 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
     }).onError((e, s) {
       debugPrint(e.toString());
       EasyLoading.dismiss();
-            if (!context.mounted) return;
+      if (!context.mounted) return;
 
       showMsg(msg: "خطا", context: context, type: "error");
     });
@@ -378,7 +378,7 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
         DropdownButtonFormField(
           isExpanded: true,
           hint: const Text('کاربر'),
-          value: _selectedUserName,
+          initialValue: _selectedUserName,
           alignment: Alignment.centerRight,
           onChanged: (newValue) {
             setState(() {

@@ -1331,7 +1331,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                         DropdownButtonFormField(
                           isExpanded: true,
                           hint: const Text('کانفیگ'),
-                          value: selectedItem,
+                          initialValue: selectedItem,
                           alignment: Alignment.centerRight,
                           onChanged: (newValue) {
                             setState(() {

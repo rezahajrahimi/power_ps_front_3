@@ -16,7 +16,8 @@ class AddNewHiddifyPanelScreen extends StatefulWidget {
   const AddNewHiddifyPanelScreen({super.key});
 
   @override
-  State<AddNewHiddifyPanelScreen> createState() => _AddNewHiddifyPanelScreenState();
+  State<AddNewHiddifyPanelScreen> createState() =>
+      _AddNewHiddifyPanelScreenState();
 }
 
 class _AddNewHiddifyPanelScreenState extends State<AddNewHiddifyPanelScreen> {
@@ -78,7 +79,8 @@ class _AddNewHiddifyPanelScreenState extends State<AddNewHiddifyPanelScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "هیدیفای افزودن پنل"),
+        appBar:
+            appBarWithBackButton(context: context, title: "هیدیفای افزودن پنل"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -738,7 +740,7 @@ class _AddNewHiddifyPanelScreenState extends State<AddNewHiddifyPanelScreen> {
         child: DropdownButtonFormField(
           isExpanded: true,
           hint: const Text('نوع پنل'),
-          value: _selectedPannelType,
+          initialValue: _selectedPannelType,
           alignment: Alignment.centerLeft,
           onChanged: (newValue) {
             setState(() {

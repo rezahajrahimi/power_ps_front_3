@@ -223,7 +223,7 @@ class _ConfigsReportTabState extends State<ConfigsReportTab>
             child: DropdownButtonFormField(
               isExpanded: true,
               hint: const Text('پنل'),
-              value: _pannelName,
+              initialValue: _pannelName,
               alignment: Alignment.centerRight,
               onChanged: (newValue) {
                 setState(() {
@@ -253,7 +253,7 @@ class _ConfigsReportTabState extends State<ConfigsReportTab>
             child: DropdownButtonFormField(
               isExpanded: true,
               hint: const Text('وضعیت بسته'),
-              value: _accountStatus,
+              initialValue: _accountStatus,
               alignment: Alignment.centerRight,
               onChanged: (newValue) {
                 setState(() {
@@ -283,7 +283,7 @@ class _ConfigsReportTabState extends State<ConfigsReportTab>
             child: DropdownButtonFormField(
               isExpanded: true,
               hint: const Text('بسته'),
-              value: _selectedProductCategory,
+              initialValue: _selectedProductCategory,
               alignment: Alignment.centerRight,
               onChanged: (newValue) {
                 setState(() {

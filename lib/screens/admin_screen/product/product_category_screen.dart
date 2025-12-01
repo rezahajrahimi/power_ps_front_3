@@ -141,7 +141,9 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       }).whenComplete(() async {
         await getPannels().then((resPannel) {
           setStateIfMounted(() {
-            if (resPannel != false && resPannel != null && resPannel.isNotEmpty) {
+            if (resPannel != false &&
+                resPannel != null &&
+                resPannel.isNotEmpty) {
               setStateIfMounted(() {
                 _pannelNameList.clear();
                 for (var i in resPannel) {
@@ -538,7 +540,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                           DropdownButtonFormField(
                             isExpanded: true,
                             hint: const Text('پنل'),
-                            value: _selectedPannelName,
+                            initialValue: _selectedPannelName,
                             alignment: Alignment.centerRight,
                             onChanged: (newValue) {
                               setState(() {

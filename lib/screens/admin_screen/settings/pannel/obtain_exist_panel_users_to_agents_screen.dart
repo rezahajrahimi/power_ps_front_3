@@ -326,7 +326,7 @@ class _ObtainExistPanelUsersToAgentsScreenState
       myList.add(DropdownButtonFormField(
         isExpanded: true,
         hint: const Text('پنل'),
-        value: _selectedPannelName,
+        initialValue: _selectedPannelName,
         alignment: Alignment.centerRight,
         onChanged: (newValue) {
           setState(() {
@@ -506,7 +506,7 @@ class _ObtainExistPanelUsersToAgentsScreenState
       myList.add(DropdownButtonFormField(
         isExpanded: true,
         hint: const Text('کاربر'),
-        value: _selectedUserName,
+        initialValue: _selectedUserName,
         alignment: Alignment.centerRight,
         onChanged: (newValue) {
           setState(() {
