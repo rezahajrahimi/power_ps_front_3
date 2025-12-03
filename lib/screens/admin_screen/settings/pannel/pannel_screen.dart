@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
-import 'package:powerps/screens/admin_screen/settings/pannel/add_new_panel_screen.dart';
+import 'package:powerps/provider/category_type_provider.dart';
+import 'package:powerps/repositories/category_type_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
+// import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/obtain_exist_panel_users_to_agents_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/category_type_item_widget.dart';
 import 'package:powerps/widgets/public/pannel_card_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:provider/provider.dart';
 
 class PannelScreen extends StatefulWidget {
   const PannelScreen({super.key});
@@ -49,86 +56,17 @@ class _PannelScreenState extends State<PannelScreen> {
                 : _content(context),
           ),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
-      ),
-    );
-  }
-
-  _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: 50.0,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          Flexible(
-            flex: 0,
-            child: ElevatedButton(
-              onPressed: () async {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AddNewPanelScreen(),
-                    )).then((value) => {});
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppStyle.secondaryColor),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 4.0,
-                    ),
-                    Text(
-                      "افزودن پنل",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const ObtainExistPanelUsersToAgentsScreen(),
-                  )).then((value) => {_fillData()});
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppStyle.secondaryColor),
-            child: const Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(FontAwesomeIcons.indent),
-                  SizedBox(
-                    width: 4.0,
-                  ),
-                  Text(
-                    "ورود کانفیگهای موجود",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
 
   void _fillData() async {
+        if (!mounted) return;
+        setState(() {
+          _showData = false;
+        });
+    await context.read<CategoryTypeProvider>().init();
+
     if (context.mounted) {
       await getPannels().then((res) {
         if (res != null && res != false) {
@@ -155,7 +93,8 @@ class _PannelScreenState extends State<PannelScreen> {
                 },
               ));
             }
-            _showData = true;
+                _showData = true;
+
           });
         }
       });
@@ -174,10 +113,14 @@ class _PannelScreenState extends State<PannelScreen> {
                   children: [
                     _pannelListCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
+                    _categoryTypeListCard(context),
+                    if (Responsive.isMobile(context))
+                      _operationInfoCard(context),
                   ],
                 )),
             if (!Responsive.isMobile(context))
               SizedBox(width: AppStyle.defaultPadding),
+
             // side windows
             if (!Responsive.isMobile(context))
               Expanded(
@@ -240,6 +183,72 @@ class _PannelScreenState extends State<PannelScreen> {
     );
   }
 
+  _categoryTypeListCard(BuildContext context) {
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("نوع های محصولات",
+              style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                childAspectRatio: 2.9,
+                context: context,
+                importedList: context
+                    .watch<CategoryTypeProvider>()
+                    .categoryTypeList
+                    .map((e) => CategoryItemWidgetInfo(
+                          categoryType: e,
+                           callback: (e){
+                            _fillData();
+                          },
+                        ))
+                    .toList(),
+              ),
+              tablet: widgetsGridview(
+                context: context,
+                childAspectRatio: 4.5,
+                importedList: context
+                    .watch<CategoryTypeProvider>()
+                    .categoryTypeList
+                    .map((e) => CategoryItemWidgetInfo(
+                          categoryType: e,
+                           callback: (e){
+                            _fillData();
+                          },
+                        ))
+                    .toList(),
+              ),
+              desktop: widgetsGridview(
+                  importedList: context
+                    .watch<CategoryTypeProvider>()
+                    .categoryTypeList
+                    .map((e) => CategoryItemWidgetInfo(
+                          categoryType: e,
+                          // callback: (e){
+                          //   _fillData();
+                          // },
+                        ))
+                    .toList(),
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _retryPannelData() {
     pannelChangedToken = "aaa";
 
@@ -263,12 +272,30 @@ class _PannelScreenState extends State<PannelScreen> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const AddNewPanelScreen(),
+                builder: (context) => const AddNewHiddifyPanelScreen(),
               )).then((value) => {_fillData()});
         },
         icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل"),
+        label: const Text("افزودن پنل هیدیفای"),
       ));
+      // actionsWidgetList.add(ElevatedButton.icon(
+      //   style: TextButton.styleFrom(
+      //     padding: EdgeInsets.symmetric(
+      //       horizontal: AppStyle.defaultPadding * 1.5,
+      //       vertical: AppStyle.defaultPadding /
+      //           (Responsive.isMobile(context) ? 2 : 1),
+      //     ),
+      //   ),
+      //   onPressed: () async {
+      //     Navigator.push(
+      //         context,
+      //         MaterialPageRoute(
+      //           builder: (context) => const AddNewSanaeiPanelScreen(),
+      //         )).then((value) => {_fillData()});
+      //   },
+      //   icon: const Icon(Icons.add),
+      //   label: const Text("افزودن پنل سنایی"),
+      // ));
       if (_pannelList.isNotEmpty) {
         actionsWidgetList.add(ElevatedButton.icon(
           style: TextButton.styleFrom(
@@ -288,6 +315,20 @@ class _PannelScreenState extends State<PannelScreen> {
           },
           icon: const Icon(FontAwesomeIcons.indent),
           label: const Text("ورود کانفیگهای موجود به اپلیکیشن"),
+        ));
+        actionsWidgetList.add(ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () async {
+            await _shodAddNewCategoryType(context);
+          },
+          icon: const Icon(Icons.add),
+          label: const Text("افزودن نوع محصول"),
         ));
       }
     });
@@ -329,4 +370,102 @@ class _PannelScreenState extends State<PannelScreen> {
       ),
     );
   }
+  
+    _shodAddNewCategoryType(BuildContext context) async {
+    final nameCntrl = TextEditingController();
+    bool isActive = true;
+
+    return showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: const Text("افزودن نوع محصول"),
+              content: SizedBox(
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: "نام",
+                        hintText: "نام نوع محصول را وارد کنید",
+                        border: OutlineInputBorder(),
+                      ),
+                      controller: nameCntrl,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Text("وضعیت: "),
+                        const Spacer(),
+                        const Text("فعال"),
+                        Switch(
+                          activeColor: Colors.green,
+                          inactiveThumbColor: Colors.red,
+                          value: isActive,
+                          onChanged: (value) {
+                            setState(() {
+                              isActive = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    TextButton(
+                        onPressed: () async {
+                          EasyLoading.show();
+                          var res = await addCategoryType(
+                              name: nameCntrl.text,
+                              isActive: isActive);
+
+                          if (res == true) {
+                            if (context.mounted) {
+                              context.read<CategoryTypeProvider>().reFillData();
+                              showMsg(msg: "افزوده شد.", context: context);
+                              // widget.callback!;
+
+                              Navigator.pop(context);
+                            }
+                          } else if (res == false) {
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              showMsg(
+                                  msg: "خطا.", context: context, type: "error");
+                            }
+                          } else {
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              showMsg(
+                                  msg: "$res", context: context, type: "error");
+                            }
+                          }
+
+                          EasyLoading.dismiss();
+                        },
+                        child: const Text(
+                          "افزودن",
+                        )),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("لغو")),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
 }

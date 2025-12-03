@@ -4,6 +4,7 @@ import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
 import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/provider/auth_provider.dart';
+import 'package:powerps/provider/category_type_provider.dart';
 import 'package:powerps/provider/panel_controller.dart';
 import 'package:powerps/provider/menu_provider.dart';
 import 'package:powerps/provider/paymeny_provider.dart';
@@ -19,12 +20,12 @@ import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/material.dart';
 
 Future main() async {
-  await dotenv.load(fileName: ".env");
+  // await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
   // await AppInfoPreference().init();
   runApp(const MyApp());
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (context) => PaymentProvider()),
           ChangeNotifierProvider(create: (context) => AppInfoProvider()),
           ChangeNotifierProvider(create: (context) => AuthChangeController()),
+          ChangeNotifierProvider(create: (context) => CategoryTypeProvider()),
         ],
         child: Consumer<AuthChangeController>(
           builder: (context, authController, child) {
