@@ -26,6 +26,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
   bool _showData = false;
   bool _showHiddifyData = false;
   bool _showMarzbanData = false;
+  bool _showSanaeiData = false;
   bool _showProxiesData = false;
   bool _showOtherData = true;
 
@@ -55,6 +56,8 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
   final _adminUrlEditTxt = TextEditingController();
   final _secretCodeEditTxt = TextEditingController();
   final _userLinkEditTxt = TextEditingController();
+  final _inboundIdEditTxt = TextEditingController();
+  final List<Widget> _sanaeiWidgetList = [];
 
   @override
   void initState() {
@@ -64,6 +67,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
 
   @override
   void dispose() {
+    _inboundIdEditTxt.dispose();
     super.dispose();
   }
 
@@ -150,6 +154,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     // SizedBox(height: AppStyle.defaultPadding),
                     if (_showOtherData) _otherPannelInfoCard(context),
                     if (_showHiddifyData) _hiddifyPannelInfoCard(context),
+                    if (_showSanaeiData) _sanaeiPannelInfoCard(context),
                     if (_showMarzbanData) _marzbanPannelInfoCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     if (_showProxiesData) _marzbanProxiesInfoCard(context),
@@ -335,6 +340,92 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                               context: context,
                               type: "error");
                         });
+                      }
+                    },
+                    icon: const Icon(Icons.checklist_rtl),
+                    label: const Text("بررسی لینک "),
+                  )
+                ],
+              )),
+        ],
+      ),
+    );
+  }
+
+  _sanaeiPannelInfoCard(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "اطلاعات پنل",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 2.9,
+                    context: context,
+                    importedList: _sanaeiWidgetList),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4.5,
+                    importedList: _sanaeiWidgetList),
+                desktop: widgetsGridview(
+                    importedList: _sanaeiWidgetList,
+                    context: context,
+                    childAspectRatio: 4.5,
+                    crossAxisCount: 2),
+              )),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+              width: double.infinity,
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppStyle.defaultPadding * 1.5,
+                        vertical: AppStyle.defaultPadding /
+                            (Responsive.isMobile(context) ? 2 : 1),
+                      ),
+                    ),
+                    onPressed: () async {
+                      if (_adminUrlEditTxt.text.isNotEmpty &&
+                          _userNameEditTxt.text.isNotEmpty &&
+                          _userPasswordEditTxt.text.isNotEmpty) {
+                        EasyLoading.show();
+                        await checkSanaeiLogin(
+                                url: _getHiddifyUrl(_adminUrlEditTxt.text),
+                                username: _userNameEditTxt.text,
+                                password: _userPasswordEditTxt.text)
+                            .then((value) {
+                          EasyLoading.dismiss();
+                          if (!context.mounted) return;
+
+                          if (value == true) {
+                            showMsg(
+                                msg: "موفق، اطلاعات وارد شده صحیح است.",
+                                context: context);
+                            return;
+                          }
+                          showMsg(
+                              msg: "ناموفق، اطلاعات وارد شده را بررسی کنید.",
+                              context: context,
+                              type: "error");
+                        });
+                      } else {
+                        showMsg(
+                            msg: "لطفاً آدرس، نام کاربری و رمز را وارد کنید.",
+                            context: context,
+                            type: "error");
                       }
                     },
                     icon: const Icon(Icons.checklist_rtl),
@@ -558,7 +649,9 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
           SizedBox(
             height: AppStyle.defaultPadding,
           ),
-          Divider(thickness: 5, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+          Divider(
+              thickness: 5,
+              color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -596,7 +689,9 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
-          Divider(thickness: 5, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+          Divider(
+              thickness: 5,
+              color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -634,7 +729,9 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
-          Divider(thickness: 5, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+          Divider(
+              thickness: 5,
+              color: AppStyle.primaryColor..withValues(alpha: 0.15)),
           SizedBox(
               width: double.infinity,
               child: CustomSwitchWidget(
@@ -684,6 +781,15 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _showOtherData = false;
 
         break;
+      case 'sanaei':
+        _selectedPannelType = "Sanaei";
+        _showMarzbanData = false;
+        _showHiddifyData = false;
+        _showProxiesData = false;
+        _showOtherData = false;
+        _showSanaeiData = true;
+
+        break;
       case "custome":
         _selectedPannelType = "دیگر";
         _showMarzbanData = false;
@@ -712,6 +818,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
     _adminUrlEditTxt.text = widget.selectedPannel.adminUrl ?? "";
     _secretCodeEditTxt.text = widget.selectedPannel.secretCode ?? "";
     _userLinkEditTxt.text = widget.selectedPannel.userLink ?? "";
+    _inboundIdEditTxt.text = widget.selectedPannel.inboundId?.toString() ?? "";
     _showData = false;
     if (widget.selectedPannel.type == 'marzban') {
       await getProxiesByPannelID(pannelId: int.parse(widget.selectedPannel.id))
@@ -789,6 +896,39 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         textHint: "موقعیت جغرافیایی سرور",
         validationError: "کشوری که سرور در آن قرار گرفته است را وارد کنید.",
         keyboardType: TextInputType.text,
+      ));
+      // Sanaei specific widgets
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _adminUrlEditTxt,
+        textHint: "لینک ادمین سرور",
+        textDirection: TextDirection.ltr,
+        validationError:
+            "آدرس لینکی که با آن وارد صفحه داشبورد سرور می شوید را وارد کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _userNameEditTxt,
+        textHint: "نام کاربری (admin)",
+        validationError: "نام کاربری را وارد کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _userPasswordEditTxt,
+        textHint: "رمز عبور (admin)",
+        validationError: "رمز عبور را وارد کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _inboundIdEditTxt,
+        textHint: "Inbound ID (شناسه inbound)",
+        validationError: "Inbound id را وارد کنید.",
+        keyboardType: TextInputType.number,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _capacityEditTxt,
+        textHint: "ظرفیت سرور",
+        validationError: "مقدار کاربری که می توانند از این سرور استفاده کنند.",
+        keyboardType: TextInputType.number,
       ));
       // _otherWidgetList.add(CustomTextFromFieldWidget(
       //   controller: _capacityEditTxt,

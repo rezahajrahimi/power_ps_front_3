@@ -71,6 +71,9 @@ String getPannelName({required String name, String type = "main"}) {
       case "hiddify":
         str = "Hiddify";
         break;
+      case "sanaei":
+        str = "Sanaei";
+        break;
       case "marzban":
         str = "Marzban";
         break;
@@ -84,6 +87,9 @@ String getPannelName({required String name, String type = "main"}) {
         break;
       case "Hiddify":
         str = "hiddify";
+        break;
+      case "Sanaei":
+        str = "sanaei";
         break;
       case "Marzban":
         str = "marzban";
