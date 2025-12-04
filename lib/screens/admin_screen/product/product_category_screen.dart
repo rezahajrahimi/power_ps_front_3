@@ -639,7 +639,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                           DropdownButtonFormField(
                             isExpanded: true,
                             hint: const Text('نوع دسته'),
-                            value: _selectedCategoryType,
+                            initialValue: _selectedCategoryType,
                             alignment: Alignment.centerRight,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(

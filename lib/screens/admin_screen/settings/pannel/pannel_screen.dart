@@ -403,7 +403,7 @@ class _PannelScreenState extends State<PannelScreen> {
                         const Spacer(),
                         const Text("فعال"),
                         Switch(
-                          activeColor: Colors.green,
+                          activeThumbColor: Colors.green,
                           inactiveThumbColor: Colors.red,
                           value: isActive,
                           onChanged: (value) {

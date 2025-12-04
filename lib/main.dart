@@ -18,7 +18,7 @@ import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
 import 'package:powerps/screens/home_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 // import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -87,9 +87,9 @@ class MyApp extends StatelessWidget {
               },
               theme: ThemeData.dark().copyWith(
                 scaffoldBackgroundColor: AppStyle.bgColor,
-                textTheme:
-                    GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
-                        .apply(bodyColor: Colors.white),
+                // textTheme:
+                //     GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme)
+                //         .apply(bodyColor: Colors.white),
                 canvasColor: AppStyle.secondaryColor,
               ),
               routes: {

@@ -137,7 +137,7 @@ class CategoryItemWidgetInfoState extends State<CategoryItemWidgetInfo> {
                         const Spacer(),
                         const Text("فعال"),
                         Switch(
-                          activeColor: Colors.green,
+                          activeThumbColor: Colors.green,
                           inactiveThumbColor: Colors.red,
                           value: isActive,
                           onChanged: (value) {
