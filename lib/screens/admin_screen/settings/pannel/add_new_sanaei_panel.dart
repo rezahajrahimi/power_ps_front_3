@@ -14,7 +14,8 @@ class AddNewSanaeiPanelScreen extends StatefulWidget {
   const AddNewSanaeiPanelScreen({super.key});
 
   @override
-  State<AddNewSanaeiPanelScreen> createState() => _AddNewSanaeiPanelScreenState();
+  State<AddNewSanaeiPanelScreen> createState() =>
+      _AddNewSanaeiPanelScreenState();
 }
 
 class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
@@ -23,11 +24,10 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
   final List<Widget> _sanaeiWidgetList = [];
   final _locationEditTxt = TextEditingController();
   final _capacityEditTxt = TextEditingController();
+  final _adminUrlEditTxt = TextEditingController();
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
-  final _adminUrlEditTxt = TextEditingController();
-  final _secretCodeEditTxt = TextEditingController();
-  final _userLinkEditTxt = TextEditingController();
+  final _inboundIdEditTxt = TextEditingController();
 
   @override
   void initState() {
@@ -37,6 +37,12 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
 
   @override
   void dispose() {
+    _locationEditTxt.dispose();
+    _capacityEditTxt.dispose();
+    _adminUrlEditTxt.dispose();
+    _userNameEditTxt.dispose();
+    _userPasswordEditTxt.dispose();
+    _inboundIdEditTxt.dispose();
     super.dispose();
   }
 
@@ -45,7 +51,8 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "افزودن پنل سنایی"),
+        appBar:
+            appBarWithBackButton(context: context, title: "افزودن پنل سنایی"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -202,10 +209,6 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     );
   }
 
-
-
-
-
   _sanaeiPannelInfoCard(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -231,7 +234,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
                 tablet: widgetsGridview(
                     context: context,
                     childAspectRatio: 4.5,
-                      importedList: _sanaeiWidgetList),
+                    importedList: _sanaeiWidgetList),
                 desktop: widgetsGridview(
                     importedList: _sanaeiWidgetList,
                     context: context,
@@ -253,18 +256,21 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
                     ),
                     onPressed: () async {
                       if (_adminUrlEditTxt.text.isNotEmpty &&
-                          _secretCodeEditTxt.text.isNotEmpty &&
-                          _userLinkEditTxt.text.isNotEmpty) {
+                          _userNameEditTxt.text.isNotEmpty &&
+                          _userPasswordEditTxt.text.isNotEmpty) {
                         EasyLoading.show();
-                        await checkIsHiddifyUrl(
+                        await checkSanaeiLogin(
                                 url: _getHiddifyUrl(_adminUrlEditTxt.text),
-                                secretCode: _secretCodeEditTxt.text)
+                                username: _userNameEditTxt.text,
+                                password: _userPasswordEditTxt.text)
                             .then((value) {
                           EasyLoading.dismiss();
                           if (!context.mounted) return;
 
                           if (value == true) {
-                            showMsg(msg: "موفق", context: context);
+                            showMsg(
+                                msg: "موفق، اطلاعات وارد شده صحیح است.",
+                                context: context);
                             return;
                           }
                           showMsg(
@@ -272,6 +278,11 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
                               context: context,
                               type: "error");
                         });
+                      } else {
+                        showMsg(
+                            msg: "لطفاً آدرس، نام کاربری و رمز را وارد کنید.",
+                            context: context,
+                            type: "error");
                       }
                     },
                     icon: const Icon(Icons.checklist_rtl),
@@ -293,11 +304,8 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     }
   }
 
-
-
   void _fillData() {
     setState(() {
-
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _locationEditTxt,
         textHint: "موقعیت جغرافیایی سرور",
@@ -320,26 +328,51 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _userNameEditTxt,
-        textHint: "نام کاربری",
+        textHint: "نام کاربری (admin)",
         validationError: "نام کاربری را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _userPasswordEditTxt,
-        textHint: "رمز عبور",
+        textHint: "رمز عبور (admin)",
         validationError: "رمز عبور را وارد کنید.",
         keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _inboundIdEditTxt,
+        textHint: "Inbound ID (شناسه inbound)",
+        validationError: "Inbound id را وارد کنید.",
+        keyboardType: TextInputType.number,
       ));
       _showData = true;
     });
   }
 
-
-
-
-
   _submitData(BuildContext context) async {
     EasyLoading.show();
+
+    // Validate capacity safely
+    int? capacity;
+    try {
+      capacity = int.tryParse(_capacityEditTxt.text) ?? 0;
+    } catch (e) {
+      capacity = 0;
+    }
+
+    if (capacity <= 0) {
+      EasyLoading.dismiss();
+      showMsg(msg: "ظرفیت نامعتبر است.", context: context, type: "error");
+      return;
+    }
+
+    int? inboundId;
+    try {
+      inboundId = _inboundIdEditTxt.text.isNotEmpty
+          ? int.tryParse(_inboundIdEditTxt.text)
+          : null;
+    } catch (e) {
+      inboundId = null;
+    }
 
     await addNewPannel(
       pannel: Pannel(
@@ -349,8 +382,8 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
           username: _userNameEditTxt.text,
           password: _userPasswordEditTxt.text,
-          userLink: _userLinkEditTxt.text,
-          capacity: int.parse(_capacityEditTxt.text)),
+          inboundId: inboundId,
+          capacity: capacity),
     ).then((res) {
       if (!context.mounted) return;
 
@@ -380,6 +413,4 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
       showMsg(msg: "خطا", context: context, type: "error");
     });
   }
-
-
 }
