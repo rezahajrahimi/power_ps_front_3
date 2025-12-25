@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
-import 'package:powerps/models/category_type_model.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
-import 'package:powerps/repositories/category_type_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/screens/admin_screen/product/fast_edit_product_categories_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -30,8 +28,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   String _selectedPannelName = "";
 
   final List<String> _categoryTypeListName = [];
-  String _selectedCategoryType = "";
-  List<CategoryTypeModel> _fetchedCategoryType = [];
+  // String _selectedCategoryType = "";
+  // List<CategoryTypeModel> _fetchedCategoryType = [];
   final _nameEditText = TextEditingController();
   final _priceEditText = TextEditingController();
   final _priceInDollarEditText = TextEditingController();
@@ -60,8 +58,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _volumeEditText.dispose();
     _selectedPannelName = "";
     _pannelNameList.clear();
-    _categoryTypeListName.clear();
-    _selectedCategoryType = "";
+    // _categoryTypeListName.clear();
+    // _selectedCategoryType = "";
     _productCatWidgetLIst.clear();
     _productCategoryList.clear();
     _showData = false;
@@ -101,20 +99,20 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   }
 
   void _fillData() async {
-    await getAllCategoryType().then((resCategoryType) {
-      setStateIfMounted(() {
-        if (resCategoryType.isNotEmpty) {
-          setStateIfMounted(() {
-            _fetchedCategoryType = resCategoryType;
-            _categoryTypeListName.clear();
-            for (var i in resCategoryType) {
-              _categoryTypeListName.add(i.name);
-            }
-            _selectedCategoryType = resCategoryType[0].name;
-          });
-        }
-      });
-    });
+    // await getAllCategoryType().then((resCategoryType) {
+    //   setStateIfMounted(() {
+    //     if (resCategoryType.isNotEmpty) {
+    //       setStateIfMounted(() {
+    //         _fetchedCategoryType = resCategoryType;
+    //         _categoryTypeListName.clear();
+    //         for (var i in resCategoryType) {
+    //           _categoryTypeListName.add(i.name);
+    //         }
+    //         _selectedCategoryType = resCategoryType[0].name;
+    //       });
+    //     }
+    //   });
+    // });
     if (mounted) {
       await getAllProdctCategory().then((res) {
         if (res != null && res != false) {
@@ -635,34 +633,34 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                             'نوع دسته را انتخاب کنید',
                             style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
-                          const SizedBox(height: 4.0),
-                          DropdownButtonFormField(
-                            isExpanded: true,
-                            hint: const Text('نوع دسته'),
-                            initialValue: _selectedCategoryType,
-                            alignment: Alignment.centerRight,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12.0,
-                                vertical: 8.0,
-                              ),
-                            ),
-                            onChanged: (newValue) {
-                              setState(() {
-                                _selectedCategoryType = newValue.toString();
-                              });
-                            },
-                            items: _categoryTypeListName.map((clType) {
-                              return DropdownMenuItem(
-                                value: clType,
-                                alignment: Alignment.centerRight,
-                                child: Text(clType),
-                              );
-                            }).toList(),
-                          ),
+                          // const SizedBox(height: 4.0),
+                          // DropdownButtonFormField(
+                          //   isExpanded: true,
+                          //   hint: const Text('نوع دسته'),
+                          //   initialValue: _selectedCategoryType,
+                          //   alignment: Alignment.centerRight,
+                          //   decoration: InputDecoration(
+                          //     border: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8.0),
+                          //     ),
+                          //     contentPadding: const EdgeInsets.symmetric(
+                          //       horizontal: 12.0,
+                          //       vertical: 8.0,
+                          //     ),
+                          //   ),
+                          //   onChanged: (newValue) {
+                          //     setState(() {
+                          //       _selectedCategoryType = newValue.toString();
+                          //     });
+                          //   },
+                          //   items: _categoryTypeListName.map((clType) {
+                          //     return DropdownMenuItem(
+                          //       value: clType,
+                          //       alignment: Alignment.centerRight,
+                          //       child: Text(clType),
+                          //     );
+                          //   }).toList(),
+                          // ),
                           const SizedBox(height: 16.0),
                           const Text(
                             'پنل را انتخاب کنید',
@@ -832,9 +830,9 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       price: int.parse(_priceEditText.text),
       priceInDollar: double.parse(_priceInDollarEditText.text),
       pannelID: pannelID,
-      categoryTypeId: _fetchedCategoryType
-          .firstWhere((element) => element.name == _selectedCategoryType)
-          .id,
+      // categoryTypeId: _fetchedCategoryType
+      //     .firstWhere((element) => element.name == _selectedCategoryType)
+      //     .id,
       expDay: int.parse(_expireDayEditText.text),
       volume: int.parse(_volumeEditText.text),
       rechargable: _rechargable,

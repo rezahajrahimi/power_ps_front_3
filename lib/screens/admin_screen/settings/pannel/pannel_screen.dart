@@ -258,7 +258,43 @@ class _PannelScreenState extends State<PannelScreen> {
   _operationInfoCard(BuildContext context) {
     List<Widget> actionsWidgetList = [];
 
-    setState(() {
+    actionsWidgetList.add(ElevatedButton.icon(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppStyle.defaultPadding * 1.5,
+          vertical:
+              AppStyle.defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
+        ),
+      ),
+      onPressed: () async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddNewHiddifyPanelScreen(),
+            )).then((value) => {_fillData()});
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("افزودن پنل هیدیفای"),
+    ));
+    actionsWidgetList.add(ElevatedButton.icon(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppStyle.defaultPadding * 1.5,
+          vertical:
+              AppStyle.defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
+        ),
+      ),
+      onPressed: () async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddNewSanaeiPanelScreen(),
+            )).then((value) => {_fillData()});
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("افزودن پنل سنایی"),
+    ));
+    if (_pannelList.isNotEmpty) {
       actionsWidgetList.add(ElevatedButton.icon(
         style: TextButton.styleFrom(
           padding: EdgeInsets.symmetric(
@@ -271,11 +307,12 @@ class _PannelScreenState extends State<PannelScreen> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const AddNewHiddifyPanelScreen(),
+                builder: (context) =>
+                    const ObtainExistPanelUsersToAgentsScreen(),
               )).then((value) => {_fillData()});
         },
-        icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل هیدیفای"),
+        icon: const Icon(FontAwesomeIcons.indent),
+        label: const Text("ورود کانفیگهای موجود به اپلیکیشن"),
       ));
       actionsWidgetList.add(ElevatedButton.icon(
         style: TextButton.styleFrom(
@@ -286,51 +323,12 @@ class _PannelScreenState extends State<PannelScreen> {
           ),
         ),
         onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddNewSanaeiPanelScreen(),
-              )).then((value) => {_fillData()});
+          await _shodAddNewCategoryType(context);
         },
         icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل سنایی"),
+        label: const Text("افزودن نوع محصول"),
       ));
-      if (_pannelList.isNotEmpty) {
-        actionsWidgetList.add(ElevatedButton.icon(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppStyle.defaultPadding * 1.5,
-              vertical: AppStyle.defaultPadding /
-                  (Responsive.isMobile(context) ? 2 : 1),
-            ),
-          ),
-          onPressed: () async {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      const ObtainExistPanelUsersToAgentsScreen(),
-                )).then((value) => {_fillData()});
-          },
-          icon: const Icon(FontAwesomeIcons.indent),
-          label: const Text("ورود کانفیگهای موجود به اپلیکیشن"),
-        ));
-        actionsWidgetList.add(ElevatedButton.icon(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppStyle.defaultPadding * 1.5,
-              vertical: AppStyle.defaultPadding /
-                  (Responsive.isMobile(context) ? 2 : 1),
-            ),
-          ),
-          onPressed: () async {
-            await _shodAddNewCategoryType(context);
-          },
-          icon: const Icon(Icons.add),
-          label: const Text("افزودن نوع محصول"),
-        ));
-      }
-    });
+    }
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
