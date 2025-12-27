@@ -63,7 +63,7 @@ class _ConfigDetailsWithCatInfoItemWidgetState
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.05),
           borderRadius: const BorderRadius.all(
-            Radius.circular(15),
+            Radius.circular(20),
           ),
           border: Border.all(
             color: AppStyle.primaryColor.withValues(alpha: 0.1),
@@ -73,7 +73,7 @@ class _ConfigDetailsWithCatInfoItemWidgetState
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: (_showdata &&
                         !(widget.item.productCategory?.pannel?.type == "sanaei"
@@ -81,15 +81,15 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                             : (_hiddifyConfig?.isActive ?? false)))
                     ? Colors.red.withValues(alpha: 0.1)
                     : AppStyle.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: _showdata == false
-                  ? Icon(Icons.code, color: AppStyle.primaryColor, size: 20)
+                  ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
                   : (widget.item.productCategory?.pannel?.type == "sanaei"
                           ? (_sanaeiConfig?.enable ?? false)
                           : (_hiddifyConfig?.isActive ?? false))
-                      ? Icon(Icons.code, color: AppStyle.primaryColor, size: 20)
-                      : const Icon(Icons.code_off, color: Colors.red, size: 20),
+                      ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
+                      : const Icon(Icons.code_off, color: Colors.red, size: 24),
             ),
             Expanded(
               child: Padding(
@@ -111,9 +111,7 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                             fontSize: 13,
                           ),
                         ),
-                          // maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        // maxLines: 1,
                         Text(
                           widget.item.updatedAt.length > 10
                               ? widget.item.updatedAt.substring(0, 10)

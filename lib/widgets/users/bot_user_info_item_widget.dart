@@ -44,7 +44,7 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.05),
           borderRadius: const BorderRadius.all(
-            Radius.circular(15),
+            Radius.circular(20),
           ),
           border: Border.all(
             color: AppStyle.primaryColor.withValues(alpha: 0.1),
@@ -54,13 +54,13 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppStyle.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(Icons.person_outline,
-                  color: AppStyle.primaryColor, size: 20),
+                  color: AppStyle.primaryColor, size: 24),
             ),
             Expanded(
               child: Padding(

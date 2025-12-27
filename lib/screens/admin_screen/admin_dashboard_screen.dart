@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/dashboard_model.dart';
 import 'package:powerps/repositories/general_repository.dart';
@@ -68,7 +69,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         flex: 5,
                         child: Column(
                           children: [
+                            _financialSummaryCard(context),
+                            SizedBox(height: AppStyle.defaultPadding),
                             _botUserInfoTabCard(context),
+                            SizedBox(height: AppStyle.defaultPadding),
+                            _pannelsStatusCard(context),
                             SizedBox(height: AppStyle.defaultPadding),
                             _last10SelledproductInfoItemCard(context),
                             SizedBox(height: AppStyle.defaultPadding),
@@ -133,6 +138,260 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         });
       }
     }).onError((error, stackTrace) {});
+  }
+
+  _financialSummaryCard(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.account_balance_wallet_outlined,
+                  color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "خلاصه وضعیت مالی (تراکنش‌های تایید شده)",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          Row(
+            children: [
+              Expanded(
+                child: _financialItem(
+                  title: "فروش امروز",
+                  value: _dashboard!.financialSummary['today'].toString(),
+                  color: Colors.greenAccent,
+                ),
+              ),
+              SizedBox(width: AppStyle.defaultPadding),
+              Expanded(
+                child: _financialItem(
+                  title: "فروش هفته",
+                  value: _dashboard!.financialSummary['week'].toString(),
+                  color: Colors.blueAccent,
+                ),
+              ),
+              SizedBox(width: AppStyle.defaultPadding),
+              Expanded(
+                child: _financialItem(
+                  title: "فروش ماه",
+                  value: _dashboard!.financialSummary['month'].toString(),
+                  color: Colors.orangeAccent,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  _financialItem(
+      {required String title, required String value, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 8),
+          FittedBox(
+            child: Text(
+              "${formatPrice(value)} تومان",
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _pannelsStatusCard(BuildContext context) {
+    List<Widget> pannelWidgets = [];
+    for (var pannel in _dashboard!.pannelsStatus) {
+      pannelWidgets.add(
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: (pannel['is_online'] == true ? Colors.green : Colors.red)
+                  .withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        pannel['type'] == 'hiddify'
+                            ? Icons.security
+                            : Icons.settings_input_component,
+                        size: 16,
+                        color: AppStyle.primaryColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        pannel['location'] ?? 'نامشخص',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: pannel['is_online'] == true
+                          ? Colors.green
+                          : Colors.red,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (pannel['is_online'] == true
+                                  ? Colors.green
+                                  : Colors.red)
+                              .withValues(alpha: 0.5),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("کل کاربران",
+                          style:
+                              TextStyle(color: Colors.white54, fontSize: 10)),
+                      Text("${pannel['total_users']}",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text("آنلاین",
+                          style:
+                              TextStyle(color: Colors.white54, fontSize: 10)),
+                      Text("${pannel['online_users']}",
+                          style: TextStyle(
+                              color: AppStyle.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14)),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.dns_outlined, color: AppStyle.primaryColor),
+                  const SizedBox(width: 10),
+                  Text(
+                    "وضعیت پنل‌ها",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              Text(
+                "${_dashboard!.pannelsStatus.length} پنل فعال",
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+            ],
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                childAspectRatio: 1.8,
+                context: context,
+                importedList: pannelWidgets,
+                crossAxisCount: 2,
+              ),
+              tablet: widgetsGridview(
+                childAspectRatio: 2.2,
+                context: context,
+                importedList: pannelWidgets,
+                crossAxisCount: 3,
+              ),
+              desktop: widgetsGridview(
+                childAspectRatio: 2.5,
+                context: context,
+                importedList: pannelWidgets,
+                crossAxisCount: 4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   _last10SelledproductInfoItemCard(BuildContext context) {

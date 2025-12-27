@@ -11,11 +11,17 @@ class Dashboard {
   List<Transaction> unConTransactions;
   List<DetailsInfoItem> mostSelledProductCategory;
   List<ProductDetails> last10ProductSelled;
-  Dashboard(
-      {required this.users,
-      required this.logs,
-      required this.conTransactions,
-      required this.unConTransactions,
-      required this.mostSelledProductCategory,
-      required this.last10ProductSelled});
+  List<Map<String, dynamic>> pannelsStatus;
+  Map<String, dynamic> financialSummary;
+
+  Dashboard({
+    required this.users,
+    required this.logs,
+    required this.conTransactions,
+    required this.unConTransactions,
+    required this.mostSelledProductCategory,
+    required this.last10ProductSelled,
+    required this.pannelsStatus,
+    required this.financialSummary,
+  });
 }

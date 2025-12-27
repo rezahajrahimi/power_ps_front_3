@@ -432,14 +432,29 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "جزییات تراکنش",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.receipt_long_outlined, color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "جزییات تراکنش",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(

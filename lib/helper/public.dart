@@ -47,6 +47,8 @@ String thousandSeperatorFormatter(String price) {
   }
 }
 
+String formatPrice(String price) => thousandSeperatorFormatter(price);
+
 showMsg(
     {required String msg,
     required BuildContext context,

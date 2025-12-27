@@ -66,13 +66,19 @@ class _TransactionInfoItemCardWidgetState
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: (widget.item.confirmed == true ? Colors.green : Colors.orange)
+                color: (widget.item.confirmed == true
+                        ? Colors.green
+                        : Colors.orange)
                     .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                widget.item.confirmed == true ? Icons.check_circle_outline : Icons.pending_outlined,
-                color: widget.item.confirmed == true ? Colors.greenAccent : Colors.orangeAccent,
+                widget.item.confirmed == true
+                    ? Icons.check_circle_outline
+                    : Icons.pending_outlined,
+                color: widget.item.confirmed == true
+                    ? Colors.greenAccent
+                    : Colors.orangeAccent,
                 size: 20,
               ),
             ),
@@ -87,9 +93,12 @@ class _TransactionInfoItemCardWidgetState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          (widget.item.botUser?.username ?? "بدون نام کاربری").length > 20
+                          (widget.item.botUser?.username ?? "بدون نام کاربری")
+                                      .length >
+                                  20
                               ? "${(widget.item.botUser?.username ?? "بدون نام کاربری").substring(0, 20)}..."
-                              : (widget.item.botUser?.username ?? "بدون نام کاربری"),
+                              : (widget.item.botUser?.username ??
+                                  "بدون نام کاربری"),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -115,39 +124,16 @@ class _TransactionInfoItemCardWidgetState
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
-                              .copyWith(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                              .copyWith(
+                                  color: Colors.greenAccent,
+                                  fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          widget.item.createdAt,
+                          widget.item.createdAt!,
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
                               .copyWith(color: Colors.white54, fontSize: 10),
-                        ),
-                      ],
-                    ),
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "${thousandSeperatorFormatter(widget.item.amount.toString())} تومان",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white70),
-                        ),
-                        // Text(
-                        //   "${widget.item.expireDay} روزه",
-                        //   style: Theme.of(context)
-                        //       .textTheme
-                        //       .bodySmall!
-                        //       .copyWith(color: Colors.white70),
-                        // ),
-                        Text(
-                          "${widget.item.createdAt}",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white70),
                         ),
                       ],
                     ),

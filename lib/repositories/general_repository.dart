@@ -58,13 +58,28 @@ Future<Dashboard?> getDashboardAnalytics() async {
       for (var i in data["last10ProductSelled"]) {
         last10ProductSelled.add(ProductDetails.fromJson(i));
       }
+
+      List<Map<String, dynamic>> pannelsStatus = [];
+      if (data["PannelsStatus"] != null) {
+        for (var i in data["PannelsStatus"]) {
+          pannelsStatus.add(Map<String, dynamic>.from(i));
+        }
+      }
+
+      Map<String, dynamic> financialSummary = {};
+      if (data["FinancialSummary"] != null) {
+        financialSummary = Map<String, dynamic>.from(data["FinancialSummary"]);
+      }
+
       Dashboard dashboard = Dashboard(
           users: users,
           logs: logs,
           conTransactions: conTransactions,
           unConTransactions: unConTransactions,
           mostSelledProductCategory: mostSelledProductCategory,
-          last10ProductSelled: last10ProductSelled);
+          last10ProductSelled: last10ProductSelled,
+          pannelsStatus: pannelsStatus,
+          financialSummary: financialSummary);
       return dashboard;
     } else if (response.statusCode == 201) {
       return null;
@@ -289,17 +304,17 @@ Future createNewAgentDollarBillUrl({required int amount}) async {
     return null;
   }
 }
+
 Future<String> getLicenseType() async {
   try {
-    Response response =
-        await GenaralApi.dio.get("/api/get-license-type",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*',
-            }));
+    Response response = await GenaralApi.dio.get("/api/get-license-type",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*',
+        }));
     if (response.statusCode == 200 && response.data != null) {
       return response.data;
     }
