@@ -792,6 +792,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   userID: _botUser!.accountId.toInt(),
                   message: messageController.text,
                 ).then((value) {
+                  if (!context.mounted) return;
                   EasyLoading.dismiss();
                   if (value != null && value != false) {
                     showMsg(context: context, msg: "پیام با موفقیت ارسال شد");
@@ -853,6 +854,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                 await syncUserProductsHistoryByAccountIDwithPanels(
                         id: _botUser!.accountId.toInt())
                     .then((value) {
+                  if (!context.mounted) return;
                   EasyLoading.dismiss();
                   if (value != null && value != false) {
                     showMsg(
@@ -921,6 +923,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   await unblockUser(_botUser!.accountId.toString())
                       .then((value) {
                     EasyLoading.dismiss();
+                    if (!context.mounted) return;
                     if (value) {
                       showMsg(
                           context: context,
@@ -936,6 +939,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                           _botUser!.accountId.toString(), "مسدود شده توسط مدیر")
                       .then((value) {
                     EasyLoading.dismiss();
+                    if (!context.mounted) return;
                     if (value) {
                       showMsg(
                           context: context, msg: "کاربر با موفقیت مسدود شد");
@@ -1457,7 +1461,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                               const InputDecoration(border: InputBorder.none),
                           hint: const Text('انتخاب کانفیگ',
                               style: TextStyle(color: Colors.white54)),
-                          value: selectedItem,
+                          initialValue: selectedItem,
                           onChanged: (newValue) {
                             setState(() {
                               selectedItem = newValue.toString();

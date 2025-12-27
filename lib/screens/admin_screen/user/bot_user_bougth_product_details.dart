@@ -354,6 +354,7 @@ class _BotUserBoughtProductDetailsScreenState
             if (link != false && link != null) {
               launchUrl(Uri.parse(link));
             } else {
+              if (!context.mounted) return;
               showMsg(
                   msg: "خطا در دریافت لینک", context: context, type: "error");
             }
@@ -370,6 +371,7 @@ class _BotUserBoughtProductDetailsScreenState
                   productID: widget.productDetails.id.toInt())
               .then((value) {
             EasyLoading.dismiss();
+            if (!context.mounted) return;
             if (value) {
               showMsg(msg: "با موفقیت انجام شد", context: context);
               Provider.of<ProductProvider>(context, listen: false)
@@ -393,6 +395,7 @@ class _BotUserBoughtProductDetailsScreenState
                   productID: widget.productDetails.id.toInt())
               .then((res) {
             EasyLoading.dismiss();
+            if (!context.mounted) return;
             if (res) {
               showMsg(msg: "تغییر وضعیت با موفقیت انجام شد", context: context);
               _fillData();
@@ -565,6 +568,7 @@ class _BotUserBoughtProductDetailsScreenState
                   productID: widget.productDetails.id.toInt())
               .then((link) {
             EasyLoading.dismiss();
+            if (!context.mounted) return;
             if (link != false && link != null) {
               launchUrl(Uri.parse(link));
             } else {
@@ -583,6 +587,7 @@ class _BotUserBoughtProductDetailsScreenState
           await reChargeProductByAdminWithPrID(
                   productID: widget.productDetails.id.toInt())
               .then((value) {
+            if (!context.mounted) return;
             EasyLoading.dismiss();
             if (value) {
               showMsg(msg: "با موفقیت انجام شد", context: context);
@@ -607,6 +612,7 @@ class _BotUserBoughtProductDetailsScreenState
                   productID: widget.productDetails.id.toInt())
               .then((res) {
             EasyLoading.dismiss();
+            if (!context.mounted) return;
             if (res) {
               showMsg(msg: "تغییر وضعیت با موفقیت انجام شد", context: context);
               _fillData();
@@ -748,6 +754,7 @@ class _BotUserBoughtProductDetailsScreenState
                   username: widget.productDetails.remark)
               .then((value) {
             EasyLoading.dismiss();
+            if (!context.mounted) return;
             if (value) {
               showMsg(msg: "با موفقیت انجام شد", context: context);
               _fillData();
@@ -1222,7 +1229,7 @@ class _ChangeCurrentProductToNewOneState
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.blueAccent,
+            activeThumbColor: Colors.blueAccent,
           ),
         ],
       ),
