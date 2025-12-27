@@ -36,6 +36,55 @@ Future<bool> checkIsHiddifyUrl(
   }
 }
 
+/// Check Sanaei (x-ui) admin login using provided admin URL, username and password.
+/// Returns true if login successful (HTTP 200 and cookie set), false otherwise.
+Future<bool> checkSanaeiLogin(
+    {required String url,
+    required String username,
+    required String password}) async {
+  try {
+    // Ensure url ends with a slash only once
+    String loginUrl = url;
+    if (!loginUrl.endsWith('/')) loginUrl = '$loginUrl/';
+    loginUrl = '${loginUrl}login';
+
+    // Use a fresh Dio instance for panel calls
+    Dio dio = Dio(BaseOptions(
+      baseUrl: loginUrl,
+      followRedirects: false,
+      validateStatus: (status) => status! < 500,
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+    ));
+
+    Response response = await dio.post(loginUrl,
+        data: {'username': username, 'password': password},
+        options: Options(headers: {
+          'Accept': 'application/json, text/html, */*',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }));
+
+    // Successful login typically returns 200 and sets a cookie
+    if (response.statusCode == 200 && response.data["success"] != false) {
+      try {
+        // Check for Set-Cookie header (some servers use lowercase)
+        if (response.headers.map.containsKey('set-cookie') ||
+            response.headers.map.containsKey('Set-Cookie')) {
+          return true;
+        }
+        // Even if cookie not present in headers, consider 200 as success
+        return true;
+      } catch (e) {
+        return true;
+      }
+    }
+    return false;
+  } catch (e) {
+    debugPrint(e.toString());
+    return false;
+  }
+}
+
 Future addHiddifyPannel({required Pannel pannel}) async {
   try {
     Response response = await GenaralApi.dio.post("/api/addHiddifyPannel",

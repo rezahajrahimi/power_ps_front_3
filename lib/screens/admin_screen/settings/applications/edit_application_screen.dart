@@ -148,7 +148,7 @@ class _EditApplicationScreenState extends State<EditApplicationScreen> {
         child: DropdownButtonFormField(
           isExpanded: true,
           hint: const Text('سیستم عامل'),
-          value: _selectedOsName,
+          initialValue: _selectedOsName,
           alignment: Alignment.centerLeft,
           onChanged: (newValue) {
             setState(() {

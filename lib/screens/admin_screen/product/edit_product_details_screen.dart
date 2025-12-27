@@ -294,7 +294,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         child: DropdownButtonFormField(
           isExpanded: true,
           hint: const Text('پنل'),
-          value: _selectedPannelName,
+          initialValue: _selectedPannelName,
           alignment: Alignment.centerLeft,
           onChanged: (newValue) {
             setStateIfMounted(() {

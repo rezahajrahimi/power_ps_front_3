@@ -145,7 +145,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                   fontSize: 18,
                   fontWeight: FontWeight.w500),
             ),
-            value: _selectedTransactionStatus,
+            initialValue: _selectedTransactionStatus,
             alignment: Alignment.centerLeft,
             onChanged: (newValue) {
               setState(() {
@@ -191,7 +191,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                         fontSize: 18,
                         fontWeight: FontWeight.w500),
                   ),
-                  value: _selectedPaymentType,
+                  initialValue: _selectedPaymentType,
                   alignment: Alignment.centerLeft,
                   onChanged: (newValue) {
                     setState(() {

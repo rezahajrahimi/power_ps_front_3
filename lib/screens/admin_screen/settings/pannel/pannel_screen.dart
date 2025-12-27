@@ -8,6 +8,7 @@ import 'package:powerps/provider/category_type_provider.dart';
 import 'package:powerps/repositories/category_type_repository.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
 // import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/obtain_exist_panel_users_to_agents_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -61,10 +62,10 @@ class _PannelScreenState extends State<PannelScreen> {
   }
 
   void _fillData() async {
-        if (!mounted) return;
-        setState(() {
-          _showData = false;
-        });
+    if (!mounted) return;
+    setState(() {
+      _showData = false;
+    });
     await context.read<CategoryTypeProvider>().init();
 
     if (context.mounted) {
@@ -93,8 +94,7 @@ class _PannelScreenState extends State<PannelScreen> {
                 },
               ));
             }
-                _showData = true;
-
+            _showData = true;
           });
         }
       });
@@ -184,7 +184,6 @@ class _PannelScreenState extends State<PannelScreen> {
   }
 
   _categoryTypeListCard(BuildContext context) {
-
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
@@ -208,7 +207,7 @@ class _PannelScreenState extends State<PannelScreen> {
                     .categoryTypeList
                     .map((e) => CategoryItemWidgetInfo(
                           categoryType: e,
-                           callback: (e){
+                          callback: (e) {
                             _fillData();
                           },
                         ))
@@ -222,7 +221,7 @@ class _PannelScreenState extends State<PannelScreen> {
                     .categoryTypeList
                     .map((e) => CategoryItemWidgetInfo(
                           categoryType: e,
-                           callback: (e){
+                          callback: (e) {
                             _fillData();
                           },
                         ))
@@ -230,15 +229,15 @@ class _PannelScreenState extends State<PannelScreen> {
               ),
               desktop: widgetsGridview(
                   importedList: context
-                    .watch<CategoryTypeProvider>()
-                    .categoryTypeList
-                    .map((e) => CategoryItemWidgetInfo(
-                          categoryType: e,
-                          // callback: (e){
-                          //   _fillData();
-                          // },
-                        ))
-                    .toList(),
+                      .watch<CategoryTypeProvider>()
+                      .categoryTypeList
+                      .map((e) => CategoryItemWidgetInfo(
+                            categoryType: e,
+                            // callback: (e){
+                            //   _fillData();
+                            // },
+                          ))
+                      .toList(),
                   context: context,
                   childAspectRatio: 4.5,
                   crossAxisCount: 2),
@@ -259,7 +258,43 @@ class _PannelScreenState extends State<PannelScreen> {
   _operationInfoCard(BuildContext context) {
     List<Widget> actionsWidgetList = [];
 
-    setState(() {
+    actionsWidgetList.add(ElevatedButton.icon(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppStyle.defaultPadding * 1.5,
+          vertical:
+              AppStyle.defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
+        ),
+      ),
+      onPressed: () async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddNewHiddifyPanelScreen(),
+            )).then((value) => {_fillData()});
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("افزودن پنل هیدیفای"),
+    ));
+    actionsWidgetList.add(ElevatedButton.icon(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppStyle.defaultPadding * 1.5,
+          vertical:
+              AppStyle.defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
+        ),
+      ),
+      onPressed: () async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddNewSanaeiPanelScreen(),
+            )).then((value) => {_fillData()});
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("افزودن پنل سنایی"),
+    ));
+    if (_pannelList.isNotEmpty) {
       actionsWidgetList.add(ElevatedButton.icon(
         style: TextButton.styleFrom(
           padding: EdgeInsets.symmetric(
@@ -272,66 +307,28 @@ class _PannelScreenState extends State<PannelScreen> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const AddNewHiddifyPanelScreen(),
+                builder: (context) =>
+                    const ObtainExistPanelUsersToAgentsScreen(),
               )).then((value) => {_fillData()});
         },
-        icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل هیدیفای"),
+        icon: const Icon(FontAwesomeIcons.indent),
+        label: const Text("ورود کانفیگهای موجود به اپلیکیشن"),
       ));
-      // actionsWidgetList.add(ElevatedButton.icon(
-      //   style: TextButton.styleFrom(
-      //     padding: EdgeInsets.symmetric(
-      //       horizontal: AppStyle.defaultPadding * 1.5,
-      //       vertical: AppStyle.defaultPadding /
-      //           (Responsive.isMobile(context) ? 2 : 1),
-      //     ),
-      //   ),
-      //   onPressed: () async {
-      //     Navigator.push(
-      //         context,
-      //         MaterialPageRoute(
-      //           builder: (context) => const AddNewSanaeiPanelScreen(),
-      //         )).then((value) => {_fillData()});
-      //   },
-      //   icon: const Icon(Icons.add),
-      //   label: const Text("افزودن پنل سنایی"),
-      // ));
-      if (_pannelList.isNotEmpty) {
-        actionsWidgetList.add(ElevatedButton.icon(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppStyle.defaultPadding * 1.5,
-              vertical: AppStyle.defaultPadding /
-                  (Responsive.isMobile(context) ? 2 : 1),
-            ),
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
           ),
-          onPressed: () async {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      const ObtainExistPanelUsersToAgentsScreen(),
-                )).then((value) => {_fillData()});
-          },
-          icon: const Icon(FontAwesomeIcons.indent),
-          label: const Text("ورود کانفیگهای موجود به اپلیکیشن"),
-        ));
-        actionsWidgetList.add(ElevatedButton.icon(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppStyle.defaultPadding * 1.5,
-              vertical: AppStyle.defaultPadding /
-                  (Responsive.isMobile(context) ? 2 : 1),
-            ),
-          ),
-          onPressed: () async {
-            await _shodAddNewCategoryType(context);
-          },
-          icon: const Icon(Icons.add),
-          label: const Text("افزودن نوع محصول"),
-        ));
-      }
-    });
+        ),
+        onPressed: () async {
+          await _shodAddNewCategoryType(context);
+        },
+        icon: const Icon(Icons.add),
+        label: const Text("افزودن نوع محصول"),
+      ));
+    }
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
@@ -370,8 +367,8 @@ class _PannelScreenState extends State<PannelScreen> {
       ),
     );
   }
-  
-    _shodAddNewCategoryType(BuildContext context) async {
+
+  _shodAddNewCategoryType(BuildContext context) async {
     final nameCntrl = TextEditingController();
     bool isActive = true;
 
@@ -403,7 +400,7 @@ class _PannelScreenState extends State<PannelScreen> {
                         const Spacer(),
                         const Text("فعال"),
                         Switch(
-                          activeColor: Colors.green,
+                          activeThumbColor: Colors.green,
                           inactiveThumbColor: Colors.red,
                           value: isActive,
                           onChanged: (value) {
@@ -425,8 +422,7 @@ class _PannelScreenState extends State<PannelScreen> {
                         onPressed: () async {
                           EasyLoading.show();
                           var res = await addCategoryType(
-                              name: nameCntrl.text,
-                              isActive: isActive);
+                              name: nameCntrl.text, isActive: isActive);
 
                           if (res == true) {
                             if (context.mounted) {
@@ -467,5 +463,4 @@ class _PannelScreenState extends State<PannelScreen> {
       ),
     );
   }
-
 }

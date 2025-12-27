@@ -335,7 +335,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       myList.add(DropdownButtonFormField(
         isExpanded: true,
         hint: const Text('پنل'),
-        value: _selectedPannelName,
+        initialValue: _selectedPannelName,
         alignment: Alignment.centerRight,
         onChanged: (newValue) {
           setState(() {
@@ -688,7 +688,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     DropdownButtonFormField<String>(
-                      value: options.first,
+                      initialValue: options.first,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'یک گزینه را انتخاب کنید';
@@ -801,7 +801,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
             child: AlertDialog(
               title: Text("تغییر وضعیت کانفیگ ها"),
               content: DropdownButtonFormField<String>(
-                value: options.first,
+                initialValue: options.first,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'یک گزینه را انتخاب کنید';
@@ -959,7 +959,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     DropdownButtonFormField<String>(
-                      value: options.first,
+                      initialValue: options.first,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'یک گزینه را انتخاب کنید';
