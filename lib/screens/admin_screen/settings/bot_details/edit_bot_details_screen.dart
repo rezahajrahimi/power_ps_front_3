@@ -6,7 +6,6 @@ import 'package:powerps/repositories/setting_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class EditBotDetailsScreen extends StatefulWidget {
   const EditBotDetailsScreen({super.key});
@@ -22,10 +21,6 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
   final _botTokenTxtEdit = TextEditingController();
   final _adminIdTxtEdit = TextEditingController();
   final _panelAddressTxtEdit = TextEditingController();
-  final List<Widget> _botInfoWidgetList = [];
-  final List<Widget> _botTokenWidgetList = [];
-  final List<Widget> _botDescriptionWidgetList = [];
-  final List<Widget> _botActionWidgetList = [];
 
   @override
   void initState() {
@@ -63,6 +58,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
 
   void _fillData() async {
     await getBotSetting().then((value) {
+      if (!mounted) return;
       if (null != value) {
         setState(() {
           _setting = value;
@@ -70,6 +66,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           _adminIdTxtEdit.text = _setting.adminId;
           _botTokenTxtEdit.text = _setting.botToken;
           _panelAddressTxtEdit.text = _setting.panelAddress;
+          _showData = true;
         });
       } else {
         setState(() {
@@ -78,273 +75,164 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
               botName: "تعریف نشده",
               botToken: "تعریف نشده",
               id: "تعریف نشده",
-              panelAddress: "تعریف نشده"
-              );
+              panelAddress: "تعریف نشده");
+          _showData = true;
         });
       }
-      setState(() {
-        _botInfoWidgetList.add(Column(
-          children: [
-            CustomTextFromFieldWidget(
-              controller: _botNameTxtEdit,
-              textDirection: TextDirection.ltr,
-              textHint: "نام ربات",
-              validationError: "نام ربات را وارد کنید.",
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                "نام ربات را همراه با @ وارد کنید ماننده @botSeller",
-                style: TextStyle(color: AppStyle.deactiveStatus),
-              ),
-            ),
-          ],
-        ));
-        _botInfoWidgetList.add(Column(
-          children: [
-            CustomTextFromFieldWidget(
-              controller: _adminIdTxtEdit,
-              textDirection: TextDirection.ltr,
-              textHint: "ID ادمین",
-              validationError: "ID ادمین را وارد کنید.",
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                "برای پیدا کردن id ادمین در تلگرام به بات @ShowChatIdBot پیام بدهید.",
-                style: TextStyle(color: AppStyle.deactiveStatus),
-              ),
-            ),
-          ],
-        ));
-        _botInfoWidgetList.add(Column(
-          children: [
-            CustomTextFromFieldWidget(
-              controller: _panelAddressTxtEdit,
-              textDirection: TextDirection.ltr,
-              textHint: "آدرس هسته ربات را وارد کنید.",
-              keyboardType: TextInputType.url,
-              validationError: " را وارد کنید را وارد کنید.",
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                "تغییر ندهید.",
-                style: TextStyle(color: AppStyle.deactiveStatus),
-              ),
-            ),
-          ],
-        ));
-
-        _botActionWidgetList.add(ElevatedButton.icon(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppStyle.defaultPadding * 1.5,
-              vertical: AppStyle.defaultPadding /
-                  (Responsive.isMobile(context) ? 2 : 1),
-            ),
-          ),
-          onPressed: () async {
-            if (_botNameTxtEdit.text.isNotEmpty &&
-                _botTokenTxtEdit.text.isNotEmpty &&
-                _adminIdTxtEdit.text.isNotEmpty &&
-                _panelAddressTxtEdit.text.isNotEmpty) {
-              _submitData(context);
-            }
-          },
-          icon: const Icon(Icons.edit),
-          label: const Text("ویرایش"),
-        ));
-        _botTokenWidgetList.add(Column(
-          children: [
-            CustomTextFromFieldWidget(
-              controller: _botTokenTxtEdit,
-              keyboardType: TextInputType.text,
-              textHint: "توکن بات را وارد کنید.",
-              textDirection: TextDirection.ltr,
-              validationError: "توکن بات را وارد کنید را وارد کنید.",
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                "توکن ربات خود را همراه با عبارت bot وارد کنید.",
-                style: TextStyle(color: AppStyle.deactiveStatus),
-              ),
-            ),
-          ],
-        ));
-
-
-        _showData = true;
-      });
     });
   }
 
   _content(BuildContext context) {
     return Column(
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-                flex: 5,
-                child: Column(
-                  children: [
-                    _botInfoCard(context),
-                  ],
-                )),
-            if (!Responsive.isMobile(context))
-              SizedBox(width: AppStyle.defaultPadding),
-            // side windows
-            if (!Responsive.isMobile(context))
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    // _actionInfoCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
-                  ],
-                ),
+        _botInfoCard(context),
+        SizedBox(height: AppStyle.defaultPadding),
+        if (!Responsive.isMobile(context))
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              SizedBox(
+                width: 200,
+                child: _buildSubmitButton(context),
               ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }
 
   _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: 50.0,
-        child: ElevatedButton(
-          onPressed: () {
-            if (_botNameTxtEdit.text.isNotEmpty &&
-                _botTokenTxtEdit.text.isNotEmpty &&
-                _adminIdTxtEdit.text.isNotEmpty &&
-                _panelAddressTxtEdit.text.isNotEmpty) {
-              _submitData(context);
-            }
-          },
-          style: ElevatedButton.styleFrom(
-              backgroundColor: AppStyle.secondaryColor),
-          child: const Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.done,
-                  color: Colors.white,
-                ),
-                SizedBox(
-                  width: 4.0,
-                ),
-                Text(
-                  "ثبت تغییرات",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        ));
-  }
-
-  _botInfoCard(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: _buildSubmitButton(context),
+    );
+  }
+
+  Widget _buildSubmitButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        if (_botNameTxtEdit.text.isNotEmpty &&
+            _botTokenTxtEdit.text.isNotEmpty &&
+            _adminIdTxtEdit.text.isNotEmpty &&
+            _panelAddressTxtEdit.text.isNotEmpty) {
+          _submitData(context);
+        }
+      },
+      icon: const Icon(Icons.check_circle_outline),
+      label: const Text("ثبت تغییرات"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppStyle.primaryColor,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      ),
+    );
+  }
+
+  _botInfoCard(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "اطلاعات ربات",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.smart_toy_outlined, color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "اطلاعات ربات",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const Divider(height: 32, color: Colors.white10),
+          _buildInputField(
+            controller: _botNameTxtEdit,
+            label: "نام ربات",
+            hint: "@botSeller",
+            helper: "نام ربات را همراه با @ وارد کنید",
+            icon: Icons.alternate_email,
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2,
-                  context: context,
-                  importedList: _botInfoWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 3.2,
-                  importedList: _botInfoWidgetList),
-              desktop: widgetsGridview(
-                  importedList: _botInfoWidgetList,
-                  context: context,
-                  childAspectRatio: 3.2,
-                  crossAxisCount: 2),
-            ),
+          _buildInputField(
+            controller: _botTokenTxtEdit,
+            label: "توکن ربات",
+            hint: "123456789:ABCDEF...",
+            helper: "توکن ربات خود را از @BotFather دریافت کنید",
+            icon: Icons.vpn_key_outlined,
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2,
-                  context: context,
-                  importedList: _botTokenWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                  importedList: _botTokenWidgetList),
-              desktop: widgetsGridview(
-                  importedList: _botTokenWidgetList,
-                  context: context,
-                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                  crossAxisCount: 1),
-            ),
+          _buildInputField(
+            controller: _adminIdTxtEdit,
+            label: "ID ادمین",
+            hint: "123456789",
+            helper: "آیدی عددی ادمین اصلی ربات",
+            icon: Icons.admin_panel_settings_outlined,
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2,
-                  context: context,
-                  importedList: _botDescriptionWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                  importedList: _botDescriptionWidgetList),
-              desktop: widgetsGridview(
-                  importedList: _botDescriptionWidgetList,
-                  context: context,
-                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                  crossAxisCount: 1),
-            ),
+          _buildInputField(
+            controller: _panelAddressTxtEdit,
+            label: "آدرس هسته ربات",
+            hint: "https://your-domain.com",
+            helper: "آدرس دامنه متصل به هاست (تغییر ندهید مگر با اطمینان)",
+            icon: Icons.link_outlined,
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          !Responsive.isMobile(context)
-              ? SizedBox(
-                  width: double.infinity,
-                  child: Responsive(
-                    mobile: widgetsGridview(
-                        childAspectRatio: 5.5,
-                        context: context,
-                        importedList: _botActionWidgetList),
-                    tablet: widgetsGridview(
-                        context: context,
-                        childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                        crossAxisCount: 2,
-                        importedList: _botActionWidgetList),
-                    desktop: widgetsGridview(
-                        importedList: _botActionWidgetList,
-                        context: context,
-                        childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                        crossAxisCount: 4),
-                  ),
-                )
-              : const Opacity(opacity: 1)
         ],
       ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required String helper,
+    required IconData icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+              color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        CustomTextFromFieldWidget(
+          controller: controller,
+          textDirection: TextDirection.ltr,
+          textHint: hint,
+          validationError: "$label را وارد کنید",
+        ),
+        const SizedBox(height: 4),
+        Text(
+          helper,
+          style: TextStyle(color: Colors.white38, fontSize: 10),
+        ),
+      ],
     );
   }
 
