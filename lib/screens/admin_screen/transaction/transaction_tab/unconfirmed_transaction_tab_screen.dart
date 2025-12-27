@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/provider/transaction_provider.dart';
 import 'package:powerps/repositories/transaction_repositopry.dart';
 import 'package:powerps/styles/app_theme.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/transaction/transaction_info_item_widget.dart';
 
 class UnConfirmedTransactionTab extends StatefulWidget {
@@ -18,17 +16,32 @@ class UnConfirmedTransactionTab extends StatefulWidget {
 class _UnConfirmedTransactionTabState extends State<UnConfirmedTransactionTab>
     with AutomaticKeepAliveClientMixin {
   late TransactionProvider _transactionProvider;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-
-    _fillData();
+    _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fillData(refresh: true);
+    });
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_transactionProvider.unConfirmedLoadingMore &&
+          _transactionProvider.unConfirmedCurrentPage <
+              _transactionProvider.unConfirmedLastPage) {
+        _loadMore();
+      }
+    }
   }
 
   @override
@@ -40,13 +53,12 @@ class _UnConfirmedTransactionTabState extends State<UnConfirmedTransactionTab>
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: _transactionProvider.showUnConfirmedTransaction == false
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  primary: false,
-                  padding: EdgeInsets.all(AppStyle.defaultPadding),
-                  child: _content(context),
-                ),
+          child: RefreshIndicator(
+            onRefresh: () async => _fillData(refresh: true),
+            child: _transactionProvider.showUnConfirmedTransaction == false
+                ? const Center(child: CircularProgressIndicator())
+                : _content(context),
+          ),
         ),
       ),
     );
@@ -55,91 +67,73 @@ class _UnConfirmedTransactionTabState extends State<UnConfirmedTransactionTab>
   @override
   bool get wantKeepAlive => true;
 
-  void _fillData() {
-    if (context.mounted) {
-      getUnConfirmedTransactions().then((value) {
-        if (value != null) {
-          _transactionProvider.setUnconfirmedTransaction(value);
-          _transactionProvider.setShowUnconfirmedTransaction(true);
-          _transactionProvider.setChanged(false);
-        } else {
-          _transactionProvider.setShowUnconfirmedTransaction(false);
-        }
-      });
+  Future<void> _fillData({bool refresh = false}) async {
+    if (refresh) {
+      _transactionProvider.resetUnconfirmed();
+    }
+
+    final result = await getUnConfirmedTransactions(
+      page: _transactionProvider.unConfirmedCurrentPage + (refresh ? 0 : 0),
+      count: 15,
+    );
+
+    if (result != null) {
+      _transactionProvider.setUnconfirmedTransaction(
+        result['data'],
+        currentPage: result['current_page'],
+        lastPage: result['last_page'],
+      );
+      _transactionProvider.setChanged(false);
+    }
+  }
+
+  Future<void> _loadMore() async {
+    _transactionProvider.setUnConfirmedLoadingMore(true);
+    final result = await getUnConfirmedTransactions(
+      page: _transactionProvider.unConfirmedCurrentPage + 1,
+      count: 15,
+    );
+
+    if (result != null) {
+      _transactionProvider.setUnconfirmedTransaction(
+        result['data'],
+        currentPage: result['current_page'],
+        lastPage: result['last_page'],
+      );
+    } else {
+      _transactionProvider.setUnConfirmedLoadingMore(false);
     }
   }
 
   _content(BuildContext context) {
     if (_transactionProvider.changed) {
-      _transactionProvider.setShowUnconfirmedTransaction(false);
-
-      _fillData();
-      return const CircularProgressIndicator();
-    } else {
-      return Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 5,
-                child: Column(
-                  children: [
-                    _transactionInfoTabCard(context),
-                  ],
-                ),
-              ),
-            ],
-          )
-        ],
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fillData(refresh: true);
+      });
+      return const Center(child: CircularProgressIndicator());
     }
-  }
 
-  _transactionInfoTabCard(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
+    if (_transactionProvider.unConfirmedTransactions.isEmpty) {
+      return const Center(child: Text("تراکنشی یافت نشد"));
+    }
 
-    List<Widget> widgetList = [];
-    setState(() {
-      for (var i in _transactionProvider.unConfirmedTransactions) {
-        widgetList.add(TransactionInfoItemCardWidget(
-          item: i,
-        ));
-      }
-    });
-    return _transactionProvider.unConfirmedTransactions.isNotEmpty
-        ? Container(
-            padding: EdgeInsets.all(AppStyle.defaultPadding),
-            decoration: BoxDecoration(
-              color: AppStyle.secondaryColor,
-              borderRadius: const BorderRadius.all(Radius.circular(20)),
-            ),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              SizedBox(
-                width: double.infinity,
-                child: Responsive(
-                  mobile: widgetsGridview(
-                      childAspectRatio: 2.7,
-                      context: context,
-                      importedList: widgetList),
-                  tablet: widgetsGridview(
-                      context: context,
-                      childAspectRatio: 6,
-                      importedList: widgetList),
-                  desktop: widgetsGridview(
-                      importedList: widgetList,
-                      context: context,
-                      childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                      crossAxisCount: 2),
-                ),
-              )
-            ]))
-        : const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Text("تراکنشی یافت نشد"),
-            ),
+    return ListView.builder(
+      controller: _scrollController,
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      itemCount: _transactionProvider.unConfirmedTransactions.length +
+          (_transactionProvider.unConfirmedLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index < _transactionProvider.unConfirmedTransactions.length) {
+          return TransactionInfoItemCardWidget(
+            item: _transactionProvider.unConfirmedTransactions[index],
           );
+        } else {
+          return const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+      },
+    );
   }
 }

@@ -13,7 +13,6 @@ import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/image_view_tab_v4_widget.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class TransactionDetailsScreen extends StatefulWidget {
   const TransactionDetailsScreen({
@@ -28,7 +27,7 @@ class TransactionDetailsScreen extends StatefulWidget {
 }
 
 class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
-  bool _showData = false;
+  bool _isLoading = true;
   String _imageSrc = "";
   bool _showImage = false;
   final TextEditingController _amountTxtController = TextEditingController();
@@ -36,14 +35,47 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       TextEditingController();
   String _selectedTransactionStatus = "تایید نشده";
   final List<String> _transactionStatusList = ["تایید نشده", "تایید شده"];
-  late String _selectedPaymentType;
+  String? _selectedPaymentType;
 
   final List<String> _paymentTypeList = [];
-  final List<Widget> _mainInfoWidgetList = [];
+
   @override
   void initState() {
-    _fillData();
     super.initState();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    setState(() => _isLoading = true);
+
+    if (widget.item.amount != null) {
+      _amountTxtController.text = widget.item.amount.toString();
+    }
+    if (widget.item.recipeNumber != null) {
+      _recipeNUmberTxtController.text = widget.item.recipeNumber.toString();
+    }
+
+    _selectedTransactionStatus =
+        widget.item.confirmed ? "تایید شده" : "تایید نشده";
+
+    if (widget.item.image != null) {
+      _imageSrc = "$imageURL${widget.item.image!.imgSrc}";
+      _showImage = true;
+    }
+
+    await getAllActiveOfflinePaymentTypes();
+    if (paymentTypesList.isNotEmpty) {
+      _paymentTypeList.clear();
+      for (var i in paymentTypesList) {
+        _paymentTypeList.add("${i.id}: ${i.name}");
+      }
+      if (widget.item.paymentType != null) {
+        _selectedPaymentType =
+            "${widget.item.paymentType!.id}: ${widget.item.paymentType!.name}";
+      }
+    }
+
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -54,425 +86,251 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         appBar: appBarWithBackButton(
             context: context,
             title:
-                "تراکنش  ${widget.item.accountId} - ${widget.item.botUser!.username!}"),
+                "تراکنش  ${widget.item.accountId} - ${widget.item.botUser?.username ?? ''}"),
         body: SafeArea(
-          child: SingleChildScrollView(
-            primary: false,
-            padding: EdgeInsets.all(AppStyle.defaultPadding),
-            child: _showData == false
-                ? const Center(
-                    child: SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                : _content(context),
-          ),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  padding: EdgeInsets.all(AppStyle.defaultPadding),
+                  child: _content(context),
+                ),
         ),
         bottomNavigationBar: Responsive.isMobile(context)
             ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
+            : null,
       ),
     );
   }
 
-  void _fillData() async {
-    if (mounted) {
-      await getAllActiveOfflinePaymentTypes().then((value) {
-        if (value != null) {
-          setState(() {
-            _paymentTypeList.clear();
-            for (var i in paymentTypesList) {
-              _paymentTypeList.add("${i.id}: ${i.name}");
-            }
-
-            _selectedPaymentType =
-                "${widget.item.paymentType!.id}: ${widget.item.paymentType!.name}";
-            widget.item.confirmed == true
-                ? _selectedTransactionStatus = "تایید شده"
-                : _selectedTransactionStatus = "تایید نشده";
-          });
-        }
-      });
-      setState(() {
-        _mainInfoWidgetList.clear();
-        if (widget.item.amount != null) {
-          _amountTxtController.text = widget.item.amount.toString();
-        }
-        if (widget.item.recipeNumber != null) {
-          _recipeNUmberTxtController.text = widget.item.recipeNumber.toString();
-        }
-        // _selectedTransactionStatus =
-        //     widget.item.confirmed ? "تایید شده" : "تایید نشده";
-        _mainInfoWidgetList.add(DetailsInfoItemWidget(
-            item: DetailsInfoItem(
-                icon: const Icon(Icons.info),
-                itemName: "Account Id",
-                itemValue: widget.item.accountId.toString())));
-        _mainInfoWidgetList.add(DetailsInfoItemWidget(
-            item: DetailsInfoItem(
-                icon: const Icon(Icons.info),
-                itemName: "نام کاربر",
-                itemValue: widget.item.botUser!.username!)));
-        _mainInfoWidgetList.add(DetailsInfoItemWidget(
-            item: DetailsInfoItem(
-                icon: const Icon(Icons.info),
-                itemName: "زمان ایجاد",
-                itemValue: widget.item.createdAt!)));
-
-        _mainInfoWidgetList.add(Container(
-          margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-          padding: EdgeInsets.all(AppStyle.defaultPadding),
-          decoration: BoxDecoration(
-            border: Border.all(
-                width: 2,
-                color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-            borderRadius: BorderRadius.all(
-              Radius.circular(AppStyle.defaultPadding),
-            ),
-          ),
-          child: DropdownButtonFormField(
-            isExpanded: true,
-            hint: const Text('وضعیت تراکنش'),
-            decoration: const InputDecoration(
-              label: Text('وضعیت تراکنش'),
-              alignLabelWithHint: true,
-              floatingLabelAlignment: FloatingLabelAlignment.start,
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              labelStyle: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500),
-            ),
-            initialValue: _selectedTransactionStatus,
-            alignment: Alignment.centerLeft,
-            onChanged: (newValue) {
-              setState(() {
-                _selectedTransactionStatus = newValue.toString();
-              });
-            },
-            items: _transactionStatusList.map((clType) {
-              return DropdownMenuItem(
-                value: clType,
-                alignment: Alignment.centerRight,
-                child: Text(clType),
-              );
-            }).toList(),
-          ),
-        ));
-        widget.item.paymentType!.type == "online"
-            ? _mainInfoWidgetList.add(DetailsInfoItemWidget(
-                item: DetailsInfoItem(
-                    icon: const Icon(Icons.info),
-                    itemName: "درگاه پرداخت",
-                    itemValue: widget.item.paymentType!.name)))
-            : _mainInfoWidgetList.add(Container(
-                margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-                padding: EdgeInsets.all(AppStyle.defaultPadding),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      width: 2,
-                      color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(AppStyle.defaultPadding),
-                  ),
-                ),
-                child: DropdownButtonFormField(
-                  isExpanded: true,
-                  hint: const Text('درگاه پرداخت'),
-                  decoration: const InputDecoration(
-                    label: Text('درگاه پرداخت'),
-                    alignLabelWithHint: true,
-                    floatingLabelAlignment: FloatingLabelAlignment.start,
-                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                    labelStyle: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500),
-                  ),
-                  initialValue: _selectedPaymentType,
-                  alignment: Alignment.centerLeft,
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedPaymentType = newValue.toString();
-                    });
-                  },
-                  items: _paymentTypeList.map((clType) {
-                    return DropdownMenuItem(
-                      value: clType,
-                      alignment: Alignment.centerRight,
-                      child: Text(clType),
-                    );
-                  }).toList(),
-                ),
-              ));
-        widget.item.paymentType!.type == "online"
-            ? _mainInfoWidgetList.add(DetailsInfoItemWidget(
-                item: DetailsInfoItem(
-                    icon: const Icon(Icons.currency_exchange),
-                    itemName: "مقدار واریزی (تومان)",
-                    itemValue: thousandSeperatorFormatter(
-                        widget.item.amount.toString()))))
-            : _mainInfoWidgetList.add(CustomTextFromFieldWidget(
-                controller: _amountTxtController,
-                keyboardType: TextInputType.number,
-                labelText: "مقدار واریزی (تومان)",
-                textHint: "مقدار واریزی را وارد کنید",
-                validationError: "مقدار واریزی را وارد کنید"));
-        widget.item.paymentType!.type == "online"
-            ? _mainInfoWidgetList.add(DetailsInfoItemWidget(
-                item: DetailsInfoItem(
-                    icon: const Icon(Icons.offline_pin),
-                    itemName: "کد پیگیری رسید واریزی",
-                    itemValue: widget.item.recipeNumber
-                        .toString()
-                        .replaceAll(RegExp(r'^0+(?=\d)'), ''))))
-            : _mainInfoWidgetList.add(CustomTextFromFieldWidget(
-                controller: _recipeNUmberTxtController,
-                labelText: "کد پیگیری رسید",
-                textHint: "کد پیگیری رسید واریزی را وارد کنید",
-                validationError: "کد پیگیری رسید واریزی را وارد کنید"));
-        _showData = true;
-      });
-      // debugPrint("aaaaasssssssssssaa=>${widget.item.image!.imgSrc}");
-
-      if (widget.item.image != null) {
-        setState(() {
-          _imageSrc = "$imageURL${widget.item.image!.imgSrc}";
-          _showImage = true;
-        });
-        // debugPrint("aaaaaaa=>$_imageSrc");
-        // await getImageSrcFromTelegram(botfile: widget.item.image!.imgSrc)
-        //     .then((value) {
-        //   if (value != null && value.toString().isNotEmpty) {
-        //     setState(() {
-        //       _imageSrc = value;
-        //       _showImage = true;
-        //     });
-        //   }
-        // });
-      }
-    }
-  }
-
-  _content(BuildContext context) {
+  Widget _content(BuildContext context) {
     return Column(
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-                flex: 5,
-                child: Column(
-                  children: [
-                    if (Responsive.isMobile(context)) // side bar mobile
-                      if (_showImage) _imageCard(context),
-                    _mainInfoItemCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
-                    // _channelLockListCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
-                  ],
-                )),
-            if (!Responsive.isMobile(context))
-              SizedBox(width: AppStyle.defaultPadding),
-            // side windows
-            if (!Responsive.isMobile(context))
+              flex: 5,
+              child: Column(
+                children: [
+                  if (Responsive.isMobile(context) && _showImage)
+                    _imageCard(context),
+                  _mainInfoCard(context),
+                  const SizedBox(height: 20),
+                  if (Responsive.isMobile(context)) _operationInfoCard(context),
+                ],
+              ),
+            ),
+            if (!Responsive.isMobile(context)) ...[
+              const SizedBox(width: 20),
               Expanded(
                 flex: 2,
                 child: Column(
                   children: [
                     _operationInfoCard(context),
-                    SizedBox(height: AppStyle.defaultPadding),
-                    if (_showImage) _imageCard(context)
+                    const SizedBox(height: 20),
+                    if (_showImage) _imageCard(context),
                   ],
                 ),
               ),
+            ],
           ],
         ),
       ],
     );
   }
 
-  _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: 50.0,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          Flexible(
-            flex: 1,
-            child: ElevatedButton(
-              onPressed: () async {
-                await _editTransaction(context);
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppStyle.secondaryColor),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 4.0,
-                    ),
-                    Text(
-                      "ثبت تغییرات",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+  Widget _mainInfoCard(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader("جزییات تراکنش", Icons.receipt_long_outlined),
+          const SizedBox(height: 20),
+          _buildInfoGrid([
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+                    icon: const Icon(Icons.info),
+                    itemName: "Account Id",
+                    itemValue: widget.item.accountId.toString())),
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+                    icon: const Icon(Icons.person),
+                    itemName: "نام کاربر",
+                    itemValue: widget.item.botUser?.username ?? "نامشخص")),
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+                    icon: const Icon(Icons.calendar_today),
+                    itemName: "زمان ایجاد",
+                    itemValue: widget.item.createdAt ?? "نامشخص")),
+            _buildStatusDropdown(),
+            if (widget.item.paymentType?.type == "online")
+              DetailsInfoItemWidget(
+                  item: DetailsInfoItem(
+                      icon: const Icon(Icons.payment),
+                      itemName: "درگاه پرداخت",
+                      itemValue: widget.item.paymentType?.name ?? "نامشخص"))
+            else
+              _buildPaymentTypeDropdown(),
+            if (widget.item.paymentType?.type == "online")
+              DetailsInfoItemWidget(
+                  item: DetailsInfoItem(
+                      icon: const Icon(Icons.currency_exchange),
+                      itemName: "مقدار واریزی (تومان)",
+                      itemValue: thousandSeperatorFormatter(
+                          widget.item.amount.toString())))
+            else
+              CustomTextFromFieldWidget(
+                  controller: _amountTxtController,
+                  keyboardType: TextInputType.number,
+                  labelText: "مقدار واریزی (تومان)",
+                  textHint: "مقدار واریزی را وارد کنید",
+                  validationError: "مقدار واریزی را وارد کنید"),
+            if (widget.item.paymentType?.type == "online")
+              DetailsInfoItemWidget(
+                  item: DetailsInfoItem(
+                      icon: const Icon(Icons.offline_pin),
+                      itemName: "کد پیگیری رسید واریزی",
+                      itemValue: widget.item.recipeNumber
+                          .toString()
+                          .replaceAll(RegExp(r'^0+(?=\d)'), '')))
+            else
+              CustomTextFromFieldWidget(
+                  controller: _recipeNUmberTxtController,
+                  labelText: "کد پیگیری رسید",
+                  textHint: "کد پیگیری رسید واریزی را وارد کنید",
+                  validationError: "کد پیگیری رسید واریزی را وارد کنید"),
+          ]),
         ],
       ),
     );
   }
 
-  _operationInfoCard(BuildContext context) {
-    List<Widget> actionsWidgetList = [];
-
-    setState(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
+  Widget _buildHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: AppStyle.primaryColor),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
         ),
-        onPressed: () async {
-          await _editTransaction(context);
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش تراکنش"),
-      ));
-      if (!widget.item.confirmed) {
-        actionsWidgetList.add(ElevatedButton.icon(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppStyle.defaultPadding * 1.5,
-              vertical: AppStyle.defaultPadding /
-                  (Responsive.isMobile(context) ? 2 : 1),
-            ),
-          ),
-          onPressed: () async {
-            await removeUnconfirmedTransaction(
-                    transactionId: widget.item.id.toInt())
-                .then((value) async {
-              if (!context.mounted) return;
+      ],
+    );
+  }
 
-              if (value) {
-                if (context.mounted) {
-                  showMsg(msg: "تراکنش حذف گردید.", context: context);
-                  Navigator.pop(context);
-                }
-              } else {
-                showMsg(msg: "خطا", context: context, type: "error");
-              }
-            });
-          },
-          icon: const Icon(
-            Icons.delete_forever,
-            color: Colors.red,
-          ),
-          label: const Text("حذف تراکنش"),
-        ));
-      }
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+  Widget _buildInfoGrid(List<Widget> children) {
+    return Responsive(
+      mobile: Column(
+          children: children
+              .map((e) =>
+                  Padding(padding: const EdgeInsets.only(bottom: 10), child: e))
+              .toList()),
+      tablet: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        childAspectRatio: 4,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        children: children,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "عملیات ها",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionsWidgetList,
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 2),
-            ),
-          ),
-        ],
+      desktop: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        childAspectRatio: 4,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        children: children,
       ),
     );
   }
 
-  _mainInfoItemCard(BuildContext context) {
-    // remove zero number in recipe number until first number
+  Widget _buildStatusDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppStyle.primaryColor.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedTransactionStatus,
+        decoration: const InputDecoration(
+            labelText: "وضعیت تراکنش", border: InputBorder.none),
+        items: _transactionStatusList
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
+        onChanged: (v) => setState(() => _selectedTransactionStatus = v!),
+      ),
+    );
+  }
 
+  Widget _buildPaymentTypeDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppStyle.primaryColor.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedPaymentType,
+        decoration: const InputDecoration(
+            labelText: "درگاه پرداخت", border: InputBorder.none),
+        items: _paymentTypeList
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
+        onChanged: (v) => setState(() => _selectedPaymentType = v),
+      ),
+    );
+  }
+
+  Widget _operationInfoCard(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.receipt_long_outlined, color: AppStyle.primaryColor),
-              const SizedBox(width: 10),
-              Text(
-                "جزییات تراکنش",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+          _buildHeader("عملیات ها", Icons.settings),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: Column(
+              children: [
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor: AppStyle.primaryColor,
+                  ),
+                  onPressed: () => _editTransaction(context),
+                  icon: const Icon(Icons.edit, color: Colors.white),
+                  label: const Text("ویرایش تراکنش",
+                      style: TextStyle(color: Colors.white)),
+                ),
+                if (!widget.item.confirmed) ...[
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: Colors.red.withValues(alpha: 0.8),
                     ),
-              ),
-            ],
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: _mainInfoWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  importedList: _mainInfoWidgetList),
-              desktop: widgetsGridview(
-                  importedList: _mainInfoWidgetList,
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 2),
+                    onPressed: () => _deleteTransaction(context),
+                    icon: const Icon(Icons.delete_forever, color: Colors.white),
+                    label: const Text("حذف تراکنش",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -480,64 +338,112 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     );
   }
 
-  _imageCard(BuildContext context) {
+  Widget _imageCard(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 20),
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "تصویر تراکنش",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          CustomImageView(
-            imageSrc: _imageSrc,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          widget.item.image != null
-              ? Text.rich(TextSpan(children: [
-                  TextSpan(
-                    text: "پیام کاربر:\n\r${widget.item.image!.userText}",
-                  )
-                ]))
-              : const SizedBox(),
+          _buildHeader("تصویر تراکنش", Icons.image),
+          const SizedBox(height: 20),
+          CustomImageView(imageSrc: _imageSrc),
+          if (widget.item.image?.userText != null) ...[
+            const SizedBox(height: 10),
+            Text("پیام کاربر:",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: AppStyle.primaryColor)),
+            Text(widget.item.image!.userText!),
+          ],
         ],
       ),
     );
   }
 
-  _editTransaction(BuildContext context) async {
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 50),
+          backgroundColor: AppStyle.primaryColor,
+        ),
+        onPressed: () => _editTransaction(context),
+        child: const Text("ثبت تغییرات",
+            style: TextStyle(color: Colors.white, fontSize: 16)),
+      ),
+    );
+  }
+
+  Future<void> _editTransaction(BuildContext context) async {
+    if (_amountTxtController.text.isEmpty ||
+        _recipeNUmberTxtController.text.isEmpty) {
+      showMsg(
+          msg: "لطفا تمام فیلدها را پر کنید", context: context, type: "error");
+      return;
+    }
+
     EasyLoading.show();
-    int pannelID = 1;
-    if (_selectedPaymentType != "") {
-      pannelID = int.parse(_selectedPaymentType.split(":")[0]);
-    }
-    if (_amountTxtController.text.isNotEmpty &&
-        _recipeNUmberTxtController.text.isNotEmpty) {
-      var res = await editUserTranaction(
-          amount: int.parse(_amountTxtController.text),
-          confirmed: _selectedTransactionStatus == "تایید شده" ? true : false,
-          id: widget.item.id.toInt(),
-          paymentTypeId: pannelID,
-          recipeNUmber: _recipeNUmberTxtController.text);
-      if (res) {
-        if (context.mounted) {
-          showMsg(msg: "ویرایش شد.", context: context);
-          Navigator.pop(context);
-        }
-      } else {
-        if (context.mounted) {
-          showMsg(msg: "خطا", context: context, type: "error");
-        }
+    try {
+      int? paymentTypeId;
+      if (_selectedPaymentType != null) {
+        paymentTypeId = int.tryParse(_selectedPaymentType!.split(":")[0]);
       }
-    } else {
-      showMsg(msg: "اطلاعات درخواست شده را وارد کنید.", context: context);
+
+      final success = await editUserTranaction(
+        amount: int.parse(_amountTxtController.text),
+        confirmed: _selectedTransactionStatus == "تایید شده",
+        id: widget.item.id.toInt(),
+        paymentTypeId: paymentTypeId ?? int.parse(widget.item.paymentType!.id),
+        recipeNUmber: _recipeNUmberTxtController.text,
+      );
+
+      if (success) {
+        showMsg(msg: "تراکنش با موفقیت ویرایش شد", context: context);
+        Navigator.pop(context, true);
+      } else {
+        showMsg(msg: "خطا در ویرایش تراکنش", context: context, type: "error");
+      }
+    } catch (e) {
+      showMsg(msg: "خطا: $e", context: context, type: "error");
+    } finally {
+      EasyLoading.dismiss();
     }
-    EasyLoading.dismiss();
+  }
+
+  Future<void> _deleteTransaction(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("حذف تراکنش"),
+        content: const Text("آیا از حذف این تراکنش اطمینان دارید؟"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("انصراف")),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("حذف", style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      EasyLoading.show();
+      final success = await removeUnconfirmedTransaction(
+          transactionId: widget.item.id.toInt());
+      EasyLoading.dismiss();
+
+      if (success) {
+        showMsg(msg: "تراکنش حذف شد", context: context);
+        Navigator.pop(context, true);
+      } else {
+        showMsg(msg: "خطا در حذف تراکنش", context: context, type: "error");
+      }
+    }
   }
 }
