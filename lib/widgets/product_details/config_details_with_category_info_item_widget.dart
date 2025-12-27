@@ -1,5 +1,6 @@
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/models/sanaei_config_model.dart';
 import 'package:powerps/models/product_details_model.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/screens/admin_screen/user/bot_user_bougth_product_details.dart';
@@ -24,18 +25,9 @@ class _ConfigDetailsWithCatInfoItemWidgetState
     super.initState();
   }
 
-  HiddifyConfig _hiddifyConfig = HiddifyConfig(
-    uuid: "",
-    currentUsageGB: 0.00,
-    name: "",
-    usageLimitGB: 0.00,
-    comment: "",
-    mode: "0",
-    lastOnline: "",
-    packageDays: 0,
-    addedByUuid: "",
-    isActive: false,
-  );
+  HiddifyConfig? _hiddifyConfig;
+  SanaeiConfig? _sanaeiConfig;
+
   bool _showdata = false;
   @override
   void dispose() {
@@ -83,7 +75,9 @@ class _ConfigDetailsWithCatInfoItemWidgetState
               SizedBox(
                 height: 20,
                 width: 20,
-                child: _hiddifyConfig.isActive
+                child: (widget.item.productCategory?.pannel?.type == "sanaei"
+                        ? (_sanaeiConfig?.enable ?? false)
+                        : (_hiddifyConfig?.isActive ?? false))
                     ? Icon(Icons.code, color: AppStyle.primaryColor)
                     : const Icon(Icons.code_off, color: Colors.red),
               ),
@@ -124,7 +118,10 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                       children: [
                         if (_showdata)
                           Text(
-                            "${_hiddifyConfig.currentUsageGB.toStringAsFixed(2)} / ${_hiddifyConfig.usageLimitGB.toStringAsFixed(2)} GB",
+                            widget.item.productCategory?.pannel?.type ==
+                                    "sanaei"
+                                ? "${_sanaeiConfig?.currentUsageGB.toStringAsFixed(2)} / ${_sanaeiConfig?.usageLimitGB.toStringAsFixed(2)} GB"
+                                : "${_hiddifyConfig?.currentUsageGB.toStringAsFixed(2)} / ${_hiddifyConfig?.usageLimitGB.toStringAsFixed(2)} GB",
                             maxLines: 1,
                             textDirection: TextDirection.ltr,
                             overflow: TextOverflow.ellipsis,
@@ -163,9 +160,24 @@ class _ConfigDetailsWithCatInfoItemWidgetState
   void _fillData() async {
     await getProductBoughtedByProductId(productID: widget.item.id.toInt())
         .then((value) {
-      if (value != null && value != false) {
+      if (value != null && value != false && value is Map<String, dynamic>) {
         setStateIfMounted(() {
-          _hiddifyConfig = value;
+          // Check if it's Sanaei or Hiddify based on the keys in the response
+          // Sanaei has 'client' or 'inbound' keys which Hiddify doesn't
+          if (value.containsKey('client') || value.containsKey('inbound')) {
+            _sanaeiConfig = SanaeiConfig.fromJson(value);
+            // Also set hiddify config for compatibility if needed
+            _hiddifyConfig = HiddifyConfig(
+              uuid: "",
+              currentUsageGB: _sanaeiConfig!.currentUsageGB,
+              usageLimitGB: _sanaeiConfig!.usageLimitGB,
+              name: "",
+              packageDays: _sanaeiConfig!.packageDays,
+              isActive: _sanaeiConfig!.enable,
+            );
+          } else {
+            _hiddifyConfig = HiddifyConfig.fromJson(value);
+          }
           _showdata = true;
         });
       }

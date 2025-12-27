@@ -408,6 +408,12 @@ class _BotUserBoughtProductDetailsScreenState
       ),
       _buildActionButton(
         context: context,
+        label: "تغییر نام",
+        icon: Icons.edit_outlined,
+        onPressed: () => _showRenameDialog(context: context),
+      ),
+      _buildActionButton(
+        context: context,
         label: "حذف بسته",
         icon: Icons.delete_forever,
         color: Colors.red,
@@ -546,6 +552,22 @@ class _BotUserBoughtProductDetailsScreenState
       )),
       DetailsInfoItemWidget(
           item: DetailsInfoItem(
+        itemName: "تاریخ شروع",
+        itemValue: _sanaeiConfig!.startDate == null ||
+                _sanaeiConfig!.startDate!.isEmpty ||
+                _sanaeiConfig!.startDate!.contains("1-01-01")
+            ? "استفاده نشده"
+            : DateTime.parse(_sanaeiConfig!.startDate!).toPersianDate(),
+        icon: const Icon(Icons.calendar_today_outlined, color: Colors.purple),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "مدت زمان بسته",
+        itemValue: "${_sanaeiConfig!.packageDays} روز",
+        icon: const Icon(Icons.timer_outlined, color: Colors.blueGrey),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
         itemName: "وضعیت بسته",
         itemValue: _sanaeiConfig!.enable ? "فعال" : "غیر فعال",
         icon: Icon(
@@ -622,6 +644,12 @@ class _BotUserBoughtProductDetailsScreenState
             }
           });
         },
+      ),
+      _buildActionButton(
+        context: context,
+        label: "تغییر نام (ایمیل)",
+        icon: Icons.edit_outlined,
+        onPressed: () => _showRenameDialog(context: context),
       ),
       _buildActionButton(
         context: context,
@@ -851,6 +879,67 @@ class _BotUserBoughtProductDetailsScreenState
         ],
       ),
     );
+  }
+
+  void _showRenameDialog({required BuildContext context}) {
+    final TextEditingController controller =
+        TextEditingController(text: widget.productDetails.remark);
+    showDialog(
+        context: context,
+        builder: (context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text("تغییر نام کاربر",
+                  style: TextStyle(color: Colors.white)),
+              content: TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: "نام جدید",
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24)),
+                ),
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("انصراف",
+                        style: TextStyle(color: Colors.white60))),
+                ElevatedButton(
+                    onPressed: () async {
+                      if (controller.text.isEmpty) return;
+                      EasyLoading.show();
+                      await renameHiddifyRemark(
+                              productID: widget.productDetails.id.toInt(),
+                              remark: controller.text)
+                          .then((value) {
+                        EasyLoading.dismiss();
+                        if (!context.mounted) return;
+                        if (value) {
+                          showMsg(msg: "با موفقیت انجام شد", context: context);
+                          setState(() {
+                            widget.productDetails.remark = controller.text;
+                          });
+                          Navigator.pop(context);
+                          _fillData();
+                        } else {
+                          showMsg(
+                              msg: "خطا در تغییر نام",
+                              context: context,
+                              type: "error");
+                        }
+                      });
+                    },
+                    child: const Text("تایید")),
+              ],
+            ),
+          );
+        });
   }
 
   void _showDeleteDialog({required BuildContext context}) {
