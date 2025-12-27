@@ -47,25 +47,27 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: AppStyle.bgColor,
         body: SafeArea(
-          child: SingleChildScrollView(
-            primary: false,
-            child: Padding(
-              padding: EdgeInsets.all(AppStyle.defaultPadding),
-              child: Column(
-                children: [
-                  // const Header(title: "کاربران"),
-                  // SizedBox(height: AppStyle.defaultPadding),
-                  _showData == false
-                      ? const SizedBox(
-                          width: 50,
-                          height: 50,
-                          child: Center(child: CircularProgressIndicator()))
-                      : _content(context),
-                ],
-              ),
-            ),
-          ),
+          child: _showData == false
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text(
+                        "درحال دریافت لیست کاربران...",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  primary: false,
+                  padding: EdgeInsets.all(AppStyle.defaultPadding),
+                  child: _content(context),
+                ),
         ),
       ),
     );
@@ -604,14 +606,29 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "پالایش کاربران",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.filter_list, color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "پالایش کاربران",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(

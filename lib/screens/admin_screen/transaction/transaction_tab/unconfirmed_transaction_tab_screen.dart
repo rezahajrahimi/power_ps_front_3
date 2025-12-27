@@ -38,20 +38,15 @@ class _UnConfirmedTransactionTabState extends State<UnConfirmedTransactionTab>
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: SingleChildScrollView(
-            primary: false,
-            child: Padding(
-              padding: EdgeInsets.all(AppStyle.defaultPadding),
-              child: Column(
-                children: [
-                  _transactionProvider.showUnConfirmedTransaction == false
-                      ? const CircularProgressIndicator()
-                      : _content(context),
-                ],
-              ),
-            ),
-          ),
+          child: _transactionProvider.showUnConfirmedTransaction == false
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  primary: false,
+                  padding: EdgeInsets.all(AppStyle.defaultPadding),
+                  child: _content(context),
+                ),
         ),
       ),
     );
@@ -117,11 +112,10 @@ class _UnConfirmedTransactionTabState extends State<UnConfirmedTransactionTab>
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             decoration: BoxDecoration(
               color: AppStyle.secondaryColor,
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
+              borderRadius: const BorderRadius.all(Radius.circular(20)),
             ),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              SizedBox(height: AppStyle.defaultPadding),
               SizedBox(
                 width: double.infinity,
                 child: Responsive(
@@ -141,6 +135,11 @@ class _UnConfirmedTransactionTabState extends State<UnConfirmedTransactionTab>
                 ),
               )
             ]))
-        : const Opacity(opacity: 1);
+        : const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text("تراکنشی یافت نشد"),
+            ),
+          );
   }
 }

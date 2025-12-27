@@ -42,18 +42,25 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
         margin: EdgeInsets.only(top: AppStyle.defaultPadding),
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(15),
+          ),
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
+            color: AppStyle.primaryColor.withValues(alpha: 0.1),
+            width: 1,
           ),
         ),
         child: Row(
           children: [
-            const SizedBox(
-              height: 20,
-              width: 20,
-              child: Icon(Icons.contact_page),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppStyle.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.person_outline,
+                  color: AppStyle.primaryColor, size: 20),
             ),
             Expanded(
               child: Padding(
@@ -67,11 +74,15 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
                       children: [
                         Text(
                           widget.item.accountId.toString(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          widget.item.username!,
+                          widget.item.username ?? "بدون نام کاربری",
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
@@ -79,22 +90,27 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "${widget.item.firstName} ${widget.item.lastName}",
+                          "${widget.item.firstName ?? ''} ${widget.item.lastName ?? ''}"
+                                  .trim()
+                                  .isEmpty
+                              ? "بدون نام"
+                              : "${widget.item.firstName ?? ''} ${widget.item.lastName ?? ''}",
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
-                              .copyWith(color: Colors.white70),
+                              .copyWith(color: Colors.white60),
                         ),
                         Text(
                           widget.item.createdAt,
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
-                              .copyWith(color: Colors.white70),
+                              .copyWith(color: Colors.white54, fontSize: 10),
                         ),
                       ],
                     ),

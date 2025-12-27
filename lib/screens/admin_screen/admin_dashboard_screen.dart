@@ -42,20 +42,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        primary: false,
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        child: _showdata == false
-            ? const Text(
-                "درحال دریافت اطلاعات",
-                textDirection: TextDirection.rtl,
-              )
-            : Column(
+      child: _showdata == false
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // const Header(
-                  //   title: "داشبورد",
-                  // ),
-                  // SizedBox(height: AppStyle.defaultPadding),
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    "درحال دریافت اطلاعات داشبورد...",
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              primary: false,
+              padding: EdgeInsets.all(AppStyle.defaultPadding),
+              child: Column(
+                children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -113,7 +118,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   )
                 ],
               ),
-      ),
+            ),
     );
   }
 
@@ -132,25 +137,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   _last10SelledproductInfoItemCard(BuildContext context) {
     List<Widget> mainInfoWidgetList = [];
-    setState(() {
-      for (var i in _dashboard!.last10ProductSelled) {
-        mainInfoWidgetList.add(ConfigDetailsWithCatInfoItemWidget(
-          item: i,
-        ));
-      }
-    });
+    for (var i in _dashboard!.last10ProductSelled) {
+      mainInfoWidgetList.add(ConfigDetailsWithCatInfoItemWidget(
+        item: i,
+      ));
+    }
+
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "آخرین کانفیگ های فروخته شده",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.shopping_cart_outlined, color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "آخرین کانفیگ های فروخته شده",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
@@ -189,7 +208,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,15 +223,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "آخرین کاربران",
-                style: Theme.of(context).textTheme.titleMedium,
+              Row(
+                children: [
+                  Icon(Icons.people_outline, color: AppStyle.primaryColor),
+                  const SizedBox(width: 10),
+                  Text(
+                    "آخرین کاربران",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
               ),
               IconButton(
                   onPressed: () {
                     _bindAdminDashboardScreenData();
                   },
-                  icon: const Icon(Icons.refresh))
+                  icon: const Icon(Icons.refresh, color: Colors.white70))
             ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
@@ -244,14 +278,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "تراکنش‌های تایید نشده",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.pending_actions, color: Colors.orangeAccent),
+              const SizedBox(width: 10),
+              Text(
+                "تراکنش‌های تایید نشده",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
@@ -289,14 +338,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "تراکنش‌های تایید شده",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.greenAccent),
+              const SizedBox(width: 10),
+              Text(
+                "تراکنش‌های تایید شده",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(

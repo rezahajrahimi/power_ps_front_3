@@ -33,20 +33,15 @@ class _ConfirmedTransactionTabState extends State<ConfirmedTransactionTab>
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: SingleChildScrollView(
-            primary: false,
-            child: Padding(
-              padding: EdgeInsets.all(AppStyle.defaultPadding),
-              child: Column(
-                children: [
-                  _transactionProvider.showConfirmedTransaction == false
-                      ? const CircularProgressIndicator()
-                      : _content(context),
-                ],
-              ),
-            ),
-          ),
+          child: _transactionProvider.showConfirmedTransaction == false
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  primary: false,
+                  padding: EdgeInsets.all(AppStyle.defaultPadding),
+                  child: _content(context),
+                ),
         ),
       ),
     );
@@ -107,35 +102,39 @@ class _ConfirmedTransactionTabState extends State<ConfirmedTransactionTab>
         ));
       }
     });
-    return Container(
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        decoration: BoxDecoration(
-          color: AppStyle.secondaryColor,
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Text(
-          //   "لیست اقلام",
-          //   style: Theme.of(context).textTheme.titleMedium,
-          // ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                    childAspectRatio: 2.7,
-                    context: context,
-                    importedList: widgetList),
-                tablet: widgetsGridview(
-                    context: context,
-                    childAspectRatio: 6,
-                    importedList: widgetList),
-                desktop: widgetsGridview(
-                    importedList: widgetList,
-                    context: context,
-                    childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                    crossAxisCount: 2),
-              ))
-        ]));
+    return _transactionProvider.confirmedTransactions.isNotEmpty
+        ? Container(
+            padding: EdgeInsets.all(AppStyle.defaultPadding),
+            decoration: BoxDecoration(
+              color: AppStyle.secondaryColor,
+              borderRadius: const BorderRadius.all(Radius.circular(20)),
+            ),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SizedBox(
+                width: double.infinity,
+                child: Responsive(
+                  mobile: widgetsGridview(
+                      childAspectRatio: 2.7,
+                      context: context,
+                      importedList: widgetList),
+                  tablet: widgetsGridview(
+                      context: context,
+                      childAspectRatio: 6,
+                      importedList: widgetList),
+                  desktop: widgetsGridview(
+                      importedList: widgetList,
+                      context: context,
+                      childAspectRatio: size.width < 1400 ? 4 : 5.5,
+                      crossAxisCount: 2),
+                ),
+              )
+            ]))
+        : const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text("تراکنشی یافت نشد"),
+            ),
+          );
   }
 }

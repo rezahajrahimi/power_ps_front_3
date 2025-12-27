@@ -61,26 +61,36 @@ class _ConfigDetailsWithCatInfoItemWidgetState
         margin: EdgeInsets.only(top: AppStyle.defaultPadding),
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(15),
+          ),
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
+            color: AppStyle.primaryColor.withValues(alpha: 0.1),
+            width: 1,
           ),
         ),
         child: Row(
           children: [
-            if (_showdata == false)
-              Icon(Icons.code, color: AppStyle.primaryColor),
-            if (_showdata)
-              SizedBox(
-                height: 20,
-                width: 20,
-                child: (widget.item.productCategory?.pannel?.type == "sanaei"
-                        ? (_sanaeiConfig?.enable ?? false)
-                        : (_hiddifyConfig?.isActive ?? false))
-                    ? Icon(Icons.code, color: AppStyle.primaryColor)
-                    : const Icon(Icons.code_off, color: Colors.red),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (_showdata &&
+                        !(widget.item.productCategory?.pannel?.type == "sanaei"
+                            ? (_sanaeiConfig?.enable ?? false)
+                            : (_hiddifyConfig?.isActive ?? false)))
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : AppStyle.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: _showdata == false
+                  ? Icon(Icons.code, color: AppStyle.primaryColor, size: 20)
+                  : (widget.item.productCategory?.pannel?.type == "sanaei"
+                          ? (_sanaeiConfig?.enable ?? false)
+                          : (_hiddifyConfig?.isActive ?? false))
+                      ? Icon(Icons.code, color: AppStyle.primaryColor, size: 20)
+                      : const Icon(Icons.code_off, color: Colors.red, size: 20),
+            ),
             Expanded(
               child: Padding(
                 padding:
@@ -93,10 +103,14 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          widget.item.productCategory!.categoryName.length > 30
-                              ? widget.item.productCategory!.categoryName
-                                  .substring(0, 30)
+                          widget.item.productCategory!.categoryName.length > 25
+                              ? "${widget.item.productCategory!.categoryName.substring(0, 25)}..."
                               : widget.item.productCategory!.categoryName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
                           // maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
