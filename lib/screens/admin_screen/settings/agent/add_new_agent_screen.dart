@@ -269,7 +269,7 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
     EasyLoading.show();
     if (_selectedUserName.isEmpty) {
       EasyLoading.dismiss();
-      showMsg(msg: "لطفا یک کاربر راانتخاب کنید.", context: context);
+      showMsg(msg: "لطفا یک کاربر را انتخاب کنید.", context: context);
       return;
     }
     int selectedUserTelID = int.parse(_selectedUserName.split(':')[0].trim());
@@ -281,56 +281,50 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
               deleteProducts: _deleteProducts,
               minusBallance: _minusBallance,
               productLimitation:
-                  int.parse(_maxProdouctLimitationTxtController.text),
+                  int.tryParse(_maxProdouctLimitationTxtController.text) ?? 0,
               trafficLimitationTB:
-                  double.parse(_maxTrafficLimitationTxtController.text),
+                  double.tryParse(_maxTrafficLimitationTxtController.text) ?? 0,
             ),
             userID: selectedUserTelID,
             gentAddCategoriyList:
                 Provider.of<AgentProvider>(context, listen: false)
                     .getAgentCategoriesAdded())
         .then((val) {
+      EasyLoading.dismiss();
       if (!context.mounted) return;
 
       if (val == true) {
-        EasyLoading.dismiss();
         showMsg(msg: "دستیار فروش با موفقیت ایجاد شد.", context: context);
         Navigator.of(context).pop();
         return;
-        // check type of val
-      } else if (val.runtimeType == String) {
-        debugPrint(val);
-        EasyLoading.dismiss();
-
-        showMsg(msg: "$val", context: context, type: "error");
-        Navigator.of(context).pop();
-        return;
       }
-      EasyLoading.dismiss();
-      showMsg(msg: "خطا", context: context, type: "error");
-      return;
-    }).onError((e, s) {
-      debugPrint(e.toString());
-      EasyLoading.dismiss();
       if (!context.mounted) return;
 
-      showMsg(msg: "خطا", context: context, type: "error");
+      showMsg(
+          msg: val is String ? val : "خطا در ایجاد دستیار فروش",
+          context: context,
+          type: "error");
+    }).onError((e, s) {
+      if (!context.mounted) return;
+      EasyLoading.dismiss();
+      showMsg(msg: "خطا در برقراری ارتباط", context: context, type: "error");
     });
   }
 
   _productInfoTabCard(BuildContext context) {
     final agentCategories = context.watch<AgentProvider>().agentCategories;
 
-    setState(() {
-      _productCatWidgetLIst.clear();
-      for (var i in agentCategories) {
-        _productCatWidgetLIst
-            .add(AgentSelectCategoryWithPriceInputWidget(type: "add", item: i));
-      }
-      if (_productCatWidgetLIst.isEmpty) {
-        _productCatWidgetLIst.add(const Text("تمام بسته‌ها انتخاب شده‌اند."));
-      }
-    });
+    List<Widget> productCatWidgetLIst = [];
+    for (var i in agentCategories) {
+      productCatWidgetLIst
+          .add(AgentSelectCategoryWithPriceInputWidget(type: "add", item: i));
+    }
+    if (productCatWidgetLIst.isEmpty) {
+      productCatWidgetLIst.add(const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Text("تمام بسته‌ها انتخاب شده‌اند."),
+      ));
+    }
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -342,28 +336,27 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "کانفیگ ها",
+            "بسته‌های قابل انتخاب",
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          if (_productCatWidgetLIst.isNotEmpty)
-            SizedBox(
-                width: double.infinity,
-                child: Responsive(
-                  mobile: widgetsGridview(
-                      childAspectRatio: 2.8,
-                      context: context,
-                      importedList: _productCatWidgetLIst),
-                  tablet: widgetsGridview(
-                      context: context,
-                      childAspectRatio: 4,
-                      importedList: _productCatWidgetLIst),
-                  desktop: widgetsGridview(
-                      importedList: _productCatWidgetLIst,
-                      context: context,
-                      childAspectRatio: 4.0,
-                      crossAxisCount: 2),
-                )),
+          SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 2.8,
+                    context: context,
+                    importedList: productCatWidgetLIst),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4,
+                    importedList: productCatWidgetLIst),
+                desktop: widgetsGridview(
+                    importedList: productCatWidgetLIst,
+                    context: context,
+                    childAspectRatio: 4.0,
+                    crossAxisCount: 2),
+              )),
         ],
       ),
     );
@@ -505,17 +498,17 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
     final agentCategoriesAdded =
         context.watch<AgentProvider>().agentCategoriesAdded;
 
-    setState(() {
-      _productCatWidgetLIstAdded.clear();
-      for (var i in agentCategoriesAdded) {
-        _productCatWidgetLIstAdded.add(
-            AgentSelectCategoryWithPriceInputWidget(type: "minus", item: i));
-      }
-      if (_productCatWidgetLIstAdded.isEmpty) {
-        _productCatWidgetLIstAdded
-            .add(const Text("هیچ بسته‌ای انتخاب نشده است."));
-      }
-    });
+    List<Widget> productCatWidgetLIstAdded = [];
+    for (var i in agentCategoriesAdded) {
+      productCatWidgetLIstAdded.add(
+          AgentSelectCategoryWithPriceInputWidget(type: "remove", item: i));
+    }
+    if (productCatWidgetLIstAdded.isEmpty) {
+      productCatWidgetLIstAdded.add(const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Text("هیچ بسته‌ای انتخاب نشده است."),
+      ));
+    }
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -527,28 +520,27 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            " افزوده شده",
+            "بسته‌های انتخاب شده",
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          if (_productCatWidgetLIstAdded.isNotEmpty)
-            SizedBox(
-                width: double.infinity,
-                child: Responsive(
-                  mobile: widgetsGridview(
-                      childAspectRatio: 2.8,
-                      context: context,
-                      importedList: _productCatWidgetLIstAdded),
-                  tablet: widgetsGridview(
-                      context: context,
-                      childAspectRatio: 4,
-                      importedList: _productCatWidgetLIstAdded),
-                  desktop: widgetsGridview(
-                      importedList: _productCatWidgetLIstAdded,
-                      context: context,
-                      childAspectRatio: 4.0,
-                      crossAxisCount: 2),
-                )),
+          SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 2.8,
+                    context: context,
+                    importedList: productCatWidgetLIstAdded),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4,
+                    importedList: productCatWidgetLIstAdded),
+                desktop: widgetsGridview(
+                    importedList: productCatWidgetLIstAdded,
+                    context: context,
+                    childAspectRatio: 4.0,
+                    crossAxisCount: 2),
+              )),
         ],
       ),
     );
