@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pagination_flutter/pagination.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
@@ -63,19 +62,26 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
       child: Scaffold(
         appBar: appBarWithBackButton(context: context, title: "اطلاعات کاربر"),
         body: SafeArea(
-          child: SingleChildScrollView(
-            primary: false,
-            padding: EdgeInsets.all(AppStyle.defaultPadding),
-            child: _showData == false
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : _content(context),
-          ),
+          child: _showData == false
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text(
+                        "درحال دریافت اطلاعات کاربر...",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  primary: false,
+                  padding: EdgeInsets.all(AppStyle.defaultPadding),
+                  child: _content(context),
+                ),
         ),
-        // bottomNavigationBar: Responsive.isMobile(context)
-        //     ? _buildBottomNavigationBar(context)
-        //     : const Opacity(opacity: 1),
       ),
     );
   }
@@ -172,358 +178,67 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     );
   }
 
-  _operationInfoCard(BuildContext context) {
-    List<Widget> actionsWidgetList = [];
-
-    setStateIfMounted(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          await _showAddNewProductDialog(context);
-        },
-        icon: const Icon(Icons.shopping_cart),
-        label: const Text("خرید کانفیگ جدید"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          showDialog(
-              context: context,
-              builder: (context) {
-                return Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: AlertDialog(
-                    title: Text("حذف کانفیگ ها"),
-                    content: Text(
-                        "این درخواست کانفیگ های موجود در powerps را با کانفیگ های موجود در پنل شما بررسی می کنید و در صورت ناموجود بودن، آنها را حذف می کند، آیا از انجام این کار اطمینان دارید؟"),
-                    actions: [
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          EasyLoading.show();
-
-                          await syncUserProductsHistoryByAccountIDwithPanels(
-                                  id: widget.id.toInt())
-                              .then((val) {
-                            EasyLoading.dismiss();
-                            if (!context.mounted) return;
-
-                            if (val) {
-                              Navigator.pop(context);
-
-                              showMsg(msg: "انجام شد.", context: context);
-                            } else {
-                              Navigator.pop(context);
-
-                              showMsg(msg: "خطا", context: context);
-                            }
-                          }).onError((e, s) {
-                            if (!context.mounted) return;
-                            EasyLoading.dismiss();
-                            debugPrint(e.toString());
-                            showMsg(msg: "خطا", context: context);
-                            return;
-                          });
-                        },
-                        label:
-                            Text("بله", style: TextStyle(color: (Colors.red))),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                        },
-                        label: Text("خیر"),
-                      ),
-                    ],
-                  ),
-                );
-              });
-        },
-        icon: const Icon(Icons.sync),
-        label: const Text("همگام سازی کانفیگ ها"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          final message = TextEditingController();
-          showDialog(
-              context: context,
-              builder: (context) {
-                return Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: AlertDialog(
-                    title: Text("ارسال پیام به کاربر"),
-                    content: Column(
-                      spacing: 8,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text("متن پیام را وارد کنید."),
-                        TextField(
-                          controller: message,
-                          maxLength: 400,
-                          maxLines: 5,
-                          textDirection: TextDirection.rtl,
-                        )
-                      ],
-                    ),
-                    actions: [
-                      ElevatedButton.icon(
-                          onPressed: () async {
-                            EasyLoading.show();
-                            await sendAdminMessageToUser(
-                                    userID: widget.id.toInt(),
-                                    message: message.text)
-                                .then((val) {
-                              EasyLoading.dismiss();
-                              if (!context.mounted) return;
-
-                              if (val) {
-                                Navigator.pop(context);
-
-                                showMsg(msg: "انجام شد.", context: context);
-                              } else {
-                                Navigator.pop(context);
-
-                                showMsg(msg: "خطا", context: context);
-                              }
-                            }).onError((e, s) {
-                              if (!context.mounted) return;
-                              EasyLoading.dismiss();
-                              debugPrint(e.toString());
-                              showMsg(msg: "خطا", context: context);
-                              return;
-                            });
-                          },
-                          label: Text("ارسال")),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                        },
-                        label: Text("لغو"),
-                      ),
-                    ],
-                  ),
-                );
-              });
-        },
-        icon: const Icon(Icons.send),
-        label: const Text("ارسال پیام به کاربر"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          if (_showBlockedUser) {
-            if (!context.mounted) return;
-            // show a toooltip that show the reason, if be blocked
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text('دلیل بلاک'),
-                  content: Text(_botUser!.blockedUser!.reason.toString()),
-                  actions: [
-                    TextButton(
-                      onPressed: () async {
-                        EasyLoading.show(status: "در حال آزاد کردن کاربر");
-                        await unblockUser(_botUser!.accountId.toString())
-                            .then((value) {
-                          if (value) {
-                            if (!context.mounted) return;
-                            EasyLoading.dismiss();
-                            Navigator.of(context).pop();
-                            setStateIfMounted(() {
-                              _showBlockedUser = false;
-                            });
-                            showMsg(
-                                msg: "کاربر با موفقیت آزاد شد",
-                                context: context,
-                                type: "success");
-                            setState(() {
-                              _showData = false;
-                            });
-                            _fillData();
-                          } else {
-                            if (!context.mounted) return;
-                            showMsg(
-                                msg: "خطا", context: context, type: "error");
-                          }
-                        }).onError((e, s) {
-                          if (!context.mounted) return;
-                          showMsg(msg: "خطا", context: context, type: "error");
-                        });
-                      },
-                      child: Text('Unblock'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Text('انصراف'),
-                    ),
-                  ],
-                );
-              },
-            );
-          } else {
-            final reasonController = TextEditingController();
-            String? reason = await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) {
-                return Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: AlertDialog(
-                    title: Text('دلیل بلاک'),
-                    content: TextField(
-                      controller: reasonController,
-                      decoration: InputDecoration(
-                        hintText: 'دلیل بلاک',
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(reasonController.text);
-                        },
-                        child: Text('تایید'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Text('انصراف'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-            if (reason != null) {
-              EasyLoading.show(status: "در حال بلاکی کردن کاربر");
-              await blockUser(_botUser!.accountId.toString(), reason)
-                  .then((value) {
-                if (value) {
-                  if (!context.mounted) return;
-                  EasyLoading.dismiss();
-                  setStateIfMounted(() {
-                    _showData = false;
-                    _showBlockedUser = false;
-                  });
-                  _fillData();
-                } else {
-                  EasyLoading.dismiss();
-                  if (!context.mounted) return;
-                  setStateIfMounted(() {
-                    _showBlockedUser = true;
-                  });
-                  showMsg(msg: "خطا", context: context, type: "error");
-                }
-              }).onError((e, s) {
-                if (!context.mounted) return;
-                EasyLoading.dismiss();
-                showMsg(msg: "خطا", context: context, type: "error");
-              });
-            }
-          }
-        },
-        icon: _botUser!.blockedUser != null
-            ? const Icon(Icons.block)
-            : const Icon(Icons.block_flipped),
-        label: _botUser!.blockedUser != null
-            ? const Text("Unblock")
-            : const Text("Block"),
-      ));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+  Widget _buildActionButton({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18, color: color ?? Colors.white),
+      label: Text(
+        label,
+        style: TextStyle(color: color ?? Colors.white, fontSize: 12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "عملیات ها",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 5,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionsWidgetList,
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 2),
-            ),
-          ),
-        ],
+      style: ElevatedButton.styleFrom(
+        backgroundColor: (color ?? Colors.blue).withValues(alpha: 0.1),
+        foregroundColor: color ?? Colors.white,
+        side: BorderSide(color: (color ?? Colors.blue).withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
   _mainInfoItemCard(BuildContext context) {
-    List<Widget> mainInfoWidgetList = [];
-    setState(() {
-      mainInfoWidgetList.add(DetailsInfoItemWidget(
+    List<Widget> mainInfoWidgetList = [
+      DetailsInfoItemWidget(
           item: DetailsInfoItem(
-              icon: const Icon(Icons.info),
+              icon: const Icon(Icons.fingerprint, color: Colors.blue),
               itemName: "Account Id",
-              itemValue: _botUser!.accountId.toString())));
-      mainInfoWidgetList.add(DetailsInfoItemWidget(
+              itemValue: _botUser!.accountId.toString())),
+      DetailsInfoItemWidget(
           item: DetailsInfoItem(
-              icon: const Icon(Icons.info),
+              icon: const Icon(Icons.alternate_email, color: Colors.orange),
               itemName: "نام کاربری",
-              itemValue: _botUser!.username.toString())));
-      mainInfoWidgetList.add(DetailsInfoItemWidget(
+              itemValue: _botUser!.username.toString())),
+      DetailsInfoItemWidget(
           item: DetailsInfoItem(
-              icon: const Icon(Icons.info),
+              icon: const Icon(Icons.person_outline, color: Colors.green),
               itemName: "نام",
-              itemValue: "${_botUser!.firstName} ${_botUser!.lastName}")));
-      mainInfoWidgetList.add(DetailsInfoItemWidget(
+              itemValue: "${_botUser!.firstName} ${_botUser!.lastName}")),
+      DetailsInfoItemWidget(
           item: DetailsInfoItem(
-              icon: const Icon(Icons.info),
+              icon: const Icon(Icons.calendar_today_outlined,
+                  color: Colors.purple),
               itemName: "تاریخ عضویت",
-              itemValue: _botUser!.createdAt)));
-    });
+              itemValue: _botUser!.createdAt)),
+    ];
+
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,23 +246,32 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "مشخصات کاربر",
-                style: Theme.of(context).textTheme.titleMedium,
+              Row(
+                children: [
+                  const Icon(Icons.person_pin_outlined,
+                      color: Colors.blueAccent),
+                  const SizedBox(width: 8),
+                  Text(
+                    "مشخصات کاربر",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                  ),
+                ],
               ),
               IconButton(
-                  onPressed: () {
-                    _fillData();
-                  },
-                  icon: const Icon(Icons.refresh))
+                  onPressed: _fillData,
+                  icon: const Icon(Icons.refresh,
+                      color: Colors.white70, size: 20))
             ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
+          const Divider(height: 32, color: Colors.white10),
           SizedBox(
             width: double.infinity,
             child: Responsive(
               mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
+                  childAspectRatio: 2.8,
                   context: context,
                   importedList: mainInfoWidgetList),
               tablet: widgetsGridview(
@@ -559,6 +283,243 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   context: context,
                   childAspectRatio: 4.5,
                   crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _accountBallanceInfoCard(BuildContext context) {
+    List<Widget> mainWidgetList = [
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        icon: const Icon(Icons.account_balance_wallet_outlined,
+            color: Colors.teal),
+        itemName: "موجودی کیف پول",
+        itemValue: _botUser!.ballance != null
+            ? "${thousandSeperatorFormatter(_botUser!.ballance!.ballance.toString())} تومان "
+            : "0 تومان",
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        icon: const Icon(Icons.currency_exchange, color: Colors.amber),
+        itemName: "موجودی دلاری",
+        itemValue: _botUser!.ballance != null
+            ? "${thousandSeperatorFormatter(_botUser!.ballance!.accountBallanceIndollar.toString())} دلار "
+            : "0 دلار",
+      )),
+    ];
+
+    List<Widget> actionsWidgetList = [
+      _buildActionButton(
+        context: context,
+        label: "ویرایش تومان",
+        icon: Icons.edit_note,
+        onPressed: () => _editAccuntBallanceDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "ویرایش دلار",
+        icon: Icons.edit_note,
+        onPressed: () => _editDollarAccuntBallanceDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "افزایش تومان",
+        icon: Icons.add_circle_outline,
+        color: Colors.green,
+        onPressed: () => _incAccuntBallanceDialog(context, type: "toman"),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "کاهش تومان",
+        icon: Icons.remove_circle_outline,
+        color: Colors.redAccent,
+        onPressed: () => _decAccuntBallanceDialog(context, type: "toman"),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "افزایش دلار",
+        icon: Icons.add_circle_outline,
+        color: Colors.green,
+        onPressed: () => _incAccuntBallanceDialog(context, type: "dollar"),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "کاهش دلار",
+        icon: Icons.remove_circle_outline,
+        color: Colors.redAccent,
+        onPressed: () => _decAccuntBallanceDialog(context, type: "dollar"),
+      ),
+    ];
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.wallet_outlined, color: Colors.tealAccent),
+              const SizedBox(width: 8),
+              Text(
+                "کیف پول کاربر",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+              ),
+            ],
+          ),
+          const Divider(height: 32, color: Colors.white10),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.8,
+                  context: context,
+                  crossAxisCount: 1,
+                  importedList: mainWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1,
+                  importedList: mainWidgetList),
+              desktop: widgetsGridview(
+                  importedList: mainWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 3.5,
+                  context: context,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionsWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _referralBallanceInfoCard(BuildContext context) {
+    List<Widget> mainWidgetList = [
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        icon: const Icon(Icons.handshake_outlined, color: Colors.orange),
+        itemName: "موجودی همکاری",
+        itemValue: _botUser!.referralWallet != null
+            ? "${thousandSeperatorFormatter(_botUser!.referralWallet!.amount.toString())} تومان "
+            : "0 تومان",
+      )),
+    ];
+
+    List<Widget> actionsWidgetList = [
+      _buildActionButton(
+        context: context,
+        label: "ویرایش موجودی",
+        icon: Icons.edit_note,
+        onPressed: () => _editReferralBallanceDialog(context),
+      ),
+    ];
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.people_outline, color: Colors.orangeAccent),
+              const SizedBox(width: 8),
+              Text(
+                "کیف پول همکاری",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+              ),
+            ],
+          ),
+          const Divider(height: 32, color: Colors.white10),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.8,
+                  context: context,
+                  crossAxisCount: 1,
+                  importedList: mainWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1,
+                  importedList: mainWidgetList),
+              desktop: widgetsGridview(
+                  importedList: mainWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 3.5,
+                  context: context,
+                  crossAxisCount: 1,
+                  importedList: actionsWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1,
+                  importedList: actionsWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionsWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1),
             ),
           ),
         ],
@@ -637,31 +598,132 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     );
   }
 
+  _operationInfoCard(BuildContext context) {
+    List<Widget> actionsWidgetList = [
+      _buildActionButton(
+        context: context,
+        label: "ارسال پیام",
+        icon: Icons.message_outlined,
+        onPressed: () => _showMessageDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "خرید کانفیگ",
+        icon: Icons.shopping_cart_outlined,
+        color: Colors.green,
+        onPressed: () => _showAddNewProductDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "همگام‌سازی",
+        icon: Icons.sync,
+        color: Colors.orange,
+        onPressed: () => _showSyncDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: _showBlockedUser ? "رفع مسدودیت" : "مسدود کردن",
+        icon: _showBlockedUser ? Icons.lock_open : Icons.lock_outline,
+        color: _showBlockedUser ? Colors.teal : Colors.redAccent,
+        onPressed: () => _handleBlockUnblock(context),
+      ),
+    ];
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.settings_suggest_outlined,
+                  color: Colors.purpleAccent),
+              const SizedBox(width: 8),
+              Text(
+                "عملیات مدیریت",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+              ),
+            ],
+          ),
+          const Divider(height: 32, color: Colors.white10),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 3.5,
+                  context: context,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionsWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   _transactionInfoItemCard(BuildContext context) {
     List<Widget> mainInfoWidgetList = [];
     if (_botUser!.transactions != null) {
-      setState(() {
-        for (var i in _botUser!.transactions!) {
-          mainInfoWidgetList.add(TransactionInfoItemCardWidget(
-            item: i,
-          ));
-        }
-      });
+      for (var i in _botUser!.transactions!) {
+        mainInfoWidgetList.add(TransactionInfoItemCardWidget(
+          item: i,
+        ));
+      }
     }
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "تراکنش ها",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              const Icon(Icons.history, color: Colors.blueAccent),
+              const SizedBox(width: 8),
+              Text(
+                "تراکنش‌ها",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+              ),
+            ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
+          const Divider(height: 32, color: Colors.white10),
           SizedBox(
             width: double.infinity,
             child: Responsive(
@@ -685,276 +747,210 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     );
   }
 
-  _accountBallanceInfoCard(BuildContext context) {
-    List<Widget> mainWidgetList = [];
-    List<Widget> actionsWidgetList = [];
-
-    setState(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
+  _showMessageDialog(BuildContext context) {
+    final messageController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: AppStyle.secondaryColor,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.message_outlined, color: Colors.blueAccent),
+              const SizedBox(width: 10),
+              const Text("ارسال پیام به کاربر",
+                  style: TextStyle(color: Colors.white, fontSize: 18)),
+            ],
           ),
-        ),
-        onPressed: () async {
-          await _editAccuntBallanceDialog(context);
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش موجودی کیف"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
+          content: CustomTextFromFieldWidget(
+            controller: messageController,
+            textHint: "متن پیام",
+            validationError: "لطفا متن پیام را وارد کنید",
           ),
-        ),
-        onPressed: () async {
-          await _editDollarAccuntBallanceDialog(context);
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش موجودی دلاری کیف"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          await _incAccuntBallanceDialog(context, type: "toman");
-        },
-        icon: const Icon(FontAwesomeIcons.plus),
-        label: const Text("افزایش موجودی تومان"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          await _decAccuntBallanceDialog(context, type: "toman");
-        },
-        icon: const Icon(FontAwesomeIcons.minus),
-        label: const Text("کاهش موجودی تومان"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          await _incAccuntBallanceDialog(context, type: "dollar");
-        },
-        icon: const Icon(FontAwesomeIcons.plus),
-        label: const Text("افزایش موجودی دلاری"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          await _decAccuntBallanceDialog(context, type: "dollar");
-        },
-        icon: const Icon(FontAwesomeIcons.minus),
-        label: const Text("کاهش موجودی دلاری"),
-      ));
-      mainWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        icon: const Icon(Icons.wallet),
-        itemName: "موجودی کیف پول",
-        itemValue: _botUser!.ballance != null
-            ? "${thousandSeperatorFormatter(_botUser!.ballance!.ballance.toString())} تومان "
-            : "0 تومان",
-      )));
-      mainWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        icon: const Icon(Icons.wallet),
-        itemName: "موجودی دلاری کیف پول",
-        itemValue: _botUser!.ballance != null
-            ? "${thousandSeperatorFormatter(_botUser!.ballance!.accountBallanceIndollar.toString())} دلار "
-            : "0 دلار",
-      )));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "کیف پول کاربر",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: mainWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 1,
-                  importedList: mainWidgetList),
-              desktop: widgetsGridview(
-                  importedList: mainWidgetList,
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 1),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child:
+                  const Text("انصراف", style: TextStyle(color: Colors.white70)),
             ),
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 5,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionsWidgetList,
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 2),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onPressed: () async {
+                if (messageController.text.isEmpty) return;
+                EasyLoading.show();
+                await sendAdminMessageToUser(
+                  userID: _botUser!.accountId.toInt(),
+                  message: messageController.text,
+                ).then((value) {
+                  EasyLoading.dismiss();
+                  if (value != null && value != false) {
+                    showMsg(context: context, msg: "پیام با موفقیت ارسال شد");
+                    Navigator.pop(context);
+                  } else {
+                    showMsg(
+                        context: context,
+                        msg: "خطا در ارسال پیام",
+                        type: "error");
+                  }
+                });
+              },
+              child: const Text("ارسال پیام"),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  _referralBallanceInfoCard(BuildContext context) {
-    List<Widget> mainWidgetList = [];
-    List<Widget> actionsWidgetList = [];
-
-    setState(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
+  _showSyncDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: AppStyle.secondaryColor,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.sync, color: Colors.orangeAccent),
+              const SizedBox(width: 10),
+              const Text("همگام‌سازی کاربر",
+                  style: TextStyle(color: Colors.white, fontSize: 18)),
+            ],
           ),
+          content: const Text(
+            "آیا از همگام‌سازی اطلاعات کاربر با ربات اطمینان دارید؟",
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child:
+                  const Text("انصراف", style: TextStyle(color: Colors.white70)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onPressed: () async {
+                EasyLoading.show();
+                await syncUserProductsHistoryByAccountIDwithPanels(
+                        id: _botUser!.accountId.toInt())
+                    .then((value) {
+                  EasyLoading.dismiss();
+                  if (value != null && value != false) {
+                    showMsg(
+                        context: context, msg: "همگام‌سازی با موفقیت انجام شد");
+                    _fillData();
+                    Navigator.pop(context);
+                  } else {
+                    showMsg(
+                        context: context,
+                        msg: "خطا در همگام‌سازی",
+                        type: "error");
+                  }
+                });
+              },
+              child: const Text("تایید همگام‌سازی"),
+            ),
+          ],
         ),
-        onPressed: () async {
-          await _editReferralBallanceDialog(context);
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش موجودی کیف پول همکاری"),
-      ));
-
-      // actionsWidgetList.add(ElevatedButton.icon(
-      //   style: TextButton.styleFrom(
-      //     padding: EdgeInsets.symmetric(
-      //       horizontal: AppStyle.defaultPadding * 1.5,
-      //       vertical: AppStyle.defaultPadding /
-      //           (Responsive.isMobile(context) ? 2 : 1),
-      //     ),
-      //   ),
-      //   onPressed: () async {
-      //     Navigator.push(
-      //         context,
-      //         MaterialPageRoute(
-      //             builder: (context) => ReferralReportScreen(
-      //                   accountId: _botUser!.accountId,
-      //                 )));
-      //   },
-      //   icon: const Icon(Icons.report),
-      //   label: const Text("گزارش کیف پول همکاری"),
-      // ));
-      mainWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        icon: const Icon(Icons.wallet),
-        itemName: "موجودی کیف پول همکاری",
-        itemValue: _botUser!.referralWallet != null
-            ? "${thousandSeperatorFormatter(_botUser!.referralWallet!.amount.toString())} تومان "
-            : "0 تومان",
-      )));
-    });
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "کیف پول همکاری",
-            style: Theme.of(context).textTheme.titleMedium,
+    );
+  }
+
+  _handleBlockUnblock(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: AppStyle.secondaryColor,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(_showBlockedUser ? Icons.lock_open : Icons.lock_outline,
+                  color: _showBlockedUser ? Colors.teal : Colors.redAccent),
+              const SizedBox(width: 10),
+              Text(_showBlockedUser ? "رفع مسدودیت" : "مسدود کردن کاربر",
+                  style: const TextStyle(color: Colors.white, fontSize: 18)),
+            ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: mainWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 1,
-                  importedList: mainWidgetList),
-              desktop: widgetsGridview(
-                  importedList: mainWidgetList,
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 1),
+          content: Text(
+            _showBlockedUser
+                ? "آیا از رفع مسدودیت این کاربر اطمینان دارید؟"
+                : "آیا از مسدود کردن این کاربر اطمینان دارید؟",
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child:
+                  const Text("انصراف", style: TextStyle(color: Colors.white70)),
             ),
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 5,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionsWidgetList,
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 2),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    _showBlockedUser ? Colors.teal : Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onPressed: () async {
+                EasyLoading.show();
+                if (_showBlockedUser) {
+                  await unblockUser(_botUser!.accountId.toString())
+                      .then((value) {
+                    EasyLoading.dismiss();
+                    if (value) {
+                      showMsg(
+                          context: context,
+                          msg: "کاربر با موفقیت رفع مسدودیت شد");
+                      _fillData();
+                      Navigator.pop(context);
+                    } else {
+                      showMsg(context: context, msg: "خطا", type: "error");
+                    }
+                  });
+                } else {
+                  await blockUser(
+                          _botUser!.accountId.toString(), "مسدود شده توسط مدیر")
+                      .then((value) {
+                    EasyLoading.dismiss();
+                    if (value) {
+                      showMsg(
+                          context: context, msg: "کاربر با موفقیت مسدود شد");
+                      _fillData();
+                      Navigator.pop(context);
+                    } else {
+                      showMsg(context: context, msg: "خطا", type: "error");
+                    }
+                  });
+                }
+              },
+              child: const Text("تایید"),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -966,11 +962,22 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             textDirection: TextDirection.rtl,
             child: SingleChildScrollView(
                 child: AlertDialog(
-              title: const Text("ویرایش موجودی کیف پول"),
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.edit_note, color: Colors.blueAccent),
+                  SizedBox(width: 10),
+                  Text("ویرایش موجودی (تومان)",
+                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                ],
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("لطفا مبلغ مورد نظر خود را وارد کنید"),
+                  const Text("لطفا مبلغ مورد نظر خود را وارد کنید",
+                      style: TextStyle(color: Colors.white70)),
                   SizedBox(height: AppStyle.defaultPadding),
                   CustomTextFromFieldWidget(
                     controller: _ballanceController,
@@ -986,9 +993,18 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text("انصراف"),
+                  child: const Text("انصراف",
+                      style: TextStyle(color: Colors.white70)),
                 ),
-                TextButton(
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
                   onPressed: () async {
                     EasyLoading.show();
                     await setNewAccountBallance(
@@ -1028,11 +1044,22 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             textDirection: TextDirection.rtl,
             child: SingleChildScrollView(
                 child: AlertDialog(
-              title: const Text("ویرایش موجودی کیف پول همکاری"),
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.edit_note, color: Colors.orangeAccent),
+                  SizedBox(width: 10),
+                  Text("ویرایش موجودی همکاری",
+                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                ],
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("لطفا مبلغ مورد نظر خود را وارد کنید"),
+                  const Text("لطفا مبلغ مورد نظر خود را وارد کنید",
+                      style: TextStyle(color: Colors.white70)),
                   SizedBox(height: AppStyle.defaultPadding),
                   CustomTextFromFieldWidget(
                     controller: _ballanceController,
@@ -1048,9 +1075,18 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text("انصراف"),
+                  child: const Text("انصراف",
+                      style: TextStyle(color: Colors.white70)),
                 ),
-                TextButton(
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
                   onPressed: () async {
                     EasyLoading.show();
                     await setNewReferralBallance(
@@ -1089,11 +1125,26 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             textDirection: TextDirection.rtl,
             child: SingleChildScrollView(
                 child: AlertDialog(
-              title: const Text("افزایش موجودی کیف پول"),
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  const Icon(Icons.add_circle_outline, color: Colors.green),
+                  const SizedBox(width: 10),
+                  Text(
+                      type == "toman"
+                          ? "افزایش موجودی (تومان)"
+                          : "افزایش موجودی (دلار)",
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 18)),
+                ],
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("لطفا مقدار مورد نظر خود را وارد کنید"),
+                  const Text("لطفا مقدار مورد نظر خود را وارد کنید",
+                      style: TextStyle(color: Colors.white70)),
                   SizedBox(height: AppStyle.defaultPadding),
                   CustomTextFromFieldWidget(
                     controller: _ballanceController,
@@ -1109,9 +1160,18 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text("انصراف"),
+                  child: const Text("انصراف",
+                      style: TextStyle(color: Colors.white70)),
                 ),
-                TextButton(
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
                   onPressed: () async {
                     EasyLoading.show();
                     await increaseUserAccuntBalanceByUserID(
@@ -1157,11 +1217,27 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             textDirection: TextDirection.rtl,
             child: SingleChildScrollView(
                 child: AlertDialog(
-              title: const Text("کاهش موجودی کیف پول"),
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  const Icon(Icons.remove_circle_outline,
+                      color: Colors.redAccent),
+                  const SizedBox(width: 10),
+                  Text(
+                      type == "toman"
+                          ? "کاهش موجودی (تومان)"
+                          : "کاهش موجودی (دلار)",
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 18)),
+                ],
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("لطفا مقدار مورد نظر خود را وارد کنید"),
+                  const Text("لطفا مقدار مورد نظر خود را وارد کنید",
+                      style: TextStyle(color: Colors.white70)),
                   SizedBox(height: AppStyle.defaultPadding),
                   CustomTextFromFieldWidget(
                     controller: _ballanceController,
@@ -1177,9 +1253,18 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text("انصراف"),
+                  child: const Text("انصراف",
+                      style: TextStyle(color: Colors.white70)),
                 ),
-                TextButton(
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
                   onPressed: () async {
                     EasyLoading.show();
                     await decreaseUserAccuntBalanceByUserID(
@@ -1228,11 +1313,22 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             textDirection: TextDirection.rtl,
             child: SingleChildScrollView(
                 child: AlertDialog(
-              title: const Text("ویرایش موجودی دلاری کیف پول"),
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.edit_note, color: Colors.amber),
+                  SizedBox(width: 10),
+                  Text("ویرایش موجودی (دلار)",
+                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                ],
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("لطفا مبلغ مورد نظر خود را وارد کنید"),
+                  const Text("لطفا مبلغ مورد نظر خود را وارد کنید",
+                      style: TextStyle(color: Colors.white70)),
                   SizedBox(height: AppStyle.defaultPadding),
                   CustomTextFromFieldWidget(
                     controller: _ballanceController,
@@ -1248,9 +1344,18 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text("انصراف"),
+                  child: const Text("انصراف",
+                      style: TextStyle(color: Colors.white70)),
                 ),
-                TextButton(
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
                   onPressed: () async {
                     EasyLoading.show();
                     await setNewDollarAccountBallance(
@@ -1307,32 +1412,52 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
           builder: (context) => Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
+                backgroundColor: AppStyle.secondaryColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 scrollable: true,
-                contentPadding: EdgeInsets.zero,
-                title: const Text("کانفیگ جدید"),
-                content: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SizedBox(
-                    child: Column(
-                      children: [
-                        const Text("نام کانفیگ را وارد کنید."),
-                        TextFormField(
-                          controller: nameEditText,
-                          keyboardType: TextInputType.text,
-                          textInputAction: TextInputAction.next,
-                          maxLines: null,
-                          decoration: const InputDecoration(
-                              labelText: "نام کانفیگ جدید"),
-                        ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        const Text("کانفیگ را انتخاب کنید"),
-                        DropdownButtonFormField(
+                contentPadding: const EdgeInsets.all(20),
+                title: const Row(
+                  children: [
+                    Icon(Icons.shopping_cart_outlined,
+                        color: Colors.greenAccent),
+                    SizedBox(width: 10),
+                    Text("خرید کانفیگ جدید",
+                        style: TextStyle(color: Colors.white, fontSize: 18)),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("نام کانفیگ را وارد کنید:",
+                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    const SizedBox(height: 12),
+                    CustomTextFromFieldWidget(
+                      controller: nameEditText,
+                      textHint: "نام کانفیگ جدید",
+                      validationError: "لطفا نام کانفیگ را وارد کنید",
+                    ),
+                    const SizedBox(height: 24),
+                    const Text("کانفیگ را انتخاب کنید:",
+                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButtonFormField<String>(
                           isExpanded: true,
-                          hint: const Text('کانفیگ'),
-                          initialValue: selectedItem,
-                          alignment: Alignment.centerRight,
+                          dropdownColor: AppStyle.secondaryColor,
+                          decoration:
+                              const InputDecoration(border: InputBorder.none),
+                          hint: const Text('انتخاب کانفیگ',
+                              style: TextStyle(color: Colors.white54)),
+                          value: selectedItem,
                           onChanged: (newValue) {
                             setState(() {
                               selectedItem = newValue.toString();
@@ -1341,70 +1466,67 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                           items: productCategoryItemList.map((clType) {
                             return DropdownMenuItem(
                               value: clType,
-                              alignment: Alignment.centerRight,
-                              child: Text(clType),
+                              child: Text(clType,
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 13)),
                             );
                           }).toList(),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
                 actions: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      TextButton(
-                          onPressed: () async {
-                            EasyLoading.show();
-                            int prcatID =
-                                int.parse(selectedItem.split(" - ")[0]);
-                            await buyProductByAdmin(
-                              productID: prcatID,
-                              remark: nameEditText.text,
-                              username: _botUser!.username,
-                              userID: _botUser!.id.toInt(),
-                              accountId: _botUser!.accountId.toInt(),
-                            ).then((val) {
-                              if (!context.mounted) return;
-                              if (val != null) {
-                                EasyLoading.dismiss();
-                                Navigator.pop(context);
-                                showMsg(
-                                    context: context,
-                                    msg: "خرید با موفقیت انجام شد");
-                                _fillData();
-                              } else {
-                                EasyLoading.dismiss();
-                                showMsg(
-                                    context: context,
-                                    msg: "خطا",
-                                    type: "error");
-                              }
-                            }).onError((error, stackTrace) {
-                              if (!context.mounted) return;
-                              EasyLoading.dismiss();
-                              debugPrint(error.toString());
-                              showMsg(
-                                  context: context, msg: "خطا", type: "error");
-                            });
-                          },
-                          child: const Text(
-                            "خرید",
-                          )),
-                      TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("لغو")),
-                    ],
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("لغو",
+                        style: TextStyle(color: Colors.white70)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                    ),
+                    onPressed: () async {
+                      if (nameEditText.text.isEmpty) return;
+                      EasyLoading.show();
+                      int prcatID = int.parse(selectedItem.split(" - ")[0]);
+                      await buyProductByAdmin(
+                        productID: prcatID,
+                        remark: nameEditText.text,
+                        username: _botUser!.username,
+                        userID: _botUser!.id.toInt(),
+                        accountId: _botUser!.accountId.toInt(),
+                      ).then((val) {
+                        if (!context.mounted) return;
+                        if (val != null) {
+                          EasyLoading.dismiss();
+                          Navigator.pop(context);
+                          showMsg(
+                              context: context, msg: "خرید با موفقیت انجام شد");
+                          _fillData();
+                        } else {
+                          EasyLoading.dismiss();
+                          showMsg(context: context, msg: "خطا", type: "error");
+                        }
+                      }).onError((error, stackTrace) {
+                        if (!context.mounted) return;
+                        EasyLoading.dismiss();
+                        debugPrint(error.toString());
+                        showMsg(context: context, msg: "خطا", type: "error");
+                      });
+                    },
+                    child: const Text("تایید خرید"),
                   ),
                 ],
               )));
     }).onError((error, stackTrace) {
       EasyLoading.dismiss();
       if (!context.mounted) return;
-      // setStateIfMounted(() {
-      //   _showData = false;
-      // });
       showMsg(msg: "خطا", context: context, type: "error");
     });
   }

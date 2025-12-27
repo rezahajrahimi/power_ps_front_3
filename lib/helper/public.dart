@@ -55,9 +55,13 @@ showMsg(
     content: Text(
       msg,
       textDirection: TextDirection.rtl,
+      style: const TextStyle(color: Colors.white, fontSize: 14),
     ),
-    duration: const Duration(seconds: 2),
-    backgroundColor: type == "info" ? AppStyle.primaryColor : Colors.red,
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    duration: const Duration(seconds: 3),
+    backgroundColor: type == "info" ? AppStyle.primaryColor : Colors.redAccent,
+    margin: const EdgeInsets.all(20),
   ));
 }
 

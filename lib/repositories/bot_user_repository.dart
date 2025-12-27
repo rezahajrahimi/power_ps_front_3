@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/bot_user_model.dart';
-import 'package:powerps/models/hiffify_config_model.dart';
 
 List<BotUser> botUserList = [];
 

@@ -27,7 +27,6 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final List<String> _pannelNameList = [];
   String _selectedPannelName = "";
 
-  final List<String> _categoryTypeListName = [];
   // String _selectedCategoryType = "";
   // List<CategoryTypeModel> _fetchedCategoryType = [];
   final _nameEditText = TextEditingController();
