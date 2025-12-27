@@ -13,6 +13,7 @@ import 'package:powerps/models/bot_user_model.dart';
 import 'package:powerps/models/details_info.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
 import 'package:powerps/models/marzban_config_model.dart';
+import 'package:powerps/models/sanaei_config_model.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/models/product_details_model.dart';
 import 'package:powerps/provider/prodct_provider.dart';
@@ -43,6 +44,7 @@ class _BotUserBoughtProductDetailsScreenState
   // bool _hasReservetion = false;
   HiddifyConfig? _hiddifyInfo;
   MarzbanConfig? _marzbanConfig;
+  SanaeiConfig? _sanaeiConfig;
 
   String? _url;
   @override
@@ -82,6 +84,8 @@ class _BotUserBoughtProductDetailsScreenState
                                 SizedBox(height: AppStyle.defaultPadding),
                                 if (_pannel!.type == "hiddify")
                                   _hiddifyConfigCardData(context),
+                                if (_pannel!.type == "sanaei")
+                                  _sanaeiConfigCardData(context),
                                 if (_pannel!.type == "marzban")
                                   _marzbanConfigCardData(context),
                                 SizedBox(height: AppStyle.defaultPadding),
@@ -137,13 +141,35 @@ class _BotUserBoughtProductDetailsScreenState
 
               if (value != null && value != false) {
                 setState(() {
-                  _hiddifyInfo = value;
+                  _hiddifyInfo = HiddifyConfig.fromJson(value);
                 });
               } else {
                 Navigator.pop(context);
                 showMsg(
                     msg:
                         "خطا در دریافت اطلاعات از سرور هیدیفای، آیا این اکانت را بصورت دستی از پنل حذف کردید؟",
+                    context: context,
+                    type: "error");
+              }
+            });
+            setState(() {
+              _showdata = true;
+            });
+          } else if (_pannel!.type == "sanaei") {
+            await getProductBoughtedByProductId(
+                    productID: widget.productDetails.id.toInt())
+                .then((value) {
+              if (!mounted) return;
+
+              if (value != null && value != false) {
+                setState(() {
+                  _sanaeiConfig = SanaeiConfig.fromJson(value);
+                });
+              } else {
+                Navigator.pop(context);
+                showMsg(
+                    msg:
+                        "خطا در دریافت اطلاعات از سرور سنایی، آیا این اکانت را بصورت دستی از پنل حذف کردید؟",
                     context: context,
                     type: "error");
               }
@@ -449,6 +475,171 @@ class _BotUserBoughtProductDetailsScreenState
     );
   }
 
+  _sanaeiConfigCardData(BuildContext context) {
+    if (_sanaeiConfig == null) {
+      return const SizedBox();
+    }
+    final Size size = MediaQuery.of(context).size;
+
+    List<Widget> pannelWidgetList = [];
+    List<Widget> actionWidgetList = [];
+    setState(() {
+      pannelWidgetList.add(DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "نام (ایمیل)",
+        itemValue: _sanaeiConfig!.client?['email'] ?? "نامشخص",
+        icon: const Icon(Icons.info),
+      )));
+      pannelWidgetList.add(DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "میزان حجم استفاده شده",
+        itemValue: "${_sanaeiConfig!.currentUsageGB.toStringAsFixed(2)} GB",
+        icon: const Icon(Icons.data_usage),
+      )));
+      pannelWidgetList.add(DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "حجم کل",
+        itemValue: "${_sanaeiConfig!.usageLimitGB.toStringAsFixed(2)} GB",
+        icon: const Icon(Icons.storage),
+      )));
+      pannelWidgetList.add(DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "وضعیت بسته",
+        itemValue: _sanaeiConfig!.enable ? "فعال" : "غیر فعال",
+        icon: _sanaeiConfig!.enable
+            ? const Icon(Icons.check_circle, color: Colors.green)
+            : const Icon(Icons.cancel, color: Colors.red),
+      )));
+
+      actionWidgetList.add(ElevatedButton.icon(
+          onPressed: () async {
+            EasyLoading.show();
+            await getBoughtProductsPannelLinkFromServerByIdAdminMode(
+                    productID: widget.productDetails.id.toInt())
+                .then((link) {
+              if (link != false && link != null) {
+                launchUrl(Uri.parse(link));
+                EasyLoading.dismiss();
+              } else {
+                if (!context.mounted) return;
+                EasyLoading.dismiss();
+                showMsg(msg: "خطا", context: context, type: "error");
+              }
+            });
+          },
+          icon: const Icon(Icons.info),
+          label: const Text("مشاهده در پنل")));
+
+      actionWidgetList.add(ElevatedButton.icon(
+          onPressed: () async {
+            EasyLoading.show();
+            await reChargeProductByAdminWithPrID(
+                    productID: widget.productDetails.id.toInt())
+                .then((value) {
+              if (!context.mounted) return;
+              if (value) {
+                EasyLoading.dismiss();
+                showMsg(msg: "با موفقیت انجام شد", context: context);
+                Provider.of<ProductProvider>(context, listen: false)
+                    .setChanged(true);
+                _fillData();
+              } else {
+                EasyLoading.dismiss();
+                showMsg(msg: "خطا", context: context, type: "error");
+              }
+            });
+          },
+          icon: const Icon(Icons.update),
+          label: const Text("ریست کردن بسته")));
+
+      actionWidgetList.add(ElevatedButton.icon(
+          onPressed: () async {
+            EasyLoading.show();
+            await changeActivationOfHiddifyUserByAdmin(
+                    enable: !_sanaeiConfig!.enable,
+                    productID: widget.productDetails.id.toInt())
+                .then((res) {
+              if (!context.mounted) return;
+              EasyLoading.dismiss();
+              if (res) {
+                showMsg(msg: "انجام شد", context: context);
+                _fillData();
+                return;
+              }
+              showMsg(msg: "خطا", context: context, type: "error");
+            });
+          },
+          icon: Icon(
+              _sanaeiConfig!.enable ? Icons.disabled_visible : Icons.visibility,
+              color: Colors.red),
+          label: Text(
+              !_sanaeiConfig!.enable ? "فعال کردن بسته" : "غیر فعال بسته",
+              style: const TextStyle(color: Colors.red))));
+
+      actionWidgetList.add(ElevatedButton.icon(
+          onPressed: () async {
+            _showDeleteDialog(context: context);
+          },
+          icon: const Icon(Icons.delete_forever, color: Colors.red),
+          label: const Text("حذف بسته", style: TextStyle(color: Colors.red))));
+    });
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "وضعیت بسته خریداری شده (سنایی)",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  importedList: pannelWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 6,
+                  importedList: pannelWidgetList),
+              desktop: widgetsGridview(
+                  importedList: pannelWidgetList,
+                  context: context,
+                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 2.9,
+                  context: context,
+                  importedList: actionWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 6,
+                  importedList: actionWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionWidgetList,
+                  context: context,
+                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
+                  crossAxisCount: 4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   _marzbanConfigCardData(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
 
@@ -615,7 +806,8 @@ class _BotUserBoughtProductDetailsScreenState
                                 msg: "خطا", context: context, type: "error");
                           }
                         });
-                      } else if (_pannel!.type == "hiddify") {
+                      } else if (_pannel!.type == "hiddify" ||
+                          _pannel!.type == "sanaei") {
                         await softDeleteProductByAgentWithPrIDAdminMOde(
                                 productID: widget.productDetails.id.toInt())
                             .then((value) {
