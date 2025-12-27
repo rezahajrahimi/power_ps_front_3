@@ -29,10 +29,11 @@ class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
         .map(
           (user) => BotUserInfoItemCardWidget(
             item: user,
-            isSelected:
-                widget.selectedUserAccountIds.contains(user.accountId.toString()),
+            isSelected: widget.selectedUserAccountIds
+                .contains(user.accountId.toString()),
             onSelectedChanged: (selected) {
-              widget.onUserSelected(user.accountId.toString(), selected ?? false);
+              widget.onUserSelected(
+                  user.accountId.toString(), selected ?? false);
             },
           ),
         )
