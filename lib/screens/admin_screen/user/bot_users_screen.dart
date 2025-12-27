@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:persian_datetimepickers/persian_datetimepickers.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
@@ -19,6 +20,7 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
   bool _showData = false;
   int _lastPage = 1;
   int selectedPage = 1;
+  final Set<String> _selectedUserAccountIds = {};
 
   @override
   void initState() {
@@ -94,6 +96,16 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
                             BotUsersInfoCardWidget(
                               title: "کاربران",
                               botUsers: botUserList,
+                              selectedUserAccountIds: _selectedUserAccountIds,
+                              onUserSelected: (accountId, selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedUserAccountIds.add(accountId);
+                                  } else {
+                                    _selectedUserAccountIds.remove(accountId);
+                                  }
+                                });
+                              },
                             ),
                             SizedBox(height: AppStyle.defaultPadding),
                             Pagination(
@@ -425,6 +437,147 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
   //   );
   // }
 
+  void _showSendMessageDialog(BuildContext context, {required bool isAll}) {
+    final messageController = TextEditingController();
+    DateTime? selectedDateTime;
+    String? formattedDateTime;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: Text(isAll
+                    ? "ارسال پیام به همه"
+                    : "ارسال پیام به انتخاب شده ها"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: messageController,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        hintText: "متن پیام خود را اینجا بنویسید...",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            selectedDateTime == null
+                                ? "زمان ارسال: بلافاصله"
+                                : "زمان ارسال: ${selectedDateTime!.toPersianDate()} ${selectedDateTime!.hour}:${selectedDateTime!.minute}",
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final DateTime? date = await showPersianDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                            );
+                            if (date != null) {
+                              if (!context.mounted) return;
+                              final TimeOfDay? time = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+                              if (time != null) {
+                                setDialogState(() {
+                                  selectedDateTime = DateTime(
+                                    date.year,
+                                    date.month,
+                                    date.day,
+                                    time.hour,
+                                    time.minute,
+                                  );
+                                  formattedDateTime =
+                                      selectedDateTime!.toIso8601String();
+                                });
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.calendar_month),
+                          label: const Text("زمانبندی"),
+                        ),
+                        if (selectedDateTime != null)
+                          IconButton(
+                            onPressed: () {
+                              setDialogState(() {
+                                selectedDateTime = null;
+                                formattedDateTime = null;
+                              });
+                            },
+                            icon: const Icon(Icons.clear, color: Colors.red),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("لغو"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (messageController.text.isEmpty) {
+                        showMsg(
+                            msg: "لطفا متن پیام را وارد کنید",
+                            context: context,
+                            type: "error");
+                        return;
+                      }
+
+                      EasyLoading.show(status: 'در حال ارسال...');
+                      bool success = false;
+                      if (isAll) {
+                        success = await sendAdminMessageToAllUsers(
+                          message: messageController.text,
+                          scheduledAt: formattedDateTime,
+                        );
+                      } else {
+                        success = await sendAdminMessageToSelectedUsers(
+                          userIds: _selectedUserAccountIds.toList(),
+                          message: messageController.text,
+                          scheduledAt: formattedDateTime,
+                        );
+                      }
+                      EasyLoading.dismiss();
+
+                      if (success) {
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        showMsg(
+                            msg: "پیام در صف ارسال قرار گرفت",
+                            context: context);
+                        setState(() {
+                          _selectedUserAccountIds.clear();
+                        });
+                      } else {
+                        if (!context.mounted) return;
+                        showMsg(
+                            msg: "خطا در ارسال پیام",
+                            context: context,
+                            type: "error");
+                      }
+                    },
+                    child: const Text("تایید و ارسال"),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   __filtersCardWidget(BuildContext context) {
     List<Widget> operationWidgetList = [];
     operationWidgetList.add(Tooltip(
@@ -600,6 +753,41 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
           },
           icon: const Icon(Icons.support_agent),
           label: const Text("دستیاران فروش"),
+        )));
+
+    operationWidgetList.add(Tooltip(
+        message: "ارسال پیام به کاربران انتخاب شده",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            backgroundColor: Colors.blueAccent.withValues(alpha: 0.2),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: _selectedUserAccountIds.isEmpty
+              ? null
+              : () => _showSendMessageDialog(context, isAll: false),
+          icon: const Icon(Icons.send_to_mobile),
+          label: Text(
+              "ارسال به انتخاب شده ها (${_selectedUserAccountIds.length})"),
+        )));
+
+    operationWidgetList.add(Tooltip(
+        message: "ارسال پیام به تمامی کاربران",
+        child: ElevatedButton.icon(
+          style: TextButton.styleFrom(
+            backgroundColor: Colors.orangeAccent.withValues(alpha: 0.2),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppStyle.defaultPadding * 1.5,
+              vertical: AppStyle.defaultPadding /
+                  (Responsive.isMobile(context) ? 2 : 1),
+            ),
+          ),
+          onPressed: () => _showSendMessageDialog(context, isAll: true),
+          icon: const Icon(Icons.campaign),
+          label: const Text("ارسال به همه"),
         )));
 
     return Container(

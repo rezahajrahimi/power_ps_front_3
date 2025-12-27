@@ -93,7 +93,7 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
               color: AppStyle.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person, color: AppStyle.primaryColor),
+            child: Icon(Icons.person, color: AppStyle.primaryColor),
           ),
           Expanded(
             child: Padding(

@@ -309,11 +309,12 @@ Future sendAdminMessageToUser(
   }
 }
 
-Future sendAdminMessageToAllUsers({required String message}) async {
+Future sendAdminMessageToAllUsers(
+    {required String message, String? scheduledAt}) async {
   try {
     Response response =
         await GenaralApi.dio.post("/api/sendAdminMessageToAllUsers",
-            data: {"message": message},
+            data: {"message": message, "scheduled_at": scheduledAt},
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -330,6 +331,38 @@ Future sendAdminMessageToAllUsers({required String message}) async {
   } catch (e) {
     debugPrint(e.toString());
     return null;
+  }
+}
+
+Future sendAdminMessageToSelectedUsers({
+  required List<String> userIds,
+  required String message,
+  String? scheduledAt,
+}) async {
+  try {
+    Response response = await GenaralApi.dio.post(
+        "/api/sendAdminMessageToSelectedUsers",
+        data: {
+          "user_ids": userIds,
+          "message": message,
+          "scheduled_at": scheduledAt
+        },
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    debugPrint("error on sendAdminMessageToSelectedUsers $e");
+    return false;
   }
 }
 

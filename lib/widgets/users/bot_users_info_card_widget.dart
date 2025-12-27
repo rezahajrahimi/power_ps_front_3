@@ -6,33 +6,37 @@ import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/users/bot_user_info_item_widget.dart';
 
 class BotUsersInfoCardWidget extends StatefulWidget {
-  const BotUsersInfoCardWidget(
-      {super.key, required this.title, required this.botUsers});
+  const BotUsersInfoCardWidget({
+    super.key,
+    required this.title,
+    required this.botUsers,
+    required this.selectedUserAccountIds,
+    required this.onUserSelected,
+  });
   final List<BotUser> botUsers;
   final String title;
+  final Set<String> selectedUserAccountIds;
+  final Function(String accountId, bool selected) onUserSelected;
 
   @override
   State<BotUsersInfoCardWidget> createState() => _BotUsersInfoCardWidgetState();
 }
 
 class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
-  final List<BotUserInfoItemCardWidget> _botUserItemList = [];
-
-  @override
-  void initState() {
-    _fillData();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _botUserItemList.clear();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    // final Size size = MediaQuery.of(context).size;
+    final List<BotUserInfoItemCardWidget> botUserItemList = widget.botUsers
+        .map(
+          (user) => BotUserInfoItemCardWidget(
+            item: user,
+            isSelected:
+                widget.selectedUserAccountIds.contains(user.accountId.toString()),
+            onSelectedChanged: (selected) {
+              widget.onUserSelected(user.accountId.toString(), selected ?? false);
+            },
+          ),
+        )
+        .toList();
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -69,15 +73,15 @@ class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
               mobile: widgetsGridview(
                   childAspectRatio: 2.9,
                   context: context,
-                  importedList: _botUserItemList),
+                  importedList: botUserItemList),
               tablet: widgetsGridview(
                   context: context,
                   childAspectRatio: 3.2,
                   crossAxisCount: 2,
-                  importedList: _botUserItemList),
+                  importedList: botUserItemList),
               desktop: widgetsGridview(
                   context: context,
-                  importedList: _botUserItemList,
+                  importedList: botUserItemList,
                   childAspectRatio: 4.5,
                   crossAxisCount: 2),
             ),
@@ -85,21 +89,5 @@ class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
         ],
       ),
     );
-  }
-
-  void _fillData() {
-    if (mounted) {
-      setStateIfMounted(() {
-        for (var i in widget.botUsers) {
-          _botUserItemList.add(BotUserInfoItemCardWidget(
-            item: i,
-          ));
-        }
-      });
-    }
-  }
-
-  void setStateIfMounted(f) {
-    if (mounted) setState(f);
   }
 }

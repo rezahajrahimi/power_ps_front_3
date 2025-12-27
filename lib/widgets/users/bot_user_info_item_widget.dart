@@ -7,9 +7,14 @@ class BotUserInfoItemCardWidget extends StatefulWidget {
   const BotUserInfoItemCardWidget({
     super.key,
     required this.item,
+    this.isSelected = false,
+    this.onSelectedChanged,
   });
 
   final BotUser item;
+  final bool isSelected;
+  final ValueChanged<bool?>? onSelectedChanged;
+
   @override
   State<BotUserInfoItemCardWidget> createState() =>
       _BotUserInfoItemCardWidgetState();
@@ -53,6 +58,14 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
         ),
         child: Row(
           children: [
+            if (widget.onSelectedChanged != null)
+              Checkbox(
+                value: widget.isSelected,
+                onChanged: widget.onSelectedChanged,
+                activeColor: AppStyle.primaryColor,
+                checkColor: Colors.white,
+                side: const BorderSide(color: Colors.white54),
+              ),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
