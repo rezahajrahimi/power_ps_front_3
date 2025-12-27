@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/edit_pannel_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/edit_sanaei_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 
@@ -74,13 +75,23 @@ class _PannelItemInfoWidgetState extends State<PannelItemInfoWidget> {
             children: [
               GestureDetector(
                 onTap: () async {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditPanelScreen(
-                          selectedPannel: widget.pannel,
-                        ),
-                      )).then((value) => {widget.callback!(true)});
+                  if (widget.pannel.type == "sanaei") {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditSanaeiPanelScreen(
+                            selectedPannel: widget.pannel,
+                          ),
+                        )).then((value) => {widget.callback!(true)});
+                  } else {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditPanelScreen(
+                            selectedPannel: widget.pannel,
+                          ),
+                        )).then((value) => {widget.callback!(true)});
+                  }
                 },
                 child: const SizedBox(
                   height: 20,

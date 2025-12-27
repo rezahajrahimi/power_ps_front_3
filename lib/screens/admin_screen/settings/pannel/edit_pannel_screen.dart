@@ -781,7 +781,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _showOtherData = false;
 
         break;
-      case 'sanaei':
+      case 'Sanaei':
         _selectedPannelType = "Sanaei";
         _showMarzbanData = false;
         _showHiddifyData = false;
