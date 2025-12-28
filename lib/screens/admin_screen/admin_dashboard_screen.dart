@@ -24,6 +24,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _showdata = false;
   Timer? _retriveDataTimer;
   Dashboard? _dashboard;
+  int _unconfirmedPage = 1;
+  bool _isLoadingMoreUnconfirmed = false;
   @override
   void initState() {
     _bindAdminDashboardScreenData();
@@ -127,17 +129,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  void _bindAdminDashboardScreenData() async {
-    await getDashboardAnalytics().then((value) {
+  void _bindAdminDashboardScreenData({int? page}) async {
+    if (page != null) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMoreUnconfirmed = true;
+      });
+    }
+    await getDashboardAnalytics(unconfirmedPage: page ?? _unconfirmedPage)
+        .then((value) {
       if (null != value) {
+        if (!mounted) return;
         setState(() {
-          _showdata = false;
-
           _dashboard = value;
           _showdata = true;
+          _isLoadingMoreUnconfirmed = false;
+          _unconfirmedPage = value.unConTransactionsCurrentPage;
         });
       }
-    }).onError((error, stackTrace) {});
+    }).onError((error, stackTrace) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMoreUnconfirmed = false;
+      });
+    });
   }
 
   _financialSummaryCard(BuildContext context) {
@@ -550,15 +565,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.pending_actions, color: Colors.orangeAccent),
-              const SizedBox(width: 10),
-              Text(
-                "تراکنش‌های تایید نشده",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+              Row(
+                children: [
+                  Icon(Icons.pending_actions, color: Colors.orangeAccent),
+                  const SizedBox(width: 10),
+                  Text(
+                    "تراکنش‌های تایید نشده",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
               ),
+              if (_isLoadingMoreUnconfirmed)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.orangeAccent,
+                  ),
+                ),
             ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
@@ -579,6 +608,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     childAspectRatio: 4.5,
                     crossAxisCount: 2),
               )),
+          if (_dashboard!.unConTransactionsLastPage > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed:
+                        _unconfirmedPage > 1 && !_isLoadingMoreUnconfirmed
+                            ? () => _bindAdminDashboardScreenData(
+                                page: _unconfirmedPage - 1)
+                            : null,
+                    icon: const Icon(Icons.arrow_back_ios, size: 18),
+                    color: AppStyle.primaryColor,
+                  ),
+                  Text(
+                    "صفحه $_unconfirmedPage از ${_dashboard!.unConTransactionsLastPage}",
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  IconButton(
+                    onPressed: _unconfirmedPage <
+                                _dashboard!.unConTransactionsLastPage &&
+                            !_isLoadingMoreUnconfirmed
+                        ? () => _bindAdminDashboardScreenData(
+                            page: _unconfirmedPage + 1)
+                        : null,
+                    icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                    color: AppStyle.primaryColor,
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

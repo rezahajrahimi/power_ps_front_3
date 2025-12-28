@@ -16,16 +16,17 @@ import 'package:powerps/models/user_dashboard_model.dart';
 
 List<BoughtProductDetailsModel> boughtProducts = [];
 int lastPageBougthProduct = 1;
-Future<Dashboard?> getDashboardAnalytics() async {
+Future<Dashboard?> getDashboardAnalytics({int unconfirmedPage = 1}) async {
   try {
-    Response response = await GenaralApi.dio.get("/api/getDashboardAnalytics",
-        options: Options(headers: {
-          'Accept': 'application/json',
-          'Connection': 'keep-alive',
-          "Content-Type": "application/json;charset=UTF-8",
-          "Charset": "utf-8",
-          'Access-Control-Allow-Origin': '*'
-        }));
+    Response response = await GenaralApi.dio
+        .get("/api/getDashboardAnalytics?page=$unconfirmedPage",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*'
+            }));
 
     if (response.statusCode == 200 && response.data != null) {
       var data = response.data;
@@ -33,6 +34,8 @@ Future<Dashboard?> getDashboardAnalytics() async {
       List<Log> logs = [];
       List<Transaction> conTransactions = [];
       List<Transaction> unConTransactions = [];
+      int unConTransactionsLastPage = 1;
+      int unConTransactionsCurrentPage = 1;
       List<DetailsInfoItem> mostSelledProductCategory = [];
       List<ProductDetails> last10ProductSelled = [];
 
@@ -46,9 +49,17 @@ Future<Dashboard?> getDashboardAnalytics() async {
       for (var i in data["Last10ConfirmedTransaction"]) {
         conTransactions.add(Transaction.fromJson(i));
       }
-      for (var i in data["UnConfirmedTransaction"]) {
-        unConTransactions.add(Transaction.fromJson(i));
+
+      if (data["UnConfirmedTransaction"] != null) {
+        unConTransactionsLastPage =
+            data["UnConfirmedTransaction"]["last_page"] ?? 1;
+        unConTransactionsCurrentPage =
+            data["UnConfirmedTransaction"]["current_page"] ?? 1;
+        for (var i in data["UnConfirmedTransaction"]["data"]) {
+          unConTransactions.add(Transaction.fromJson(i));
+        }
       }
+
       for (var i in data["MostSelledProductCategory"]) {
         mostSelledProductCategory.add(DetailsInfoItem(
             icon: const Icon(Icons.info),
@@ -76,6 +87,8 @@ Future<Dashboard?> getDashboardAnalytics() async {
           logs: logs,
           conTransactions: conTransactions,
           unConTransactions: unConTransactions,
+          unConTransactionsLastPage: unConTransactionsLastPage,
+          unConTransactionsCurrentPage: unConTransactionsCurrentPage,
           mostSelledProductCategory: mostSelledProductCategory,
           last10ProductSelled: last10ProductSelled,
           pannelsStatus: pannelsStatus,
