@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/product_category_model.dart';
@@ -125,7 +127,7 @@ class _UserProductCategoryInfoItemWidgetState
     String remark = "";
     return await showDialog(
         context: context,
-        builder: (context) {
+        builder: (dialogContext) {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
@@ -143,7 +145,7 @@ class _UserProductCategoryInfoItemWidgetState
                       if (remark.isEmpty) {
                         showMsg(
                             msg: "نام را وارد کنید.",
-                            context: context,
+                            context: dialogContext,
                             type: "error");
                         return;
                       }
@@ -152,18 +154,25 @@ class _UserProductCategoryInfoItemWidgetState
                       await buyProductByUserWithPrID(
                               productID: widget.item.id, remark: remark)
                           .then((val) {
-                        if (!context.mounted) return;
+                        if (!dialogContext.mounted) return;
                         if (val != false && val != null) {
                           // open val as a link in a new window
-                          if (val.contains("https://") ||
+                          if (widget.item.pannel?.type == "sanaei" ||
+                              val.startsWith("vless://") ||
+                              val.startsWith("vmess://") ||
+                              val.startsWith("trojan://")) {
+                            EasyLoading.dismiss();
+                            Navigator.of(dialogContext).pop();
+                            _showConfigDialog(context, val);
+                          } else if (val.contains("https://") ||
                               val.contains("http://")) {
                             launchUrl(Uri.parse(val),
                                 mode: LaunchMode.externalApplication);
                             EasyLoading.dismiss();
 
-                            Navigator.of(context).pop();
+                            Navigator.of(dialogContext).pop();
                           } else {
-                            Navigator.of(context).pop();
+                            Navigator.of(dialogContext).pop();
 
                             EasyLoading.dismiss();
                             showMsg(
@@ -175,10 +184,9 @@ class _UserProductCategoryInfoItemWidgetState
                               msg: "خطا در برقراری ارتباط با سرور",
                               context: context,
                               type: "error");
-                          Navigator.of(context).pop();
+                          Navigator.of(dialogContext).pop();
                         }
                       }).then((val) {
-
                         // لیست خریدها را آپدیت کن
                       }).whenComplete(() {
                         if (!context.mounted) return;
@@ -189,12 +197,59 @@ class _UserProductCategoryInfoItemWidgetState
                     child: const Text('خرید')),
                 TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(dialogContext).pop();
                     },
                     child: const Text('بستن'))
               ],
             ),
           );
         });
+  }
+
+  void _showConfigDialog(BuildContext context, String config) {
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('کانفیگ خریداری شده'),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  QrImageView(
+                    data: config,
+                    version: QrVersions.auto,
+                    size: 200.0,
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(height: 20),
+                  SelectableText(
+                    config,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: config));
+                showMsg(msg: "کپی شد", context: context, type: "info");
+              },
+              child: const Text('کپی'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('بستن'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

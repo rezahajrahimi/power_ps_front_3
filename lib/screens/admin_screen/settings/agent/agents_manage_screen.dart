@@ -196,13 +196,16 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
     });
 
     try {
-      final value = await getAgents();
-      if (value != null) {
-        _agents = value;
-        for (var i in _agents) {
-          _agentsWidgetList.add(_agentInfo(agent: i, context: context));
+      await getAgents().then((val) {
+        if (val != null) {
+          if (!mounted) return;
+
+          _agents = val;
+          for (var i in _agents) {
+            _agentsWidgetList.add(_agentInfo(agent: i, context: context));
+          }
         }
-      }
+      });
     } catch (e) {
       debugPrint("Error fetching agents: $e");
     } finally {

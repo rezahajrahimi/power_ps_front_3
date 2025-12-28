@@ -1,5 +1,6 @@
 class SanaeiConfig {
   bool enable;
+  bool isActive;
   double currentUsageGB;
   double usageLimitGB;
   String? startDate;
@@ -9,6 +10,7 @@ class SanaeiConfig {
 
   SanaeiConfig({
     required this.enable,
+    required this.isActive,
     required this.currentUsageGB,
     required this.usageLimitGB,
     this.startDate,
@@ -22,6 +24,9 @@ class SanaeiConfig {
       enable: json['enable'] == true ||
           json['enable'].toString() == "1" ||
           json['enable'].toString() == "true",
+      isActive: json['is_active'] == true ||
+          json['is_active'].toString() == "1" ||
+          json['is_active'].toString() == "true",
       currentUsageGB: double.parse(json['current_usage_GB'].toString()),
       usageLimitGB: double.parse(json['usage_limit_GB'].toString()),
       startDate: json['start_date']?.toString(),
@@ -34,6 +39,7 @@ class SanaeiConfig {
   Map<String, dynamic> toJson() {
     return {
       'enable': enable,
+      'is_active': isActive,
       'current_usage_GB': currentUsageGB,
       'usage_limit_GB': usageLimitGB,
       'start_date': startDate,

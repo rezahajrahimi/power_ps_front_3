@@ -261,7 +261,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: DropdownButtonFormField<String>(
-        value: _selectedTransactionStatus,
+        initialValue: _selectedTransactionStatus,
         decoration: const InputDecoration(
             labelText: "وضعیت تراکنش", border: InputBorder.none),
         items: _transactionStatusList
@@ -280,7 +280,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: DropdownButtonFormField<String>(
-        value: _selectedPaymentType,
+        initialValue: _selectedPaymentType,
         decoration: const InputDecoration(
             labelText: "درگاه پرداخت", border: InputBorder.none),
         items: _paymentTypeList
@@ -393,6 +393,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       if (_selectedPaymentType != null) {
         paymentTypeId = int.tryParse(_selectedPaymentType!.split(":")[0]);
       }
+      if (!context.mounted) return;
 
       final success = await editUserTranaction(
         amount: int.parse(_amountTxtController.text),
@@ -401,7 +402,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
         paymentTypeId: paymentTypeId ?? int.parse(widget.item.paymentType!.id),
         recipeNUmber: _recipeNUmberTxtController.text,
       );
-
+      if (!context.mounted) return;
       if (success) {
         showMsg(msg: "تراکنش با موفقیت ویرایش شد", context: context);
         Navigator.pop(context, true);
@@ -437,6 +438,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       final success = await removeUnconfirmedTransaction(
           transactionId: widget.item.id.toInt());
       EasyLoading.dismiss();
+      if (!context.mounted) return;
 
       if (success) {
         showMsg(msg: "تراکنش حذف شد", context: context);

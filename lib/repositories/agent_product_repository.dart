@@ -7,6 +7,7 @@ import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/models/sanaei_config_model.dart';
 import 'package:powerps/models/product_category_model.dart';
 
 Future createAndEditBatchOfUserAgentProduct(
@@ -421,6 +422,10 @@ Future getBoughtProductsStatusFromServerById({required int productID}) async {
             }));
 
     if (response.statusCode == 200) {
+      if (response.data.containsKey('client') ||
+          response.data.containsKey('inbound')) {
+        return SanaeiConfig.fromJson(response.data);
+      }
       HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
       return hiddifyConfig;
     } else if (response.statusCode == 201) {
@@ -451,6 +456,10 @@ Future getProductBoughtedByProductIdUserMode({required int productID}) async {
             }));
 
     if (response.statusCode == 200) {
+      if (response.data.containsKey('client') ||
+          response.data.containsKey('inbound')) {
+        return SanaeiConfig.fromJson(response.data);
+      }
       HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
       return hiddifyConfig;
     } else if (response.statusCode == 201) {

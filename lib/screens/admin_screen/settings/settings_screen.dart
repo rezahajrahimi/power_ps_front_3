@@ -23,8 +23,7 @@ import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.da
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
-import 'package:powerps/widgets/setting/advanced_setting_info_widget.dart'
-    hide EasyLoading;
+import 'package:powerps/widgets/setting/advanced_setting_info_widget.dart';
 
 import 'backup/backup_screen.dart';
 

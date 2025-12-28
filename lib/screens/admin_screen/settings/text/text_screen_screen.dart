@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/custom_text_model.dart';
 import 'package:powerps/repositories/custom_text_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/formatted_text_editor_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class TextScreenScreen extends StatefulWidget {
   const TextScreenScreen({super.key});

@@ -5,7 +5,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/repositories/custom_text_repository.dart'
     as custom_text_repository;
 import 'package:powerps/styles/app_theme.dart';
-import 'dart:convert';
 import '../../models/custom_text_model.dart';
 
 class FormattedTextEditorWidget extends StatefulWidget {
@@ -234,7 +233,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
         border:
-            Border.all(width: 1, color: AppStyle.primaryColor.withOpacity(0.2)),
+            Border.all(width: 1, color: AppStyle.primaryColor.withAlpha(20)),
         borderRadius: BorderRadius.all(
           Radius.circular(AppStyle.defaultPadding),
         ),
@@ -257,7 +256,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
                       Text(
                         widget.customTextModel.description,
                         style: TextStyle(
-                            fontSize: 12, color: Colors.white.withOpacity(0.6)),
+                            fontSize: 12, color: Colors.white.withAlpha(60)),
                       ),
                   ],
                 ),
@@ -309,7 +308,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
               style: const TextStyle(fontFamily: 'monospace'),
               decoration: InputDecoration(
                 hintText: 'متن خود را اینجا بنویسید...',
-                fillColor: AppStyle.bgColor.withOpacity(0.5),
+                fillColor: AppStyle.bgColor.withAlpha(50),
                 filled: true,
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -321,7 +320,7 @@ class _FormattedTextEditorWidgetState extends State<FormattedTextEditorWidget> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppStyle.bgColor.withOpacity(0.3),
+                color: AppStyle.bgColor.withAlpha(30),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.white10),
               ),
