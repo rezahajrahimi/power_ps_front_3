@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/product_category_model.dart';
-import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 
 class FastEditableProductCategoryWidget extends StatefulWidget {
   final ProductCategory productCategory;
+  final Function(ProductCategory updatedCategory)? onChanged;
 
   const FastEditableProductCategoryWidget(
-      {super.key, required this.productCategory});
+      {super.key, required this.productCategory, this.onChanged});
 
   @override
   State<FastEditableProductCategoryWidget> createState() =>
@@ -40,7 +38,33 @@ class _FastEditableProductCategoryWidgetState
     _volumeEditText =
         TextEditingController(text: widget.productCategory.volume.toString());
     _isActive = widget.productCategory.isActive;
+
+    // Add listeners to notify changes
+    _nameEditText.addListener(_notifyChange);
+    _priceEditText.addListener(_notifyChange);
+    _priceInDollarEditText.addListener(_notifyChange);
+    _expireDayEditText.addListener(_notifyChange);
+    _volumeEditText.addListener(_notifyChange);
+
     super.initState();
+  }
+
+  void _notifyChange() {
+    if (widget.onChanged != null) {
+      final updated = widget.productCategory.copyWith(
+        categoryName: _nameEditText.text,
+        price:
+            int.tryParse(_priceEditText.text) ?? widget.productCategory.price,
+        priceInDollar: double.tryParse(_priceInDollarEditText.text) ??
+            widget.productCategory.priceInDollar,
+        expireDay: int.tryParse(_expireDayEditText.text) ??
+            widget.productCategory.expireDay,
+        volume:
+            int.tryParse(_volumeEditText.text) ?? widget.productCategory.volume,
+        isActive: _isActive,
+      );
+      widget.onChanged!(updated);
+    }
   }
 
   @override
@@ -51,48 +75,6 @@ class _FastEditableProductCategoryWidgetState
     _expireDayEditText.dispose();
     _volumeEditText.dispose();
     super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (_formKey.currentState!.validate()) {
-      EasyLoading.show(status: 'در حال بروزرسانی...');
-      try {
-        int pannelID = int.parse(widget.productCategory.pannel!.id);
-        final res = await editProductCategory(
-          name: _nameEditText.text,
-          price: int.parse(_priceEditText.text),
-          priceInDollar: double.parse(_priceInDollarEditText.text),
-          pannelID: pannelID,
-          expDay: int.parse(_expireDayEditText.text),
-          volume: int.parse(_volumeEditText.text),
-          rechargable: widget.productCategory.rechargable,
-          showPannelLink: widget.productCategory.showPannelLink,
-          showSubscriptionLink: widget.productCategory.showSubscriptionLink,
-          isActive: _isActive,
-          id: widget.productCategory.id.toInt(),
-        );
-
-        if (res != false) {
-          if (mounted) {
-            showMsg(
-              msg: "بسته \"${_nameEditText.text}\" با موفقیت ویرایش شد.",
-              context: context,
-              type: "success",
-            );
-          }
-        } else {
-          if (mounted) {
-            showMsg(msg: "خطا در ویرایش بسته", context: context, type: "error");
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          showMsg(msg: "خطای غیرمنتظره: $e", context: context, type: "error");
-        }
-      } finally {
-        EasyLoading.dismiss();
-      }
-    }
   }
 
   @override
@@ -146,19 +128,15 @@ class _FastEditableProductCategoryWidgetState
                         height: 30,
                         child: Switch(
                           value: _isActive,
-                          onChanged: (val) => setState(() => _isActive = val),
+                          onChanged: (val) {
+                            setState(() => _isActive = val);
+                            _notifyChange();
+                          },
                           activeThumbColor: AppStyle.primaryColor,
                         ),
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  onPressed: _save,
-                  icon: const Icon(Icons.save, color: Colors.green),
-                  tooltip: "ذخیره تغییرات",
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                 ),
               ],
             ),

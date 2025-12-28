@@ -21,6 +21,7 @@ class _FastEditProductCategoriesScreenState
   late List<ProductCategory> _allCategories;
   String _searchQuery = '';
   bool _isLoading = false;
+  Map<int, ProductCategory> _changes = {};
 
   @override
   void initState() {
@@ -35,10 +36,62 @@ class _FastEditProductCategoriesScreenState
       if (updatedList is List<ProductCategory>) {
         setState(() {
           _allCategories = updatedList;
+          _changes.clear(); // Clear changes after refresh
         });
       }
     } catch (e) {
       debugPrint('Error refreshing: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveAllChanges() async {
+    if (_changes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('هیچ تغییری برای ذخیره وجود ندارد')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      List<Future> saveFutures = [];
+      for (var updated in _changes.values) {
+        saveFutures.add(editProductCategory(
+          name: updated.categoryName,
+          price: updated.price,
+          priceInDollar: updated.priceInDollar,
+          pannelID: updated.pannelId,
+          expDay: updated.expireDay,
+          volume: updated.volume,
+          rechargable: updated.rechargable,
+          showPannelLink: updated.showPannelLink,
+          showSubscriptionLink: updated.showSubscriptionLink,
+          isActive: updated.isActive,
+          id: updated.id,
+        ));
+      }
+
+      await Future.wait(saveFutures);
+
+      setState(() {
+        _changes.clear();
+        _allCategories =
+            _allCategories.map((cat) => _changes[cat.id] ?? cat).toList();
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('همه تغییرات با موفقیت ذخیره شد')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطا در ذخیره تغییرات: $e')),
+        );
+      }
     } finally {
       setState(() => _isLoading = false);
     }
@@ -64,6 +117,12 @@ class _FastEditProductCategoriesScreenState
           context: context,
           title: "ویرایش سریع بسته‌ها",
           actions: [
+            if (_changes.isNotEmpty)
+              IconButton(
+                onPressed: _saveAllChanges,
+                icon: Icon(Icons.save, color: Colors.green),
+                tooltip: "ذخیره همه تغییرات",
+              ),
             IconButton(
               onPressed: _refreshData,
               icon: _isLoading
@@ -106,6 +165,8 @@ class _FastEditProductCategoriesScreenState
                         return FastEditableProductCategoryWidget(
                           key: ValueKey(_filteredList[index].id),
                           productCategory: _filteredList[index],
+                          onChanged: (updated) =>
+                              setState(() => _changes[updated.id] = updated),
                         );
                       },
                     ),
