@@ -234,3 +234,43 @@ Future deleteProductCategoryByID({required int id}) async {
     return false;
   }
 }
+Future updatePricesByyTether() async {
+  try {
+    Response response = await GenaralApi.dio.post("/api/updatePricesByyTether",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
+Future updatePricesByTether() async {
+  try {
+    Response response = await GenaralApi.dio.post("/api/updatePricesByTether",
+        options: Options(headers: {
+          "Accept": "application/json",
+          "Connection": "keep-alive",
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }));
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}

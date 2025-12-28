@@ -22,6 +22,7 @@ class _FastEditProductCategoriesScreenState
   String _searchQuery = '';
   bool _isLoading = false;
   Map<int, ProductCategory> _changes = {};
+  int _rebuildCounter = 0;
 
   @override
   void initState() {
@@ -37,6 +38,7 @@ class _FastEditProductCategoriesScreenState
         setState(() {
           _allCategories = updatedList;
           _changes.clear(); // Clear changes after refresh
+          _rebuildCounter++;
         });
       }
     } catch (e) {
@@ -97,6 +99,36 @@ class _FastEditProductCategoriesScreenState
     }
   }
 
+  Future<void> _updatePricesByTether() async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await updatePricesByTether();
+      if (result == true) {
+        // Refresh the list
+        await _refreshData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('قیمت‌ها با موفقیت به‌روزرسانی شد')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('خطا در به‌روزرسانی قیمت‌ها')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطا: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   List<ProductCategory> get _filteredList {
     if (_searchQuery.isEmpty) return _allCategories;
     return _allCategories.where((cat) {
@@ -123,6 +155,11 @@ class _FastEditProductCategoriesScreenState
                 icon: Icon(Icons.save, color: Colors.green),
                 tooltip: "ذخیره همه تغییرات",
               ),
+            IconButton(
+              onPressed: _updatePricesByTether,
+              icon: Icon(Icons.currency_exchange, color: Colors.blue),
+              tooltip: "به‌روزرسانی قیمت‌ها بر اساس دلار",
+            ),
             IconButton(
               onPressed: _refreshData,
               icon: _isLoading
@@ -163,7 +200,8 @@ class _FastEditProductCategoriesScreenState
                       itemCount: _filteredList.length,
                       itemBuilder: (context, index) {
                         return FastEditableProductCategoryWidget(
-                          key: ValueKey(_filteredList[index].id),
+                          key: ValueKey(
+                              '${_filteredList[index].id}_$_rebuildCounter'),
                           productCategory: _filteredList[index],
                           onChanged: (updated) =>
                               setState(() => _changes[updated.id] = updated),
