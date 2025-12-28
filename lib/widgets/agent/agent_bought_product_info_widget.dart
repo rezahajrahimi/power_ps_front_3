@@ -363,7 +363,11 @@ class _AgentBoughtProductInfoWidgetState
                                 }
                               });
                             },
-                            child: const Text('مشاهده در پنل')),
+                            child: widget.boughtProductDetailsModel
+                                        .productCategory?.pannel?.type ==
+                                    "sanaei"
+                                ? Text('مشاهده در پنل')
+                                : Text('مشاهده کانفیگ')),
 
                         // ElevatedButton(
                         //     onPressed: () {
