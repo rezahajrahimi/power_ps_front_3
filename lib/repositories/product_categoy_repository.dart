@@ -43,6 +43,8 @@ Future addNewProductCategory({
   required bool rechargable,
   required bool showPannelLink,
   required bool showSubscriptionLink,
+  int? inboundId,
+  int? ipLimit,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/addNewProductCategory",
@@ -56,7 +58,9 @@ Future addNewProductCategory({
           "volume": volume,
           "rechargable": rechargable,
           "show_pannel_link": showPannelLink,
-          "show_subscription_link": showSubscriptionLink
+          "show_subscription_link": showSubscriptionLink,
+          "inbound_id": inboundId,
+          "ip_limit": ipLimit,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -101,6 +105,8 @@ Future<bool> editProductCategory({
   required bool showPannelLink,
   required bool showSubscriptionLink,
   required bool isActive,
+  int? inboundId,
+  int? ipLimit,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/editProductCategory",
@@ -116,6 +122,8 @@ Future<bool> editProductCategory({
           "show_subscription_link": showSubscriptionLink,
           'is_active': isActive,
           "id": id,
+          "inbound_id": inboundId,
+          "ip_limit": ipLimit,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -234,6 +242,7 @@ Future deleteProductCategoryByID({required int id}) async {
     return false;
   }
 }
+
 Future updatePricesByyTether() async {
   try {
     Response response = await GenaralApi.dio.post("/api/updatePricesByyTether",
@@ -254,6 +263,7 @@ Future updatePricesByyTether() async {
     return false;
   }
 }
+
 Future updatePricesByTether() async {
   try {
     Response response = await GenaralApi.dio.post("/api/updatePricesByTether",

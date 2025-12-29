@@ -34,6 +34,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final _priceInDollarEditText = TextEditingController();
   final _expireDayEditText = TextEditingController();
   final _volumeEditText = TextEditingController();
+  final _inboundIdEditText = TextEditingController();
+  final _ipLimitEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
@@ -55,6 +57,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _priceInDollarEditText.dispose();
     _expireDayEditText.dispose();
     _volumeEditText.dispose();
+    _inboundIdEditText.dispose();
+    _ipLimitEditText.dispose();
     _selectedPannelName = "";
     _pannelNameList.clear();
     // _categoryTypeListName.clear();
@@ -693,6 +697,52 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               );
                             }).toList(),
                           ),
+                          if (_selectedPannelName.contains("Sanaei")) ...[
+                            const SizedBox(height: 16.0),
+                            const Text(
+                              'Inbound ID را وارد کنید.',
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 4.0),
+                            TextFormField(
+                              controller: _inboundIdEditText,
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                labelText: 'Inbound ID',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 12.0,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16.0),
+                            const Text(
+                              'محدودیت IP را وارد کنید (0 برای بدون محدودیت).',
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 4.0),
+                            TextFormField(
+                              controller: _ipLimitEditText,
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                labelText: 'IP Limit',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 12.0,
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 16.0),
                           Card(
                             elevation: 0,
@@ -790,6 +840,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                       _priceInDollarEditText.clear();
                                       _expireDayEditText.clear();
                                       _volumeEditText.clear();
+                                      _inboundIdEditText.clear();
+                                      _ipLimitEditText.clear();
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -837,6 +889,12 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       rechargable: _rechargable,
       showPannelLink: _showPannelLink,
       showSubscriptionLink: _showSubscriptionLink,
+      inboundId: _inboundIdEditText.text.isNotEmpty
+          ? int.tryParse(_inboundIdEditText.text)
+          : null,
+      ipLimit: _ipLimitEditText.text.isNotEmpty
+          ? int.tryParse(_ipLimitEditText.text)
+          : 0,
     ).then((val) {
       if (val) {
         if (context.mounted) {

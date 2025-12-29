@@ -10,7 +10,6 @@ class Pannel {
   String? userLink;
   String? secretCode;
   String? domin;
-  int? inboundId;
   int? capacity;
   Pannel(
       {required this.id,
@@ -23,7 +22,6 @@ class Pannel {
       this.adminUrl,
       this.userLink,
       this.secretCode,
-      this.inboundId,
       this.domin,
       this.capacity});
 
@@ -38,9 +36,6 @@ class Pannel {
         urlPort: json['url_port'] ?? json['url_port'].toString(),
         adminUrl: json['admin_url'] ?? json['admin_url'].toString(),
         userLink: json['user_link'] ?? json['user_link'].toString(),
-        inboundId: json['inbound_id'] != null
-            ? int.tryParse(json['inbound_id'].toString())
-            : null,
         secretCode: json['secret_code'] ?? json['secret_code'].toString(),
         domin: json['domin'] ?? json['domin'].toString(),
         capacity:

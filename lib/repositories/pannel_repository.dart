@@ -63,7 +63,6 @@ Future<bool> addNewPannel({required Pannel pannel}) async {
           "admin_url": pannel.adminUrl,
           "user_link": pannel.userLink,
           "secret_code": pannel.secretCode,
-          "inbound_id": pannel.inboundId,
           "capacity": pannel.capacity,
         },
         options: Options(headers: {
@@ -115,7 +114,6 @@ Future<bool> addNewPannelMarzban({
           "capacity": pannel.capacity,
           "user_link": pannel.userLink,
           "secret_code": pannel.secretCode,
-          "inbound_id": pannel.inboundId,
           "vmess": vmess,
           "vless": vless,
           "trojan": trojan,
@@ -176,7 +174,6 @@ Future<bool> editMarzbanPannel({
           "capacity": pannel.capacity,
           "user_link": pannel.userLink,
           "secret_code": pannel.secretCode,
-          "inbound_id": pannel.inboundId,
           "vmess": vmess,
           "vless": vless,
           "trojan": trojan,
@@ -226,7 +223,6 @@ Future updatePannel({required Pannel pannel}) async {
           "admin_url": pannel.adminUrl,
           "user_link": pannel.userLink,
           "secret_code": pannel.secretCode,
-          "inbound_id": pannel.inboundId,
           "capacity": pannel.capacity,
         },
         options: Options(headers: {

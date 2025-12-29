@@ -33,6 +33,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   final _priceInDollarEditText = TextEditingController();
   final _expireDayEditText = TextEditingController();
   final _volumeEditText = TextEditingController();
+  final _inboundIdEditText = TextEditingController();
+  final _ipLimitEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
@@ -137,6 +139,10 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       _expireDayEditText.text =
           widget.selectedProductCategory.expireDay.toString();
       _volumeEditText.text = widget.selectedProductCategory.volume.toString();
+      _inboundIdEditText.text =
+          widget.selectedProductCategory.inboundId?.toString() ?? "";
+      _ipLimitEditText.text =
+          widget.selectedProductCategory.ipLimit?.toString() ?? "0";
       _rechargable = widget.selectedProductCategory.rechargable;
       _showSubscriptionLink =
           widget.selectedProductCategory.showSubscriptionLink;
@@ -281,6 +287,20 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         validationError: "حجم بسته را وارد کنید.",
         keyboardType: TextInputType.number,
       ));
+      if (_selectedPannelName.contains("Sanaei")) {
+        _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+          controller: _inboundIdEditText,
+          textHint: "Inbound ID",
+          validationError: "Inbound ID را وارد کنید.",
+          keyboardType: TextInputType.number,
+        ));
+        _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+          controller: _ipLimitEditText,
+          textHint: "محدودیت IP (0 برای بدون محدودیت)",
+          validationError: "محدودیت IP را وارد کنید.",
+          keyboardType: TextInputType.number,
+        ));
+      }
       _productDetailsWidgetLIst.add(Container(
         margin: EdgeInsets.only(top: AppStyle.defaultPadding),
         padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -457,7 +477,13 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           showPannelLink: _showPannelLink,
           showSubscriptionLink: _showSubscriptionLink,
           isActive: _isActive,
-          id: widget.selectedProductCategory.id.toInt());
+          id: widget.selectedProductCategory.id.toInt(),
+          inboundId: _inboundIdEditText.text.isNotEmpty
+              ? int.tryParse(_inboundIdEditText.text)
+              : null,
+          ipLimit: _ipLimitEditText.text.isNotEmpty
+              ? int.tryParse(_ipLimitEditText.text)
+              : 0);
       if (res) {
         if (context.mounted) {
           showMsg(msg: "ویرایش شد.", context: context);

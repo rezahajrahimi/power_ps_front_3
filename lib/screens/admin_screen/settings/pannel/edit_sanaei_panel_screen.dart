@@ -27,7 +27,6 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
   final _adminUrlEditTxt = TextEditingController();
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
-  final _inboundIdEditTxt = TextEditingController();
 
   @override
   void initState() {
@@ -36,7 +35,6 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
     _adminUrlEditTxt.text = widget.selectedPannel.adminUrl ?? "";
     _userNameEditTxt.text = widget.selectedPannel.username ?? "";
     _userPasswordEditTxt.text = widget.selectedPannel.password ?? "";
-    _inboundIdEditTxt.text = widget.selectedPannel.inboundId?.toString() ?? "";
 
     _fillData();
     super.initState();
@@ -49,7 +47,6 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
     _adminUrlEditTxt.dispose();
     _userNameEditTxt.dispose();
     _userPasswordEditTxt.dispose();
-    _inboundIdEditTxt.dispose();
     super.dispose();
   }
 
@@ -343,12 +340,6 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
         validationError: "رمز عبور را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
-      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
-        controller: _inboundIdEditTxt,
-        textHint: "Inbound ID (شناسه inbound)",
-        validationError: "Inbound id را وارد کنید.",
-        keyboardType: TextInputType.number,
-      ));
       _showData = true;
     });
   }
@@ -370,15 +361,6 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
       return;
     }
 
-    int? inboundId;
-    try {
-      inboundId = _inboundIdEditTxt.text.isNotEmpty
-          ? int.tryParse(_inboundIdEditTxt.text)
-          : null;
-    } catch (e) {
-      inboundId = null;
-    }
-
     await updatePannel(
       pannel: Pannel(
           id: widget.selectedPannel.id,
@@ -387,7 +369,6 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
           username: _userNameEditTxt.text,
           password: _userPasswordEditTxt.text,
-          inboundId: inboundId,
           capacity: capacity),
     ).then((res) {
       if (!context.mounted) return;

@@ -27,7 +27,6 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
   final _adminUrlEditTxt = TextEditingController();
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
-  final _inboundIdEditTxt = TextEditingController();
 
   @override
   void initState() {
@@ -42,7 +41,6 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     _adminUrlEditTxt.dispose();
     _userNameEditTxt.dispose();
     _userPasswordEditTxt.dispose();
-    _inboundIdEditTxt.dispose();
     super.dispose();
   }
 
@@ -338,12 +336,6 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
         validationError: "رمز عبور را وارد کنید.",
         keyboardType: TextInputType.text,
       ));
-      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
-        controller: _inboundIdEditTxt,
-        textHint: "Inbound ID (شناسه inbound)",
-        validationError: "Inbound id را وارد کنید.",
-        keyboardType: TextInputType.number,
-      ));
       _showData = true;
     });
   }
@@ -365,15 +357,6 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
       return;
     }
 
-    int? inboundId;
-    try {
-      inboundId = _inboundIdEditTxt.text.isNotEmpty
-          ? int.tryParse(_inboundIdEditTxt.text)
-          : null;
-    } catch (e) {
-      inboundId = null;
-    }
-
     await addNewPannel(
       pannel: Pannel(
           id: "1",
@@ -382,7 +365,6 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
           username: _userNameEditTxt.text,
           password: _userPasswordEditTxt.text,
-          inboundId: inboundId,
           capacity: capacity),
     ).then((res) {
       if (!context.mounted) return;
