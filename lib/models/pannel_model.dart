@@ -6,6 +6,7 @@ class Pannel {
   String? token;
   String? location;
   String? urlPort;
+  String? subPort;
   String? adminUrl;
   String? userLink;
   String? secretCode;
@@ -19,6 +20,7 @@ class Pannel {
       this.location,
       this.token,
       this.urlPort,
+      this.subPort,
       this.adminUrl,
       this.userLink,
       this.secretCode,
@@ -34,6 +36,7 @@ class Pannel {
         token: json['token'] ?? json['token'].toString(),
         location: json['location'] ?? json['location'].toString(),
         urlPort: json['url_port'] ?? json['url_port'].toString(),
+        subPort: json['sub_port']?.toString(),
         adminUrl: json['admin_url'] ?? json['admin_url'].toString(),
         userLink: json['user_link'] ?? json['user_link'].toString(),
         secretCode: json['secret_code'] ?? json['secret_code'].toString(),

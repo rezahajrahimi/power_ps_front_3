@@ -25,6 +25,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
   final _locationEditTxt = TextEditingController();
   final _capacityEditTxt = TextEditingController();
   final _adminUrlEditTxt = TextEditingController();
+  final _subPortEditTxt = TextEditingController();
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
 
@@ -39,6 +40,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     _locationEditTxt.dispose();
     _capacityEditTxt.dispose();
     _adminUrlEditTxt.dispose();
+    _subPortEditTxt.dispose();
     _userNameEditTxt.dispose();
     _userPasswordEditTxt.dispose();
     super.dispose();
@@ -325,6 +327,13 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
         keyboardType: TextInputType.text,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _subPortEditTxt,
+        textHint: "پورت سابسکریپشن (اختیاری)",
+        textDirection: TextDirection.ltr,
+        validationError: "",
+        keyboardType: TextInputType.number,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _userNameEditTxt,
         textHint: "نام کاربری (admin)",
         validationError: "نام کاربری را وارد کنید.",
@@ -363,6 +372,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
           type: "sanaei",
           location: _locationEditTxt.text,
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
+          subPort: _subPortEditTxt.text,
           username: _userNameEditTxt.text,
           password: _userPasswordEditTxt.text,
           capacity: capacity),
