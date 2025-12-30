@@ -46,22 +46,27 @@ class _RecentEventsState extends State<RecentEvents> {
           ),
           SizedBox(
             width: double.infinity,
-            height: widget.type == "dashboard" ? 400 : 800,
+            height: widget.type == "dashboard" ? 400 : 1000,
             child: DataTable2(
               columnSpacing: AppStyle.defaultPadding,
               minWidth: 600,
+              headingRowHeight: 40,
+              dataRowHeight: 60,
               columns: const [
-                // DataColumn(
-                //   label: Text("نام فعالیت"),
-                // ),
-                DataColumn(
-                  label: Text("کاربر"),
+                DataColumn2(
+                  label: Text("کاربر",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  size: ColumnSize.L,
                 ),
-                DataColumn(
-                  label: Text("زمان"),
+                DataColumn2(
+                  label: Text("زمان",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  size: ColumnSize.M,
                 ),
-                DataColumn(
-                  label: Text("جزییات"),
+                DataColumn2(
+                  label: Text("جزییات",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  size: ColumnSize.L,
                 ),
               ],
               rows: List.generate(
