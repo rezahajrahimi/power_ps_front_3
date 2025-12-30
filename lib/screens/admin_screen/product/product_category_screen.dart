@@ -101,161 +101,117 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     if (mounted) setState(f);
   }
 
-  void _fillData() async {
-    // await getAllCategoryType().then((resCategoryType) {
-    //   setStateIfMounted(() {
-    //     if (resCategoryType.isNotEmpty) {
-    //       setStateIfMounted(() {
-    //         _fetchedCategoryType = resCategoryType;
-    //         _categoryTypeListName.clear();
-    //         for (var i in resCategoryType) {
-    //           _categoryTypeListName.add(i.name);
-    //         }
-    //         _selectedCategoryType = resCategoryType[0].name;
-    //       });
-    //     }
-    //   });
-    // });
-    if (mounted) {
-      await getAllProdctCategory().then((res) {
-        if (res != null && res != false) {
-          setStateIfMounted(() {
-            _showData = false;
-            _productCategoryList = res;
-            _productCatWidgetLIst.clear();
-            _selectedPanelIDFiltered.clear();
-            for (var i in _productCategoryList) {
-              _productCatWidgetLIst.add(ProductCategoryInfoItemCardWidget(
-                onTap: () {
-                  _fillData();
-                },
-                item: ProductCategory(
-                    categoryName: i.categoryName,
-                    pannelId: i.pannelId,
-                    expireDay: i.expireDay,
-                    priceInDollar: i.priceInDollar,
-                    id: i.id,
-                    price: i.price,
-                    volume: i.volume,
-                    pannel: i.pannel,
-                    rechargable: i.rechargable,
-                    showPannelLink: i.showPannelLink,
-                    isActive: i.isActive,
-                    showSubscriptionLink: i.showSubscriptionLink),
-              ));
+  Future<void> _fillData() async {
+    if (!mounted) return;
 
-              // check if i.pannelId is now in _selectedPanelNameFiltered, add to _selectedPanelNameFiltered
-              if (_selectedPanelIDFiltered.contains(i.pannelId.toString())) {
-                _selectedPanelIDFiltered.add(i.pannelId.toString());
-              }
-            }
-          });
+    setStateIfMounted(() {
+      _showData = false;
+      _showFilters = false;
+    });
+
+    try {
+      final res = await getAllProdctCategory();
+      if (res != null && res != false) {
+        _productCategoryList = res;
+        _productCatWidgetLIst.clear();
+        _selectedPanelIDFiltered.clear();
+
+        for (var i in _productCategoryList) {
+          _productCatWidgetLIst.add(ProductCategoryInfoItemCardWidget(
+            onTap: () => _fillData(),
+            item: i,
+          ));
+
+          if (!_selectedPanelIDFiltered.contains(i.pannelId.toString())) {
+            _selectedPanelIDFiltered.add(i.pannelId.toString());
+          }
         }
-      }).onError((error, stackTrace) {
-        debugPrint(error.toString());
-        if (mounted) {
-          showMsg(msg: "خطا", context: context, type: "error");
+      }
+
+      final resPannel = await getPannels();
+      if (resPannel != false && resPannel != null && resPannel.isNotEmpty) {
+        _pannelNameList.clear();
+        for (var i in resPannel) {
+          _pannelNameList
+              .add("${i.id}: ${getPannelName(name: i.type)} - ${i.location}");
         }
-      }).whenComplete(() async {
-        await getPannels().then((resPannel) {
-          setStateIfMounted(() {
-            if (resPannel != false &&
-                resPannel != null &&
-                resPannel.isNotEmpty) {
-              setStateIfMounted(() {
-                _pannelNameList.clear();
-                for (var i in resPannel) {
-                  _pannelNameList.add(
-                      "${i.id}: ${getPannelName(name: i.type)} - ${i.location}");
-                }
-                _selectedPannelName =
-                    "${resPannel[0].id}: ${getPannelName(name: resPannel[0].type)} - ${resPannel[0].location}";
-              });
-            }
-            setStateIfMounted(() {
-              _showData = true;
-              _showFilters = true;
-            });
-          });
-        });
+        _selectedPannelName =
+            "${resPannel[0].id}: ${getPannelName(name: resPannel[0].type)} - ${resPannel[0].location}";
+      }
+
+      setStateIfMounted(() {
+        _showData = true;
+        _showFilters = true;
       });
+    } catch (error) {
+      debugPrint("Error in _fillData: $error");
+      if (mounted) {
+        showMsg(msg: "خطا در دریافت اطلاعات", context: context, type: "error");
+      }
     }
   }
 
   _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: 50.0,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
       child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          Flexible(
-            flex: 1,
-            child: ElevatedButton(
-              onPressed: () async {
-                _openAddNewProductCategoryDialog(context: context);
-              },
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () =>
+                  _openAddNewProductCategoryDialog(context: context),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppStyle.secondaryColor),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 4.0,
-                    ),
-                    Text(
-                      "کانفیگ جدید",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
+                backgroundColor: AppStyle.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text("بسته جدید",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
-          Flexible(
-            flex: 1,
-            child: ElevatedButton(
-              onPressed: () async {
-                _pannelNameList.isNotEmpty
-                    ? Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                FastEditProductCategoriesScreen(
-                                  productCategoryList: _productCategoryList,
-                                )))
-                    : showMsg(
-                        msg:
-                            "هیچ پنلی ثبت نشده است، ابتدا می بایست به بخش تنظیمات پنل بروید و یک پنل ثبت کنید.",
-                        context: context,
-                        type: "error");
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                if (_pannelNameList.isNotEmpty) {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => FastEditProductCategoriesScreen(
+                                productCategoryList: _productCategoryList,
+                              )));
+                } else {
+                  showMsg(
+                      msg: "هیچ پنلی ثبت نشده است. ابتدا یک پنل ثبت کنید.",
+                      context: context,
+                      type: "error");
+                }
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppStyle.secondaryColor),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 4.0,
-                    ),
-                    Text(
-                      "ویرایش سریع",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
+                backgroundColor: AppStyle.primaryColor.withValues(alpha: 0.2),
+                foregroundColor: AppStyle.primaryColor,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: AppStyle.primaryColor)),
               ),
+              icon: const Icon(Icons.edit_note, size: 20),
+              label: const Text("ویرایش سریع",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -264,10 +220,6 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   }
 
   _content(BuildContext context) {
-    // Provider.of<ProductCategoryProvider>(context, listen: false);
-
-    // _fillData();
-
     return Column(
       children: [
         Row(
@@ -279,14 +231,18 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                 children: [
                   _showData == true
                       ? _productInfoTabCard(context)
-                      : const Center(child: CircularProgressIndicator()),
+                      : const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(50.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
                 ],
               ),
             ),
             if (!Responsive.isMobile(context))
               SizedBox(width: AppStyle.defaultPadding),
-            // On Mobile means if the screen is less than 850 we dont want to show it
-            if (!Responsive.isMobile(context)) // side windows
+            if (!Responsive.isMobile(context))
               Expanded(
                 flex: 2,
                 child: Column(
@@ -306,15 +262,18 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   }
 
   _productInfoTabCard(BuildContext context) {
-    // if (changed) {
-    //   _fillData();
-    // }
-
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,39 +281,55 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "کانفیگ ها",
-                style: Theme.of(context).textTheme.titleMedium,
+              Row(
+                children: [
+                  const Icon(Icons.category_outlined,
+                      color: Colors.white70, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    "بسته‌های تعریف شده",
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
               IconButton(
-                icon: const Icon(
-                  Icons.refresh,
-                  color: Colors.white,
-                ),
-                onPressed: () {
-                  _fillData();
-                },
+                icon:
+                    const Icon(Icons.refresh, color: Colors.white70, size: 20),
+                onPressed: () => _fillData(),
+                tooltip: 'بروزرسانی',
               ),
             ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                    childAspectRatio: 3.2,
-                    context: context,
-                    importedList: _productCatWidgetLIst),
-                tablet: widgetsGridview(
-                    context: context,
-                    childAspectRatio: 4.5,
-                    importedList: _productCatWidgetLIst),
-                desktop: widgetsGridview(
-                    importedList: _productCatWidgetLIst,
-                    context: context,
-                    childAspectRatio: 4.5,
-                    crossAxisCount: 2),
-              )),
+          const Divider(color: Colors.white10, height: 20),
+          if (_productCatWidgetLIst.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(30.0),
+                child: Text("هیچ بسته‌ای یافت نشد",
+                    style: TextStyle(color: Colors.white38)),
+              ),
+            )
+          else
+            SizedBox(
+                width: double.infinity,
+                child: Responsive(
+                  mobile: widgetsGridview(
+                      childAspectRatio: 3.2,
+                      context: context,
+                      importedList: _productCatWidgetLIst),
+                  tablet: widgetsGridview(
+                      context: context,
+                      childAspectRatio: 4.5,
+                      importedList: _productCatWidgetLIst),
+                  desktop: widgetsGridview(
+                      importedList: _productCatWidgetLIst,
+                      context: context,
+                      childAspectRatio: 4.5,
+                      crossAxisCount: 2),
+                )),
         ],
       ),
     );
@@ -452,416 +427,250 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   _openAddNewProductCategoryDialog({required BuildContext context}) {
     final theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
-    final dialogWidth = screenSize.width > 600 ? 550.0 : screenSize.width * 0.9;
+    final dialogWidth =
+        screenSize.width > 600 ? 550.0 : screenSize.width * 0.95;
 
     return showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => Dialog(
+        backgroundColor: AppStyle.secondaryColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         insetPadding:
-            const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+            const EdgeInsets.symmetric(horizontal: 10.0, vertical: 20.0),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: dialogWidth,
             maxHeight: screenSize.height * 0.9,
           ),
-          child: SingleChildScrollView(
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: StatefulBuilder(
-                builder: (BuildContext context, StateSetter setState) {
-                  return Container(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppStyle.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'بسته جدید',
+                            'تعریف بسته جدید',
                             style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.primaryColor,
                               fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16.0),
-                          const Text(
-                            'نام بسته جدید را وارد کنید.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4.0),
-                          TextFormField(
-                            controller: _nameEditText,
-                            keyboardType: TextInputType.text,
-                            textInputAction: TextInputAction.next,
-                            maxLines: null,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'لطفا نام بسته را وارد کنید';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'نام بسته جدید',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 12.0,
-                              ),
+                              color: AppStyle.primaryColor,
                             ),
                           ),
-                          const SizedBox(height: 16.0),
-                          const Text(
-                            'قیمت بسته جدید را به تومان وارد کنید.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4.0),
-                          TextFormField(
-                            controller: _priceEditText,
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                            maxLines: null,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'لطفا قیمت بسته را وارد کنید';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'قیمت بسته جدید',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 12.0,
-                              ),
-                              prefixIcon: const Icon(Icons.attach_money_rounded,
-                                  size: 20),
-                            ),
-                          ),
-                          const SizedBox(height: 16.0),
-                          const Text(
-                            'قیمت دلاری بسته جدید را وارد کنید.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4.0),
-                          TextFormField(
-                            controller: _priceInDollarEditText,
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                            maxLines: null,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'لطفا قیمت دلاری بسته را وارد کنید';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'قیمت دلاری بسته جدید',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 12.0,
-                              ),
-                              prefixText: '\$ ',
-                            ),
-                          ),
-                          const SizedBox(height: 16.0),
-                          const Text(
-                            'مدت زمان اعتبار (روز) بسته را وارد کنید.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4.0),
-                          TextFormField(
-                            controller: _expireDayEditText,
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                            maxLines: null,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'لطفا مدت زمان اعتبار را وارد کنید';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'مدت زمان اعتبار (روز)',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 12.0,
-                              ),
-                              suffixIcon:
-                                  const Icon(Icons.calendar_today, size: 20),
-                            ),
-                          ),
-                          const SizedBox(height: 16.0),
-                          const Text(
-                            'حجم بسته را به گیگابایت وارد کنید',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4.0),
-                          TextFormField(
-                            controller: _volumeEditText,
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                            maxLines: null,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'لطفا حجم بسته را وارد کنید';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'حجم بسته (گیگابایت)',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 12.0,
-                              ),
-                              suffixText: 'GB',
-                            ),
-                          ),
-                          const SizedBox(height: 16.0),
-                          const Text(
-                            'نوع دسته را انتخاب کنید',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          // const SizedBox(height: 4.0),
-                          // DropdownButtonFormField(
-                          //   isExpanded: true,
-                          //   hint: const Text('نوع دسته'),
-                          //   initialValue: _selectedCategoryType,
-                          //   alignment: Alignment.centerRight,
-                          //   decoration: InputDecoration(
-                          //     border: OutlineInputBorder(
-                          //       borderRadius: BorderRadius.circular(8.0),
-                          //     ),
-                          //     contentPadding: const EdgeInsets.symmetric(
-                          //       horizontal: 12.0,
-                          //       vertical: 8.0,
-                          //     ),
-                          //   ),
-                          //   onChanged: (newValue) {
-                          //     setState(() {
-                          //       _selectedCategoryType = newValue.toString();
-                          //     });
-                          //   },
-                          //   items: _categoryTypeListName.map((clType) {
-                          //     return DropdownMenuItem(
-                          //       value: clType,
-                          //       alignment: Alignment.centerRight,
-                          //       child: Text(clType),
-                          //     );
-                          //   }).toList(),
-                          // ),
-                          const SizedBox(height: 16.0),
-                          const Text(
-                            'پنل را انتخاب کنید',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4.0),
-                          DropdownButtonFormField(
-                            isExpanded: true,
-                            hint: const Text('پنل'),
-                            initialValue: _selectedPannelName,
-                            alignment: Alignment.centerRight,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12.0,
-                                vertical: 8.0,
-                              ),
-                            ),
-                            onChanged: (newValue) {
-                              setState(() {
-                                _selectedPannelName = newValue.toString();
-                              });
-                            },
-                            items: _pannelNameList.map((clType) {
-                              return DropdownMenuItem(
-                                value: clType,
-                                alignment: Alignment.centerRight,
-                                child: Text(clType),
-                              );
-                            }).toList(),
-                          ),
-                          if (_selectedPannelName.contains("Sanaei")) ...[
-                            const SizedBox(height: 16.0),
-                            const Text(
-                              'Inbound ID را وارد کنید.',
-                              style:
-                                  TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 4.0),
-                            TextFormField(
-                              controller: _inboundIdEditText,
-                              keyboardType: TextInputType.number,
-                              textInputAction: TextInputAction.next,
-                              decoration: InputDecoration(
-                                labelText: 'Inbound ID',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 12.0,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16.0),
-                            const Text(
-                              'محدودیت IP را وارد کنید (0 برای بدون محدودیت).',
-                              style:
-                                  TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 4.0),
-                            TextFormField(
-                              controller: _ipLimitEditText,
-                              keyboardType: TextInputType.number,
-                              textInputAction: TextInputAction.next,
-                              decoration: InputDecoration(
-                                labelText: 'IP Limit',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 12.0,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 16.0),
-                          Card(
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              side: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SwitchListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: const Text(
-                                        'نمایش لینک سابسکریپشن به کاربر'),
-                                    value: _selectedPannelName
-                                                .contains("Hiddify") !=
-                                            true
-                                        ? _showSubscriptionLink
-                                        : true,
-                                    onChanged: _selectedPannelName
-                                                .contains("Hiddify") !=
-                                            true
-                                        ? (bool value) {
-                                            setState(() {
-                                              _showSubscriptionLink = value;
-                                            });
-                                          }
-                                        : null,
-                                  ),
-                                  SwitchListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title:
-                                        const Text('نمایش لینک پنل به کاربر'),
-                                    value: _showPannelLink,
-                                    onChanged: (bool value) {
-                                      setState(() {
-                                        _showPannelLink = value;
-                                      });
-                                    },
-                                  ),
-                                  SwitchListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: const Text(
-                                        'قابلیت شارژ مجدد توسط ربات'),
-                                    value:
-                                        _selectedPannelName.contains("دیگر") !=
-                                                true
-                                            ? _rechargable
-                                            : false,
-                                    onChanged:
-                                        _selectedPannelName.contains("دیگر") !=
-                                                true
-                                            ? (bool value) {
-                                                setState(() {
-                                                  _rechargable = value;
-                                                });
-                                              }
-                                            : null,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24.0),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12.0),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                    side: BorderSide(color: theme.primaryColor),
-                                  ),
-                                  child: const Text('انصراف'),
-                                ),
-                              ),
-                              const SizedBox(width: 12.0),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    if (_formKey.currentState!.validate()) {
-                                      EasyLoading.show();
-
-                                      await _submitData(context);
-                                      _formKey.currentState!.save();
-                                      _nameEditText.clear();
-                                      _priceEditText.clear();
-                                      _priceInDollarEditText.clear();
-                                      _expireDayEditText.clear();
-                                      _volumeEditText.clear();
-                                      _inboundIdEditText.clear();
-                                      _ipLimitEditText.clear();
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12.0),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                  ),
-                                  child: const Text('افزودن'),
-                                ),
-                              ),
-                            ],
+                          IconButton(
+                            icon:
+                                const Icon(Icons.close, color: Colors.white70),
+                            onPressed: () => Navigator.pop(context),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
-              ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildTextField(
+                                controller: _nameEditText,
+                                label: 'نام بسته',
+                                hint: 'مثال: یک ماهه 50 گیگ',
+                                icon: Icons.label_outline,
+                                validator: (v) =>
+                                    v!.isEmpty ? 'نام بسته الزامی است' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _priceEditText,
+                                      label: 'قیمت (تومان)',
+                                      hint: '0',
+                                      icon: Icons.payments_outlined,
+                                      keyboardType: TextInputType.number,
+                                      validator: (v) =>
+                                          v!.isEmpty ? 'قیمت الزامی است' : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _priceInDollarEditText,
+                                      label: 'قیمت (دلار)',
+                                      hint: '0.0',
+                                      icon: Icons.attach_money,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                              decimal: true),
+                                      validator: (v) => v!.isEmpty
+                                          ? 'قیمت دلاری الزامی است'
+                                          : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _expireDayEditText,
+                                      label: 'مدت (روز)',
+                                      hint: '30',
+                                      icon: Icons.timer_outlined,
+                                      keyboardType: TextInputType.number,
+                                      validator: (v) =>
+                                          v!.isEmpty ? 'مدت الزامی است' : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _volumeEditText,
+                                      label: 'حجم (گیگابایت)',
+                                      hint: '50',
+                                      icon: Icons.data_usage,
+                                      keyboardType: TextInputType.number,
+                                      validator: (v) =>
+                                          v!.isEmpty ? 'حجم الزامی است' : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                isExpanded: true,
+                                initialValue: _selectedPannelName,
+                                dropdownColor: AppStyle.secondaryColor,
+                                decoration: _inputDecoration(
+                                    'انتخاب پنل', Icons.dns_outlined),
+                                items: _pannelNameList.map((clType) {
+                                  return DropdownMenuItem(
+                                    value: clType,
+                                    child: Text(clType,
+                                        style: const TextStyle(
+                                            color: Colors.white)),
+                                  );
+                                }).toList(),
+                                onChanged: (newValue) {
+                                  setState(
+                                      () => _selectedPannelName = newValue!);
+                                },
+                              ),
+                              if (_selectedPannelName.contains("Sanaei")) ...[
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _inboundIdEditText,
+                                        label: 'Inbound ID',
+                                        icon: Icons.numbers,
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _ipLimitEditText,
+                                        label: 'IP Limit',
+                                        icon: Icons.devices,
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              const SizedBox(height: 20),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppStyle.bgColor.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    _buildSwitchTile(
+                                      'نمایش لینک سابسکریپشن',
+                                      _selectedPannelName.contains("Hiddify")
+                                          ? true
+                                          : _showSubscriptionLink,
+                                      _selectedPannelName.contains("Hiddify")
+                                          ? null
+                                          : (v) => setState(
+                                              () => _showSubscriptionLink = v),
+                                    ),
+                                    _buildSwitchTile(
+                                      'نمایش لینک پنل',
+                                      _showPannelLink,
+                                      (v) =>
+                                          setState(() => _showPannelLink = v),
+                                    ),
+                                    _buildSwitchTile(
+                                      'قابلیت شارژ مجدد',
+                                      _selectedPannelName.contains("دیگر")
+                                          ? false
+                                          : _rechargable,
+                                      _selectedPannelName.contains("دیگر")
+                                          ? null
+                                          : (v) =>
+                                              setState(() => _rechargable = v),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (_formKey.currentState!.validate()) {
+                                  await _submitData(context);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppStyle.primaryColor,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                elevation: 5,
+                              ),
+                              child: const Text('ثبت و ذخیره',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -869,136 +678,192 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     );
   }
 
-  _submitData(BuildContext context) async {
-    EasyLoading.show();
-    int pannelID = 1;
-    if (_selectedPannelName != "") {
-      pannelID = int.parse(_selectedPannelName.split(":")[0]);
-    }
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      validator: validator,
+      decoration: _inputDecoration(label, icon, hint: hint),
+    );
+  }
 
-    await addNewProductCategory(
-      name: _nameEditText.text,
-      price: int.parse(_priceEditText.text),
-      priceInDollar: double.parse(_priceInDollarEditText.text),
-      pannelID: pannelID,
-      // categoryTypeId: _fetchedCategoryType
-      //     .firstWhere((element) => element.name == _selectedCategoryType)
-      //     .id,
-      expDay: int.parse(_expireDayEditText.text),
-      volume: int.parse(_volumeEditText.text),
-      rechargable: _rechargable,
-      showPannelLink: _showPannelLink,
-      showSubscriptionLink: _showSubscriptionLink,
-      inboundId: _inboundIdEditText.text.isNotEmpty
-          ? int.tryParse(_inboundIdEditText.text)
-          : null,
-      ipLimit: _ipLimitEditText.text.isNotEmpty
-          ? int.tryParse(_ipLimitEditText.text)
-          : 0,
-    ).then((val) {
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {String? hint}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+      labelStyle: const TextStyle(color: Colors.white70),
+      prefixIcon: Icon(icon, color: AppStyle.primaryColor, size: 20),
+      filled: true,
+      fillColor: AppStyle.bgColor.withValues(alpha: 0.3),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white10)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppStyle.primaryColor)),
+      errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.redAccent)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    );
+  }
+
+  Widget _buildSwitchTile(String title, bool value, Function(bool)? onChanged) {
+    return SwitchListTile(
+      title: Text(title,
+          style: const TextStyle(color: Colors.white70, fontSize: 13)),
+      value: value,
+      activeThumbColor: AppStyle.primaryColor,
+      onChanged: onChanged,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      dense: true,
+    );
+  }
+
+  Future<void> _submitData(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    EasyLoading.show(status: 'در حال ثبت...');
+    try {
+      int pannelID = 1;
+      if (_selectedPannelName.isNotEmpty) {
+        pannelID = int.parse(_selectedPannelName.split(":")[0]);
+      }
+
+      final val = await addNewProductCategory(
+        name: _nameEditText.text,
+        price: int.parse(_priceEditText.text),
+        priceInDollar: double.parse(_priceInDollarEditText.text),
+        pannelID: pannelID,
+        expDay: int.parse(_expireDayEditText.text),
+        volume: int.parse(_volumeEditText.text),
+        rechargable: _rechargable,
+        showPannelLink: _showPannelLink,
+        showSubscriptionLink: _showSubscriptionLink,
+        inboundId: _inboundIdEditText.text.isNotEmpty
+            ? int.tryParse(_inboundIdEditText.text)
+            : null,
+        ipLimit: _ipLimitEditText.text.isNotEmpty
+            ? int.tryParse(_ipLimitEditText.text)
+            : 0,
+      );
+
       if (val) {
         if (context.mounted) {
-          showMsg(msg: "افزوده شد.", context: context);
+          showMsg(
+              msg: "بسته با موفقیت افزوده شد.",
+              context: context,
+              type: "success");
           Navigator.pop(context);
+          _fillData();
         }
       } else {
         if (context.mounted) {
-          showMsg(msg: "خطا", context: context, type: "error");
+          showMsg(
+              msg: "خطا در ثبت بسته. لطفا دوباره تلاش کنید.",
+              context: context,
+              type: "error");
         }
       }
-    }).whenComplete(() {
-      EasyLoading.dismiss();
-      _fillData();
-    }).catchError((onError) {
-      EasyLoading.dismiss();
+    } catch (e) {
+      debugPrint("Error in _submitData: $e");
       if (context.mounted) {
-        showMsg(msg: "خطا", context: context, type: "error");
+        showMsg(msg: "خطای غیرمنتظره رخ داد.", context: context, type: "error");
       }
-    });
+    } finally {
+      EasyLoading.dismiss();
+    }
   }
 
   _panelNameFilters(BuildContext context) {
     List<Widget> list = [];
     for (var panelName in _pannelNameList) {
       int pannelID = int.parse(panelName.split(":")[0]);
-      list.add(SizedBox(
-        child: CheckboxListTile(
-          value: _selectedPanelIDFiltered.contains(pannelID),
-          onChanged: (bool? value) {
-            setStateIfMounted(() {
-              _showData = false;
-            });
-            if (value!) {
-              _selectedPanelIDFiltered.add(pannelID);
-            } else {
-              _selectedPanelIDFiltered.remove(pannelID);
-            }
-            setStateIfMounted(() {
-              _productCatWidgetLIst.clear();
-
-              for (var i in _productCategoryList) {
-                if (_selectedPanelIDFiltered.contains(i.pannelId)) {
-                  _productCatWidgetLIst.add(ProductCategoryInfoItemCardWidget(
-                    onTap: () {
-                      _fillData();
-                    },
-                    item: ProductCategory(
-                        categoryName: i.categoryName,
-                        pannelId: i.pannelId,
-                        expireDay: i.expireDay,
-                        priceInDollar: i.priceInDollar,
-                        id: i.id,
-                        price: i.price,
-                        volume: i.volume,
-                        pannel: i.pannel,
-                        rechargable: i.rechargable,
-                        showPannelLink: i.showPannelLink,
-                        isActive: i.isActive,
-                        showSubscriptionLink: i.showSubscriptionLink),
-                  ));
-                }
+      list.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: AppStyle.bgColor.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: CheckboxListTile(
+            value: _selectedPanelIDFiltered.contains(pannelID),
+            activeColor: AppStyle.primaryColor,
+            checkColor: Colors.white,
+            onChanged: (bool? value) {
+              setStateIfMounted(() {
+                _showData = false;
+              });
+              if (value!) {
+                _selectedPanelIDFiltered.add(pannelID);
+              } else {
+                _selectedPanelIDFiltered.remove(pannelID);
               }
-              _showData = true;
-            });
-          },
-          title: Text(panelName),
+              setStateIfMounted(() {
+                _productCatWidgetLIst.clear();
+
+                for (var i in _productCategoryList) {
+                  if (_selectedPanelIDFiltered.contains(i.pannelId)) {
+                    _productCatWidgetLIst.add(ProductCategoryInfoItemCardWidget(
+                      onTap: () => _fillData(),
+                      item: i,
+                    ));
+                  }
+                }
+                _showData = true;
+              });
+            },
+            title: Text(
+              panelName,
+              style: const TextStyle(fontSize: 13, color: Colors.white),
+            ),
+          ),
         ),
-      ));
+      );
     }
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "پنل‌ها",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              const Icon(Icons.filter_list, color: Colors.white70, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                "فیلتر پنل‌ها",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 5,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: list),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 1,
-                  importedList: list),
-              desktop: widgetsGridview(
-                  importedList: list,
-                  context: context,
-                  childAspectRatio: 4.5,
-                  crossAxisCount: 1),
-            ),
-          ),
+          ...list,
         ],
       ),
     );
