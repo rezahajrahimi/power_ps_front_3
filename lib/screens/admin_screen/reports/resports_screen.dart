@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:powerps/screens/admin_screen/reports/report_tabs/configs_report_tab_screen.dart';
+import 'package:powerps/screens/admin_screen/reports/report_tabs/users_report_tab_screen.dart';
+import 'package:powerps/screens/admin_screen/reports/report_tabs/financial_report_tab_screen.dart';
+import 'package:powerps/screens/admin_screen/reports/report_tabs/summary_report_tab_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 
 class ReportScreen extends StatefulWidget {
@@ -21,28 +24,53 @@ class _ReportScreenState extends State<ReportScreen>
           children: [
             Expanded(
               child: Container(
-                padding: EdgeInsets.all(AppStyle.defaultPadding),
                 decoration: BoxDecoration(
                   color: AppStyle.secondaryColor,
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  borderRadius: const BorderRadius.all(Radius.circular(15)),
                 ),
                 child: DefaultTabController(
-                  length: 2,
+                  length: 4,
                   child: Scaffold(
+                    backgroundColor: Colors.transparent,
                     appBar: AppBar(
-                      backgroundColor: AppStyle.secondaryColor,
-                      automaticallyImplyLeading: true,
-                      title: Text(
-                        'گزارشگیری از بسته ها و درآمدها',
-                        style: Theme.of(context).textTheme.titleMedium,
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      automaticallyImplyLeading: false,
+                      title: Row(
+                        children: [
+                          Icon(Icons.analytics, color: AppStyle.primaryColor),
+                          const SizedBox(width: 10),
+                          const Text('مرکز گزارشات و آمار'),
+                        ],
                       ),
-                      bottom: const TabBar(
-                          tabs: [Tab(text: 'بسته‌ها'), Tab(text: 'درآمدها')]),
+                      bottom: TabBar(
+                        isScrollable: true,
+                        indicatorColor: AppStyle.primaryColor,
+                        labelColor: AppStyle.primaryColor,
+                        unselectedLabelColor: Colors.grey,
+                        tabs: const [
+                          Tab(
+                              text: 'خلاصه وضعیت',
+                              icon: Icon(Icons.dashboard_outlined)),
+                          Tab(
+                              text: 'کاربران',
+                              icon: Icon(Icons.people_outline)),
+                          Tab(
+                              text: 'تراکنش‌ها',
+                              icon:
+                                  Icon(Icons.account_balance_wallet_outlined)),
+                          Tab(
+                              text: 'جستجوی کانفیگ',
+                              icon: Icon(Icons.search_outlined)),
+                        ],
+                      ),
                     ),
                     body: const TabBarView(
                       children: [
+                        SummaryReportTab(),
+                        UsersReportTab(),
+                        FinancialReportTab(),
                         ConfigsReportTab(),
-                        Text("Accounting"),
                       ],
                     ),
                   ),

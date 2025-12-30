@@ -111,14 +111,14 @@ class _SideMenuState extends State<SideMenu> {
               _callBack("transactions");
             },
           ),
-          // DrawerListTileV4(
-          //   title: "گزارشگیری",
-          //   icon: Icons.list,
-          //   isSelected: widget.currentPage == "گزارشگیری" ? true : false,
-          //   press: () {
-          //     _callBack("reports");
-          //   },
-          // ),
+          DrawerListTileV4(
+            title: "گزارشات",
+            icon: Icons.analytics,
+            isSelected: widget.currentPage == "گزارشات" ? true : false,
+            press: () {
+              _callBack("reports");
+            },
+          ),
           DrawerListTileV4(
             title: "رخدادها",
             icon: Icons.event,
