@@ -21,7 +21,7 @@ class _FastEditProductCategoriesScreenState
   late List<ProductCategory> _allCategories;
   String _searchQuery = '';
   bool _isLoading = false;
-  Map<int, ProductCategory> _changes = {};
+  final Map<int, ProductCategory> _changes = {};
   int _rebuildCounter = 0;
 
   @override
