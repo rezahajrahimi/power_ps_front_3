@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/connector/dio.dart';
@@ -39,8 +40,9 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
       });
     } else {
       setState(() => _isLoading = false);
-      if (mounted)
+      if (mounted) {
         showMsg(msg: "خطا در دریافت اطلاعات", context: context, type: "error");
+      }
     }
   }
 
@@ -74,12 +76,42 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
                 : Column(
                     children: [
                       Expanded(
-                        child: ListView.builder(
-                          padding: EdgeInsets.all(AppStyle.defaultPadding),
-                          itemCount: _messages.length,
-                          itemBuilder: (context, index) {
-                            final msg = _messages[index];
-                            return _buildMessageCard(msg);
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            int crossAxisCount = 1;
+                            if (constraints.maxWidth > 1200) {
+                              crossAxisCount = 3;
+                            } else if (constraints.maxWidth > 800) {
+                              crossAxisCount = 2;
+                            }
+
+                            if (crossAxisCount > 1) {
+                              return GridView.builder(
+                                padding:
+                                    EdgeInsets.all(AppStyle.defaultPadding),
+                                itemCount: _messages.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: AppStyle.defaultPadding,
+                                  mainAxisSpacing: AppStyle.defaultPadding,
+                                  mainAxisExtent: 520, // Approximate height
+                                ),
+                                itemBuilder: (context, index) {
+                                  final msg = _messages[index];
+                                  return _buildMessageCard(msg);
+                                },
+                              );
+                            }
+
+                            return ListView.builder(
+                              padding: EdgeInsets.all(AppStyle.defaultPadding),
+                              itemCount: _messages.length,
+                              itemBuilder: (context, index) {
+                                final msg = _messages[index];
+                                return _buildMessageCard(msg);
+                              },
+                            );
                           },
                         ),
                       ),
@@ -155,7 +187,6 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
     final double progress = total > 0 ? sent / total : 0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
         borderRadius: BorderRadius.circular(20),
@@ -199,15 +230,23 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
             ),
           ),
           if (msg['image_path'] != null)
-            Container(
-              height: 120,
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: NetworkImage(baseURL + "/" + msg['image_path']),
-                  fit: BoxFit.cover,
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Container(
+                    color: Colors.black12,
+                    child: Image.network(
+                      baseURL + "/" + msg['image_path'],
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Center(
+                              child: Icon(Icons.broken_image,
+                                  color: Colors.white30)),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -215,11 +254,12 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (msg['message'] != null)
                   Text(
                     msg['message'],
-                    maxLines: 3,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                   ),
@@ -245,11 +285,150 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
                     minHeight: 8,
                   ),
                 ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(
+                              color:
+                                  AppStyle.primaryColor.withValues(alpha: 0.5)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () => _showDetails(msg),
+                        icon: const Icon(Icons.info_outline, size: 18),
+                        label: const Text("جزئیات ارسال"),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showDetails(dynamic msg) {
+    List sentIds = [];
+    List failedIds = [];
+
+    try {
+      if (msg['sent_ids'] != null) {
+        if (msg['sent_ids'] is String) {
+          sentIds = jsonDecode(msg['sent_ids']);
+        } else {
+          sentIds = List.from(msg['sent_ids']);
+        }
+      }
+      if (msg['failed_ids'] != null) {
+        if (msg['failed_ids'] is String) {
+          failedIds = jsonDecode(msg['failed_ids']);
+        } else {
+          failedIds = List.from(msg['failed_ids']);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error decoding ids: $e");
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppStyle.secondaryColor,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+        maxWidth: 600,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "جزئیات ارسال پیام",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: DefaultTabController(
+                length: 2,
+                child: Column(
+                  children: [
+                    TabBar(
+                      indicatorColor: AppStyle.primaryColor,
+                      labelColor: Colors.white,
+                      unselectedLabelColor: Colors.white30,
+                      tabs: [
+                        Tab(text: "موفق (${sentIds.length})"),
+                        Tab(text: "ناموفق (${failedIds.length})"),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          _buildIdList(sentIds),
+                          _buildFailedList(failedIds),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIdList(List ids) {
+    if (ids.isEmpty) {
+      return const Center(
+          child:
+              Text("دیتا یافت نشد", style: TextStyle(color: Colors.white30)));
+    }
+    return ListView.builder(
+      itemCount: ids.length,
+      itemBuilder: (context, index) => ListTile(
+        title: Text("شناسه: ${ids[index]}",
+            style: const TextStyle(color: Colors.white70)),
+        leading: const Icon(Icons.check_circle, color: Colors.greenAccent),
+      ),
+    );
+  }
+
+  Widget _buildFailedList(List items) {
+    if (items.isEmpty) {
+      return const Center(
+          child:
+              Text("دیتا یافت نشد", style: TextStyle(color: Colors.white30)));
+    }
+    return ListView.builder(
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return ListTile(
+          title: Text("شناسه: ${item['user_id']}",
+              style: const TextStyle(color: Colors.white70)),
+          subtitle: Text(item['error'] ?? 'خطای نامشخص',
+              style: const TextStyle(color: Colors.redAccent, fontSize: 11)),
+          leading: const Icon(Icons.error, color: Colors.redAccent),
+        );
+      },
     );
   }
 
