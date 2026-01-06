@@ -171,7 +171,7 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
                             color: Colors.white.withValues(alpha: 0.4)),
                         const SizedBox(width: 5),
                         Text(
-                          widget.item.createdAt ?? "نامشخص",
+                          widget.item.createdAt,
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.white.withValues(alpha: 0.45),
