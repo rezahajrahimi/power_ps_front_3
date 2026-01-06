@@ -43,12 +43,16 @@ class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.05),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -56,34 +60,65 @@ class _BotUsersInfoCardWidgetState extends State<BotUsersInfoCardWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.people_outline, color: AppStyle.primaryColor),
-              const SizedBox(width: 10),
-              Text(
-                widget.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppStyle.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.people_alt_rounded,
+                        color: AppStyle.primaryColor, size: 24),
+                  ),
+                  const SizedBox(width: 15),
+                  Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                  ),
+                ],
+              ),
+              if (widget.botUsers.isNotEmpty)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppStyle.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${widget.botUsers.length} نفر",
+                    style: TextStyle(
+                      color: AppStyle.primaryColor,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
-              ),
+                  ),
+                ),
             ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(height: AppStyle.defaultPadding * 1.5),
           SizedBox(
             width: double.infinity,
             child: Responsive(
               mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
+                  childAspectRatio: 2.5,
                   context: context,
                   importedList: botUserItemList),
               tablet: widgetsGridview(
                   context: context,
-                  childAspectRatio: 3.2,
+                  childAspectRatio: 3.0,
                   crossAxisCount: 2,
                   importedList: botUserItemList),
               desktop: widgetsGridview(
                   context: context,
                   importedList: botUserItemList,
-                  childAspectRatio: 4.5,
+                  childAspectRatio: 4.2,
                   crossAxisCount: 2),
             ),
           ),

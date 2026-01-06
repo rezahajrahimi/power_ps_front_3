@@ -41,38 +41,74 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
               builder: (context) => BotUserDetailsScreen(
                 id: widget.item.id,
               ),
-            )).then((value) {});
+            ));
       },
       child: Container(
         margin: EdgeInsets.only(top: AppStyle.defaultPadding),
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: const BorderRadius.all(
-            Radius.circular(20),
-          ),
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppStyle.primaryColor.withValues(alpha: 0.1),
-            width: 1,
+            color: widget.isSelected
+                ? AppStyle.primaryColor
+                : Colors.white.withValues(alpha: 0.08),
+            width: 1.5,
           ),
+          gradient: widget.isSelected
+              ? LinearGradient(
+                  colors: [
+                    AppStyle.primaryColor.withValues(alpha: 0.1),
+                    AppStyle.primaryColor.withValues(alpha: 0.02),
+                  ],
+                )
+              : null,
+          boxShadow: widget.isSelected
+              ? [
+                  BoxShadow(
+                    color: AppStyle.primaryColor.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
         child: Row(
           children: [
             if (widget.onSelectedChanged != null)
-              Checkbox(
-                value: widget.isSelected,
-                onChanged: widget.onSelectedChanged,
-                activeColor: AppStyle.primaryColor,
-                checkColor: Colors.white,
-                side: const BorderSide(color: Colors.white54),
+              Transform.scale(
+                scale: 0.9,
+                child: Checkbox(
+                  value: widget.isSelected,
+                  onChanged: widget.onSelectedChanged,
+                  activeColor: AppStyle.primaryColor,
+                  checkColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
               ),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppStyle.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(15),
+                gradient: LinearGradient(
+                  colors: [
+                    AppStyle.primaryColor.withValues(alpha: 0.25),
+                    AppStyle.primaryColor.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppStyle.primaryColor.withValues(alpha: 0.2),
+                ),
               ),
-              child: Icon(Icons.person_outline,
+              child: Icon(Icons.person_rounded,
                   color: AppStyle.primaryColor, size: 24),
             ),
             Expanded(
@@ -89,47 +125,67 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
                           widget.item.accountId.toString(),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 15,
+                            color: Colors.white,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          widget.item.username ?? "بدون نام کاربری",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white70),
-                        ),
+                        if (widget.item.username != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppStyle.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              "@${widget.item.username}",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppStyle.primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                       ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "${widget.item.firstName ?? ''} ${widget.item.lastName ?? ''}"
+                              .trim()
+                              .isEmpty
+                          ? "کاربر بدون نام"
+                          : "${widget.item.firstName ?? ''} ${widget.item.lastName ?? ''}",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        Icon(Icons.calendar_today_rounded,
+                            size: 12,
+                            color: Colors.white.withValues(alpha: 0.4)),
+                        const SizedBox(width: 5),
                         Text(
-                          "${widget.item.firstName ?? ''} ${widget.item.lastName ?? ''}"
-                                  .trim()
-                                  .isEmpty
-                              ? "بدون نام"
-                              : "${widget.item.firstName ?? ''} ${widget.item.lastName ?? ''}",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white60),
-                        ),
-                        Text(
-                          widget.item.createdAt,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white54, fontSize: 10),
+                          widget.item.createdAt ?? "نامشخص",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.45),
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white.withValues(alpha: 0.2),
             ),
           ],
         ),
