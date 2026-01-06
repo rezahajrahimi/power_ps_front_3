@@ -95,7 +95,8 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
                                   crossAxisCount: crossAxisCount,
                                   crossAxisSpacing: AppStyle.defaultPadding,
                                   mainAxisSpacing: AppStyle.defaultPadding,
-                                  mainAxisExtent: 520, // Approximate height
+                                  mainAxisExtent:
+                                      560, // افزایش ارتفاع برای جلوگیری از سرریزی
                                 ),
                                 itemBuilder: (context, index) {
                                   final msg = _messages[index];
@@ -239,7 +240,7 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
                   child: Container(
                     color: Colors.black12,
                     child: Image.network(
-                      baseURL + "/" + msg['image_path'],
+                      "$baseURL/${msg['image_path']}",
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) =>
                           const Center(
