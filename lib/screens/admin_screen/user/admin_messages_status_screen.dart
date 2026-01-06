@@ -316,23 +316,42 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
   }
 
   void _showDetails(dynamic msg) {
-    List sentIds = [];
-    List failedIds = [];
+    // Prefer detailed user info from API if available
+    List<dynamic> sentUsers = [];
+    List<dynamic> failedUsers = [];
 
+    List<dynamic> recipients = [];
     try {
-      if (msg['sent_ids'] != null) {
+      if (msg['sent_users_detail'] != null &&
+          msg['sent_users_detail'] is List) {
+        sentUsers = List.from(msg['sent_users_detail']);
+      } else if (msg['sent_ids'] != null) {
         if (msg['sent_ids'] is String) {
-          sentIds = jsonDecode(msg['sent_ids']);
+          sentUsers = jsonDecode(msg['sent_ids']);
         } else {
-          sentIds = List.from(msg['sent_ids']);
+          sentUsers = List.from(msg['sent_ids']);
         }
       }
-      if (msg['failed_ids'] != null) {
+
+      if (msg['failed_users_detail'] != null &&
+          msg['failed_users_detail'] is List) {
+        failedUsers = List.from(msg['failed_users_detail']);
+      } else if (msg['failed_ids'] != null) {
         if (msg['failed_ids'] is String) {
-          failedIds = jsonDecode(msg['failed_ids']);
+          failedUsers = jsonDecode(msg['failed_ids']);
         } else {
-          failedIds = List.from(msg['failed_ids']);
+          failedUsers = List.from(msg['failed_ids']);
         }
+      }
+
+      if (msg['recipient_details'] != null &&
+          msg['recipient_details'] is List) {
+        recipients = List.from(msg['recipient_details']);
+      } else if (msg['recipient_ids'] != null) {
+        if (msg['recipient_ids'] is String)
+          recipients = jsonDecode(msg['recipient_ids']);
+        else
+          recipients = List.from(msg['recipient_ids']);
       }
     } catch (e) {
       debugPrint("Error decoding ids: $e");
@@ -365,7 +384,7 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
             const SizedBox(height: 20),
             Expanded(
               child: DefaultTabController(
-                length: 2,
+                length: 3,
                 child: Column(
                   children: [
                     TabBar(
@@ -373,16 +392,18 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
                       labelColor: Colors.white,
                       unselectedLabelColor: Colors.white30,
                       tabs: [
-                        Tab(text: "موفق (${sentIds.length})"),
-                        Tab(text: "ناموفق (${failedIds.length})"),
+                        Tab(text: "گیرندگان (${recipients.length})"),
+                        Tab(text: "موفق (${sentUsers.length})"),
+                        Tab(text: "ناموفق (${failedUsers.length})"),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Expanded(
                       child: TabBarView(
                         children: [
-                          _buildIdList(sentIds),
-                          _buildFailedList(failedIds),
+                          _buildRecipientList(recipients),
+                          _buildUserList(sentUsers),
+                          _buildFailedUserList(failedUsers),
                         ],
                       ),
                     ),
@@ -396,23 +417,94 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
     );
   }
 
-  Widget _buildIdList(List ids) {
-    if (ids.isEmpty) {
+  Widget _buildUserList(List users) {
+    if (users.isEmpty) {
       return const Center(
           child:
               Text("دیتا یافت نشد", style: TextStyle(color: Colors.white30)));
     }
     return ListView.builder(
-      itemCount: ids.length,
-      itemBuilder: (context, index) => ListTile(
-        title: Text("شناسه: ${ids[index]}",
-            style: const TextStyle(color: Colors.white70)),
-        leading: const Icon(Icons.check_circle, color: Colors.greenAccent),
-      ),
+      itemCount: users.length,
+      itemBuilder: (context, index) {
+        final u = users[index];
+        String display = '';
+        String subtitle = '';
+        if (u is Map) {
+          final fn = (u['first_name'] ?? '').toString();
+          final ln = (u['last_name'] ?? '').toString();
+          final username = (u['username'] ?? '').toString();
+          final acc = (u['account_id'] ?? u['user_id'] ?? '').toString();
+          if (fn.isNotEmpty || ln.isNotEmpty) {
+            display = '$fn $ln';
+          } else if (username.isNotEmpty)
+            display = '@$username';
+          else
+            display = 'شناسه: $acc';
+          if (username.isNotEmpty) {
+            subtitle = '@$username';
+          } else {
+            subtitle = 'شناسه: $acc';
+          }
+        } else {
+          display = u.toString();
+        }
+        return ListTile(
+          title: Text(display, style: const TextStyle(color: Colors.white70)),
+          subtitle: subtitle.isNotEmpty
+              ? Text(subtitle,
+                  style: const TextStyle(color: Colors.white38, fontSize: 12))
+              : null,
+          leading: const Icon(Icons.check_circle, color: Colors.greenAccent),
+        );
+      },
     );
   }
 
-  Widget _buildFailedList(List items) {
+  Widget _buildRecipientList(List items) {
+    if (items.isEmpty)
+      return const Center(
+          child:
+              Text("دیتا یافت نشد", style: TextStyle(color: Colors.white30)));
+    return ListView.builder(
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        String title = '';
+        String subtitle = '';
+        String status = '';
+        Color statusColor = Colors.white30;
+        if (item is Map) {
+          final fn = (item['first_name'] ?? '').toString();
+          final ln = (item['last_name'] ?? '').toString();
+          final username = (item['username'] ?? '').toString();
+          final acc = (item['account_id'] ?? item['user_id'] ?? '').toString();
+          if (fn.isNotEmpty || ln.isNotEmpty)
+            title = '$fn $ln';
+          else if (username.isNotEmpty)
+            title = '@$username';
+          else
+            title = 'شناسه: $acc';
+          subtitle = username.isNotEmpty ? '@$username' : 'شناسه: $acc';
+          status = (item['status'] ?? '').toString();
+          if (status == 'sent')
+            statusColor = Colors.greenAccent;
+          else if (status == 'failed') statusColor = Colors.redAccent;
+        } else {
+          title = item.toString();
+        }
+        return ListTile(
+          title: Text(title, style: const TextStyle(color: Colors.white70)),
+          subtitle: subtitle.isNotEmpty
+              ? Text(subtitle,
+                  style: const TextStyle(color: Colors.white38, fontSize: 12))
+              : null,
+          leading: Icon(Icons.person, color: statusColor),
+        );
+      },
+    );
+  }
+
+  Widget _buildFailedUserList(List items) {
     if (items.isEmpty) {
       return const Center(
           child:
@@ -422,10 +514,26 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
+        String title = '';
+        String subtitle = '';
+        if (item is Map) {
+          final fn = (item['first_name'] ?? '').toString();
+          final ln = (item['last_name'] ?? '').toString();
+          final username = (item['username'] ?? '').toString();
+          final acc = (item['account_id'] ?? item['user_id'] ?? '').toString();
+          if (fn.isNotEmpty || ln.isNotEmpty) {
+            title = '$fn $ln';
+          } else if (username.isNotEmpty)
+            title = '@$username';
+          else
+            title = 'شناسه: $acc';
+          subtitle = item['error'] ?? 'خطای نامشخص';
+        } else {
+          title = item.toString();
+        }
         return ListTile(
-          title: Text("شناسه: ${item['user_id']}",
-              style: const TextStyle(color: Colors.white70)),
-          subtitle: Text(item['error'] ?? 'خطای نامشخص',
+          title: Text(title, style: const TextStyle(color: Colors.white70)),
+          subtitle: Text(subtitle,
               style: const TextStyle(color: Colors.redAccent, fontSize: 11)),
           leading: const Icon(Icons.error, color: Colors.redAccent),
         );
