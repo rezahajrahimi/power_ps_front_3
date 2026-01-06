@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:persian_datetimepickers/persian_datetimepickers.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
+import 'package:powerps/screens/admin_screen/user/admin_messages_status_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:pagination_flutter/pagination.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -172,6 +176,7 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
     final messageController = TextEditingController();
     DateTime? selectedDateTime;
     String? formattedDateTime;
+    File? selectedImage;
 
     showDialog(
       context: context,
@@ -202,116 +207,179 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
                     ),
                   ],
                 ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: messageController,
-                      maxLines: 6,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: "متن پیام خود را اینجا بنویسید...",
-                        hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.3)),
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.05),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (selectedImage != null)
+                        Stack(
+                          children: [
+                            Container(
+                              height: 150,
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 10),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                image: DecorationImage(
+                                  image: FileImage(selectedImage!),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 5,
+                              left: 5,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setDialogState(() {
+                                    selectedImage = null;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.redAccent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close,
+                                      color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                              color:
-                                  AppStyle.primaryColor.withValues(alpha: 0.5)),
+                      TextField(
+                        controller: messageController,
+                        maxLines: 8,
+                        keyboardType: TextInputType.multiline,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: "متن پیام خود را اینجا بنویسید...",
+                          hintStyle: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.3)),
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.05),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                                color: AppStyle.primaryColor
+                                    .withValues(alpha: 0.5)),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.05)),
-                      ),
-                      child: Row(
+                      const SizedBox(height: 15),
+                      Row(
                         children: [
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "زمان ارسال:",
-                                  style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.5),
-                                      fontSize: 10),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  selectedDateTime == null
-                                      ? "بلافاصله"
-                                      : "${selectedDateTime!.toPersianDate()} ${selectedDateTime!.hour}:${selectedDateTime!.minute}",
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton.icon(
-                            onPressed: () async {
-                              final DateTime? date =
-                                  await showPersianDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                              );
-                              if (date != null) {
-                                if (!context.mounted) return;
-                                final TimeOfDay? time = await showTimePicker(
-                                  context: context,
-                                  initialTime: TimeOfDay.now(),
-                                );
-                                if (time != null) {
+                            child: _buildActionButton(
+                              label: "انتخاب تصویر",
+                              icon: Icons.image_rounded,
+                              onPressed: () async {
+                                final ImagePicker picker = ImagePicker();
+                                final XFile? image = await picker.pickImage(
+                                    source: ImageSource.gallery);
+                                if (image != null) {
                                   setDialogState(() {
-                                    selectedDateTime = DateTime(
-                                      date.year,
-                                      date.month,
-                                      date.day,
-                                      time.hour,
-                                      time.minute,
-                                    );
-                                    formattedDateTime =
-                                        selectedDateTime!.toIso8601String();
+                                    selectedImage = File(image.path);
                                   });
                                 }
-                              }
-                            },
-                            icon: Icon(Icons.calendar_month_rounded,
-                                size: 18, color: AppStyle.primaryColor),
-                            label: Text(
-                              "زمانبندی",
-                              style: TextStyle(color: AppStyle.primaryColor),
+                              },
+                              color: Colors.blueAccent,
                             ),
                           ),
-                          if (selectedDateTime != null)
-                            IconButton(
-                              onPressed: () {
-                                setDialogState(() {
-                                  selectedDateTime = null;
-                                  formattedDateTime = null;
-                                });
-                              },
-                              icon: const Icon(Icons.close_rounded,
-                                  color: Colors.redAccent, size: 20),
-                            ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 15),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.05)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "زمان ارسال:",
+                                    style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.5),
+                                        fontSize: 10),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    selectedDateTime == null
+                                        ? "بلافاصله"
+                                        : "${selectedDateTime!.toPersianDate()} ${selectedDateTime!.hour}:${selectedDateTime!.minute}",
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () async {
+                                final DateTime? date =
+                                    await showPersianDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                );
+                                if (date != null) {
+                                  if (!context.mounted) return;
+                                  final TimeOfDay? time = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
+                                  );
+                                  if (time != null) {
+                                    setDialogState(() {
+                                      selectedDateTime = DateTime(
+                                        date.year,
+                                        date.month,
+                                        date.day,
+                                        time.hour,
+                                        time.minute,
+                                      );
+                                      formattedDateTime =
+                                          selectedDateTime!.toIso8601String();
+                                    });
+                                  }
+                                }
+                              },
+                              icon: Icon(Icons.calendar_month_rounded,
+                                  size: 18, color: AppStyle.primaryColor),
+                              label: Text(
+                                "زمانبندی",
+                                style: TextStyle(color: AppStyle.primaryColor),
+                              ),
+                            ),
+                            if (selectedDateTime != null)
+                              IconButton(
+                                onPressed: () {
+                                  setDialogState(() {
+                                    selectedDateTime = null;
+                                    formattedDateTime = null;
+                                  });
+                                },
+                                icon: const Icon(Icons.close_rounded,
+                                    color: Colors.redAccent, size: 20),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 actions: [
                   TextButton(
@@ -334,9 +402,10 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
                       elevation: 0,
                     ),
                     onPressed: () async {
-                      if (messageController.text.isEmpty) {
+                      if (messageController.text.isEmpty &&
+                          selectedImage == null) {
                         showMsg(
-                            msg: "لطفا متن پیام را وارد کنید",
+                            msg: "لطفا متن یا تصویر پیام را انتخاب کنید",
                             context: context,
                             type: "error");
                         return;
@@ -348,12 +417,14 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
                         success = await sendAdminMessageToAllUsers(
                           message: messageController.text,
                           scheduledAt: formattedDateTime,
+                          imagePath: selectedImage?.path,
                         );
                       } else {
                         success = await sendAdminMessageToSelectedUsers(
                           userIds: _selectedUserAccountIds.toList(),
                           message: messageController.text,
                           scheduledAt: formattedDateTime,
+                          imagePath: selectedImage?.path,
                         );
                       }
                       EasyLoading.dismiss();
@@ -386,6 +457,29 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.1),
+        foregroundColor: color,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: color.withValues(alpha: 0.2)),
+        ),
+      ),
     );
   }
 
@@ -602,6 +696,21 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
         EasyLoading.dismiss();
       },
       color: Colors.purpleAccent,
+    ));
+
+    operationWidgetList.add(_buildModernButton(
+      context: context,
+      label: "وضعیت پیام‌ها",
+      icon: Icons.track_changes_rounded,
+      tooltip: "مشاهده وضعیت پیام‌های ارسال شده و صف",
+      color: Colors.lightGreenAccent,
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const AdminMessagesStatusScreen()),
+        );
+      },
     ));
 
     operationWidgetList.add(_buildModernButton(

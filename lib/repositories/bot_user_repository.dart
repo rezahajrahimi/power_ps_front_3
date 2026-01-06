@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
@@ -309,19 +311,33 @@ Future sendAdminMessageToUser(
   }
 }
 
-Future sendAdminMessageToAllUsers(
-    {required String message, String? scheduledAt}) async {
+Future sendAdminMessageToAllUsers({
+  required String message,
+  String? scheduledAt,
+  String? imagePath,
+}) async {
   try {
-    Response response =
-        await GenaralApi.dio.post("/api/sendAdminMessageToAllUsers",
-            data: {"message": message, "scheduled_at": scheduledAt},
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+    FormData formData = FormData.fromMap({
+      "message": message,
+      "scheduled_at": scheduledAt,
+    });
+
+    if (imagePath != null) {
+      formData.files.add(MapEntry(
+        "image",
+        await MultipartFile.fromFile(imagePath,
+            filename: imagePath.split('/').last),
+      ));
+    }
+
+    Response response = await GenaralApi.dio.post(
+      "/api/sendAdminMessageToAllUsers",
+      data: formData,
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+      }),
+    );
 
     if (response.statusCode == 200) {
       return true;
@@ -338,22 +354,31 @@ Future sendAdminMessageToSelectedUsers({
   required List<String> userIds,
   required String message,
   String? scheduledAt,
+  String? imagePath,
 }) async {
   try {
+    FormData formData = FormData.fromMap({
+      "user_ids": jsonEncode(userIds),
+      "message": message,
+      "scheduled_at": scheduledAt,
+    });
+
+    if (imagePath != null) {
+      formData.files.add(MapEntry(
+        "image",
+        await MultipartFile.fromFile(imagePath,
+            filename: imagePath.split('/').last),
+      ));
+    }
+
     Response response = await GenaralApi.dio.post(
-        "/api/sendAdminMessageToSelectedUsers",
-        data: {
-          "user_ids": userIds,
-          "message": message,
-          "scheduled_at": scheduledAt
-        },
-        options: Options(headers: {
-          'Accept': 'application/json',
-          'Connection': 'keep-alive',
-          "Content-Type": "application/json;charset=UTF-8",
-          "Charset": "utf-8",
-          'Access-Control-Allow-Origin': '*'
-        }));
+      "/api/sendAdminMessageToSelectedUsers",
+      data: formData,
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+      }),
+    );
 
     if (response.statusCode == 200) {
       return true;
@@ -366,19 +391,33 @@ Future sendAdminMessageToSelectedUsers({
   }
 }
 
-Future sendAdminMessageToAllUsersWithoutConfigs(
-    {required String message}) async {
+Future sendAdminMessageToAllUsersWithoutConfigs({
+  required String message,
+  String? scheduledAt,
+  String? imagePath,
+}) async {
   try {
-    Response response = await GenaralApi.dio
-        .post("/api/sendAdminMessageToAllUsersWithoutConfigs",
-            data: {"message": message},
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+    FormData formData = FormData.fromMap({
+      "message": message,
+      "scheduled_at": scheduledAt,
+    });
+
+    if (imagePath != null) {
+      formData.files.add(MapEntry(
+        "image",
+        await MultipartFile.fromFile(imagePath,
+            filename: imagePath.split('/').last),
+      ));
+    }
+
+    Response response = await GenaralApi.dio.post(
+      "/api/sendAdminMessageToAllUsersWithoutConfigs",
+      data: formData,
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+      }),
+    );
 
     if (response.statusCode == 200) {
       return true;
@@ -388,6 +427,33 @@ Future sendAdminMessageToAllUsersWithoutConfigs(
   } catch (e) {
     debugPrint(e.toString());
     return null;
+  }
+}
+
+Future getAdminMessages({int page = 1}) async {
+  try {
+    Response response = await GenaralApi.dio.get(
+      "/api/getAdminMessages?page=$page",
+    );
+    if (response.statusCode == 200) {
+      return response.data;
+    }
+    return null;
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future deleteAdminMessage(int id) async {
+  try {
+    Response response = await GenaralApi.dio.delete(
+      "/api/deleteAdminMessage/$id",
+    );
+    return response.statusCode == 200;
+  } catch (e) {
+    debugPrint(e.toString());
+    return false;
   }
 }
 
