@@ -521,17 +521,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               width: double.infinity,
               child: Responsive(
                 mobile: widgetsGridview(
-                    childAspectRatio: 3.2,
+                    childAspectRatio: 2.3,
                     context: context,
                     importedList: botUserWidgetLIst),
                 tablet: widgetsGridview(
                     context: context,
-                    childAspectRatio: 4.5,
+                    childAspectRatio: 4,
                     importedList: botUserWidgetLIst),
                 desktop: widgetsGridview(
                     importedList: botUserWidgetLIst,
                     context: context,
-                    childAspectRatio: 4.5,
+                    childAspectRatio: 4,
                     crossAxisCount: 2),
               )),
         ],

@@ -27,6 +27,8 @@ import 'package:flutter/material.dart';
 Future main() async {
   // await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
+  // load persisted base URL (if set)
+  await initBaseUrl();
   // await AppInfoPreference().init();
   runApp(const MyApp());
 }

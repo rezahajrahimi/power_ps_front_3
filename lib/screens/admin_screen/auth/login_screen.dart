@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/constes.dart';
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/user_model.dart';
 // import 'package:powerps/repositories/app_info_repository.dart';
 import 'package:provider/provider.dart';
@@ -400,6 +402,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             SizedBox(
                               height: AppStyle.defaultPadding,
                             ),
+                            InkWell(
+                              onTap: () {
+                                _showSetBaseUrlDialog(context);
+                              },
+                              child: const Text(
+                                "تنظیم مسیر",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -481,20 +496,55 @@ class _LoginScreenState extends State<LoginScreen> {
     _login();
   }
 
-  // void _fillProjectInfo() async {
-  //   fetchAppInfo().then((appInfo) {
-  //     if (!mounted) return;
-  //     setStateIfMounted(() {
-  //       projectName = appInfo.name;
-  //       _showData = true;
-  //     });
-  //   }).catchError((error) {
-  //     debugPrint("Error fetching app info: $error");
-  //     setStateIfMounted(() {
-  //       _showData = true;
-  //     });
-  //   });
-  // }
+  _showSetBaseUrlDialog(BuildContext context) {
+    final urlController = TextEditingController();
+    urlController.text = baseURL;
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('تنظیم مسیر سرور'),
+            content: TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                hintText: 'آدرس سرور را وارد کنید',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('لغو'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  String newUrl = urlController.text.trim();
+                  if (newUrl.isNotEmpty) {
+                    if (newUrl.endsWith("/")) {
+                      newUrl = newUrl.substring(0, newUrl.length - 1);
+                    }
+                    if (!newUrl.startsWith('http://') &&
+                        !newUrl.startsWith('https://')) {
+                      newUrl = 'http://$newUrl';
+                    }
+
+                    // persist to SharedPreferences and update Dio global
+                    await saveBaseUrl(newUrl);
+
+                    // trigger a rebuild so UI shows updated value
+                    setStateIfMounted(() {});
+
+                    Navigator.of(context).pop();
+                    showMsg(msg: "ذخیره شد", context: context);
+                  }
+                },
+                child: const Text('ذخیره'),
+              ),
+            ],
+          );
+        });
+  }
 
   void setStateIfMounted(f) {
     if (mounted) setState(f);

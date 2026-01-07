@@ -348,10 +348,11 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
           msg['recipient_details'] is List) {
         recipients = List.from(msg['recipient_details']);
       } else if (msg['recipient_ids'] != null) {
-        if (msg['recipient_ids'] is String)
+        if (msg['recipient_ids'] is String) {
           recipients = jsonDecode(msg['recipient_ids']);
-        else
+        } else {
           recipients = List.from(msg['recipient_ids']);
+        }
       }
     } catch (e) {
       debugPrint("Error decoding ids: $e");
@@ -461,10 +462,11 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
   }
 
   Widget _buildRecipientList(List items) {
-    if (items.isEmpty)
+    if (items.isEmpty) {
       return const Center(
           child:
               Text("دیتا یافت نشد", style: TextStyle(color: Colors.white30)));
+    }
     return ListView.builder(
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -478,17 +480,17 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
           final ln = (item['last_name'] ?? '').toString();
           final username = (item['username'] ?? '').toString();
           final acc = (item['account_id'] ?? item['user_id'] ?? '').toString();
-          if (fn.isNotEmpty || ln.isNotEmpty)
+          if (fn.isNotEmpty || ln.isNotEmpty) {
             title = '$fn $ln';
-          else if (username.isNotEmpty)
+          } else if (username.isNotEmpty)
             title = '@$username';
           else
             title = 'شناسه: $acc';
           subtitle = username.isNotEmpty ? '@$username' : 'شناسه: $acc';
           status = (item['status'] ?? '').toString();
-          if (status == 'sent')
+          if (status == 'sent') {
             statusColor = Colors.greenAccent;
-          else if (status == 'failed') statusColor = Colors.redAccent;
+          } else if (status == 'failed') statusColor = Colors.redAccent;
         } else {
           title = item.toString();
         }
