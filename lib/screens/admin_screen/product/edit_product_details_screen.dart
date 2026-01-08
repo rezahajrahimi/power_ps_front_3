@@ -62,15 +62,15 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-          context: context,
-          title: "ویرایش ${widget.selectedProductCategory.categoryName}",
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+            context: context,
+            title: "ویرایش ${widget.selectedProductCategory.categoryName}",
+          ),
+          body: SingleChildScrollView(
             primary: false,
             child: Padding(
               padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -92,10 +92,10 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }

@@ -42,13 +42,13 @@ class _SupportFaqScreenState extends State<SupportFaqScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context, title: "پشتیبانی و سوالات متداول"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "پشتیبانی و سوالات متداول"),
+          body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             child: _showData == false
@@ -61,10 +61,10 @@ class _SupportFaqScreenState extends State<SupportFaqScreen> {
                   )
                 : _content(context),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }

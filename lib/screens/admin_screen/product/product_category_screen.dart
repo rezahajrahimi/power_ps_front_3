@@ -75,11 +75,11 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   Widget build(BuildContext context) {
     // Provider.of<ProductCategoryProvider>(context, listen: false);
     // // _fillData();
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          body: SingleChildScrollView(
               primary: false,
               child: Padding(
                 padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -89,10 +89,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                   ],
                 ),
               )),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }

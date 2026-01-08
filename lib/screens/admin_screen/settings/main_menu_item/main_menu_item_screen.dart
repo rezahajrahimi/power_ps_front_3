@@ -27,13 +27,13 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context, title: "ویرایش منو اصلی ربات"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "ویرایش منو اصلی ربات"),
+          body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             child: _showData == false
@@ -119,10 +119,11 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
                         // جابجایی در هر دو لیست
                         final menuItem = _mainMenuItemsList.removeAt(oldIndex);
                         _mainMenuItemsList.insert(newIndex, menuItem);
-                        
-                        final widgetItem = _menuItemWidgetList.removeAt(oldIndex);
+
+                        final widgetItem =
+                            _menuItemWidgetList.removeAt(oldIndex);
                         _menuItemWidgetList.insert(newIndex, widgetItem);
-                        
+
                         // بروزرسانی position‌ها
                         for (int i = 0; i < _mainMenuItemsList.length; i++) {
                           _mainMenuItemsList[i].position = i + 1;
@@ -139,21 +140,21 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
     );
   }
 
-   _fillData() async {
-    if(!mounted) return;
-    
+  _fillData() async {
+    if (!mounted) return;
+
     _showData = false;
-      
+
     var res = await getAllMainMenuItems();
     if (res != null && res != false) {
-      if(!mounted) return;
-      
+      if (!mounted) return;
+
       setState(() {
         _mainMenuItemsList = res;
         _menuItemWidgetList.clear();
         // مرتب‌سازی بر اساس position
         _mainMenuItemsList.sort((a, b) => a.position.compareTo(b.position));
-        
+
         for (var i in _mainMenuItemsList) {
           _menuItemWidgetList.add(MenuItemInfoWidget(
             key: ValueKey(i.id),
@@ -169,17 +170,17 @@ class _MainMenuItemsScreenState extends State<MainMenuItemsScreen> {
     }
   }
 
-   _retryMenuData() async {
+  _retryMenuData() async {
     menuChangedToken = "aaa";
     await _fillData();
     menuItemNotifier.changedMenuData();
   }
 
   // اضافه کردن متد جدید برای ارسال تغییرات به سرور
-   _updatePositionsOnServer(BuildContext context) async {
+  _updatePositionsOnServer(BuildContext context) async {
     await updateMainMenuItems(_mainMenuItemsList).then((value) {
-      if(value == true){
-        if(context.mounted){
+      if (value == true) {
+        if (context.mounted) {
           showMsg(msg: "منوها با موفقیت به روز شدند", context: context);
         }
       }

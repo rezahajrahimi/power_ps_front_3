@@ -56,15 +56,15 @@ class _BotUserBoughtProductDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context,
-            title: widget.productDetails.productCategory?.categoryName ??
-                " محصول خریداری شده"),
-        body: SafeArea(
-          child: _showdata == false
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context,
+              title: widget.productDetails.productCategory?.categoryName ??
+                  " محصول خریداری شده"),
+          body: _showdata == false
               ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

@@ -56,13 +56,13 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar:
-            appBarWithBackButton(context: context, title: "ویرایش دستیار فروش"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "ویرایش دستیار فروش"),
+          body: SingleChildScrollView(
             primary: false,
             child: Padding(
               padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -78,10 +78,10 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }

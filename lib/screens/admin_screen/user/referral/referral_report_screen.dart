@@ -25,13 +25,13 @@ class _ReferralReportScreenState extends State<ReferralReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context, title: "گزارش کیف پول همکاری کاربر"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "گزارش کیف پول همکاری کاربر"),
+          body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             child: _showData == false
@@ -40,10 +40,10 @@ class _ReferralReportScreenState extends State<ReferralReportScreen> {
                   )
                 : _content(context),
           ),
+          // bottomNavigationBar: Responsive.isMobile(context)
+          //     ? _buildBottomNavigationBar(context)
+          //     : const Opacity(opacity: 1),
         ),
-        // bottomNavigationBar: Responsive.isMobile(context)
-        //     ? _buildBottomNavigationBar(context)
-        //     : const Opacity(opacity: 1),
       ),
     );
   }

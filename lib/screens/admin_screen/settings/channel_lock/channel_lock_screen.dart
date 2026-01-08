@@ -31,12 +31,12 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "قفل ربات"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(context: context, title: "قفل ربات"),
+          body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             child: _showData == false
@@ -49,10 +49,10 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
                   )
                 : _content(context),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }
@@ -60,7 +60,7 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
   void _fillData() async {
     if (context.mounted) {
       var res = await getAllChannelLock();
-      if (res != null && res != false ) {
+      if (res != null && res != false) {
         setState(() {
           _showData = false;
           _channelLockList = res;
@@ -160,8 +160,6 @@ class _ChannelLockScreenState extends State<ChannelLockScreen> {
       ),
     );
   }
-
-
 
   _channelLockListCard(BuildContext context) {
     var size = MediaQuery.of(context).size.width;

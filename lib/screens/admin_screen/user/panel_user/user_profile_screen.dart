@@ -37,22 +37,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
-        appBar: appBarWithBackButton(context: context, title: "پروفایل شما"),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            primary: false,
-            padding: EdgeInsets.all(AppStyle.defaultPadding),
-            child: _showData
-                ? _content(context)
-                : const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
+          appBar: appBarWithBackButton(context: context, title: "پروفایل شما"),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              primary: false,
+              padding: EdgeInsets.all(AppStyle.defaultPadding),
+              child: _showData
+                  ? _content(context)
+                  : const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+            ),
           ),
         ),
       ),
@@ -215,7 +217,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           type: "error");
       return;
     }
-    
+
     // بررسی رمز عبور
     if (_password.text.isNotEmpty || _confirmPassword.text.isNotEmpty) {
       // بررسی یکسان بودن رمز عبور و تکرار آن
@@ -226,7 +228,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             type: "error");
         return;
       }
-      
+
       // بررسی طول رمز عبور
       if (_password.text.length < 8) {
         showMsg(
@@ -236,7 +238,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         return;
       }
     }
-    
+
     // اعتبارسنجی نام کاربری
     if (_name.text.isEmpty) {
       showMsg(
@@ -245,7 +247,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           type: "error");
       return;
     }
-    
+
     // اگر همه شرایط برقرار بود، به‌روزرسانی را انجام بده
     if (_currentUserData!.role == "admin") {
       if (!context.mounted) return;

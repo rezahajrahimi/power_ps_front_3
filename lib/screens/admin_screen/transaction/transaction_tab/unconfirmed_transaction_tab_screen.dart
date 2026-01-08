@@ -48,12 +48,12 @@ class _UnConfirmedTransactionTabState extends State<UnConfirmedTransactionTab>
   Widget build(BuildContext context) {
     super.build(context);
     _transactionProvider = Provider.of<TransactionProvider>(context);
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: RefreshIndicator(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: RefreshIndicator(
             onRefresh: () async => _fillData(refresh: true),
             child: _transactionProvider.showUnConfirmedTransaction == false
                 ? const Center(child: CircularProgressIndicator())

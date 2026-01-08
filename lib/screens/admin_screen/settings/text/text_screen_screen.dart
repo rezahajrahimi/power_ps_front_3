@@ -50,13 +50,13 @@ class _TextScreenScreenState extends State<TextScreenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context, title: "مدیریت پیام‌های ربات"),
-        body: SafeArea(
-          child: _showData
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "مدیریت پیام‌های ربات"),
+          body: _showData
               ? Column(
                   children: [
                     Padding(

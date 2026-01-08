@@ -46,13 +46,13 @@ class _GifCardScreenState extends State<GifCardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context, title: "گیف کارت و کدهای تخفیف"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "گیف کارت و کدهای تخفیف"),
+          body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             child: _showData == false
@@ -65,10 +65,10 @@ class _GifCardScreenState extends State<GifCardScreen> {
                   )
                 : _content(context),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }
@@ -138,7 +138,6 @@ class _GifCardScreenState extends State<GifCardScreen> {
       ],
     );
   }
-
 
   _giftCardLIstCard(BuildContext context) {
     var size = MediaQuery.of(context).size.width;

@@ -54,13 +54,14 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context, title: "عملیات گروهی (اکانتهای نقره ای و طلایی)"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context,
+              title: "عملیات گروهی (اکانتهای نقره ای و طلایی)"),
+          body: SingleChildScrollView(
             primary: false,
             child: Padding(
               padding: EdgeInsets.all(AppStyle.defaultPadding),
