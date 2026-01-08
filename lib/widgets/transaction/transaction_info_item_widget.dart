@@ -52,25 +52,36 @@ class _TransactionInfoItemCardWidgetState
         margin: EdgeInsets.only(top: AppStyle.defaultPadding),
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(15),
+          ),
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
+            color: AppStyle.primaryColor.withValues(alpha: 0.1),
+            width: 1,
           ),
         ),
         child: Row(
           children: [
-            widget.item.confirmed == true
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: Icon(Icons.done, color: Colors.purple),
-                  )
-                : const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: Icon(Icons.stop, color: Colors.purple),
-                  ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (widget.item.confirmed == true
+                        ? Colors.green
+                        : Colors.orange)
+                    .withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                widget.item.confirmed == true
+                    ? Icons.check_circle_outline
+                    : Icons.pending_outlined,
+                color: widget.item.confirmed == true
+                    ? Colors.greenAccent
+                    : Colors.orangeAccent,
+                size: 20,
+              ),
+            ),
             Expanded(
               child: Padding(
                 padding:
@@ -82,14 +93,21 @@ class _TransactionInfoItemCardWidgetState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          widget.item.botUser!.username!.length > 30
-                              ? "${widget.item.botUser!.username!.substring(25)}..."
-                              : widget.item.botUser!.username!,
+                          (widget.item.botUser?.username ?? "بدون نام کاربری")
+                                      .length >
+                                  20
+                              ? "${(widget.item.botUser?.username ?? "بدون نام کاربری").substring(0, 20)}..."
+                              : (widget.item.botUser?.username ??
+                                  "بدون نام کاربری"),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          widget.item.paymentType!.name,
+                          widget.item.paymentType?.name ?? "نامشخص",
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
@@ -97,29 +115,25 @@ class _TransactionInfoItemCardWidgetState
                         ),
                       ],
                     ),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "${thousandSeperatorFormatter(widget.item.amount.toString())} تومان",
+                          "${formatPrice(widget.item.amount.toString())} تومان",
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
-                              .copyWith(color: Colors.white70),
+                              .copyWith(
+                                  color: Colors.greenAccent,
+                                  fontWeight: FontWeight.bold),
                         ),
-                        // Text(
-                        //   "${widget.item.expireDay} روزه",
-                        //   style: Theme.of(context)
-                        //       .textTheme
-                        //       .bodySmall!
-                        //       .copyWith(color: Colors.white70),
-                        // ),
                         Text(
-                          "${widget.item.createdAt}",
+                          widget.item.createdAt!,
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
-                              .copyWith(color: Colors.white70),
+                              .copyWith(color: Colors.white54, fontSize: 10),
                         ),
                       ],
                     ),

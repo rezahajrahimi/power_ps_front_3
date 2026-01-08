@@ -25,6 +25,7 @@ class EditProductDetailsScreen extends StatefulWidget {
 
 class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   bool _showData = false;
+  final _formKey = GlobalKey<FormState>();
   final List<Widget> _productDetailsWidgetLIst = [];
   final List<String> _pannelNameList = [];
   late String _selectedPannelName;
@@ -33,6 +34,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   final _priceInDollarEditText = TextEditingController();
   final _expireDayEditText = TextEditingController();
   final _volumeEditText = TextEditingController();
+  final _inboundIdEditText = TextEditingController();
+  final _ipLimitEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
@@ -43,6 +46,18 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   void initState() {
     _fillData();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _nameEditText.dispose();
+    _priceEditText.dispose();
+    _priceInDollarEditText.dispose();
+    _expireDayEditText.dispose();
+    _volumeEditText.dispose();
+    _inboundIdEditText.dispose();
+    _ipLimitEditText.dispose();
+    super.dispose();
   }
 
   @override
@@ -64,10 +79,14 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
                   // const Header(title: "ویرایش بسته"),
                   SizedBox(height: AppStyle.defaultPadding),
                   _showData == false
-                      ? const SizedBox(
-                          width: 50,
-                          height: 50,
-                          child: Center(child: CircularProgressIndicator()))
+                      ? SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppStyle.primaryColor,
+                            ),
+                          ),
+                        )
                       : _content(context),
                 ],
               ),
@@ -86,75 +105,81 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   }
 
   _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      height: 50.0,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          Flexible(
-            flex: 1,
-            child: ElevatedButton(
-              onPressed: () async {
-                await _submitData(context);
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppStyle.secondaryColor),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 4.0,
-                    ),
-                    Text(
-                      "ثبت تغییرات",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
+      ),
+      child: SafeArea(
+        child: ElevatedButton.icon(
+          onPressed: () => _submitData(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppStyle.primaryColor,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: const Icon(Icons.save),
+          label: const Text("ثبت تغییرات"),
+        ),
       ),
     );
   }
 
   void _fillData() async {
-    List<Pannel>? resPannel = await getPannels();
+    try {
+      List<Pannel>? resPannel = await getPannels();
 
-    setStateIfMounted(() {
-      _nameEditText.text = widget.selectedProductCategory.categoryName;
-      _priceEditText.text = widget.selectedProductCategory.price.toString();
-      _priceInDollarEditText.text =
-          widget.selectedProductCategory.priceInDollar.toString();
-      _expireDayEditText.text =
-          widget.selectedProductCategory.expireDay.toString();
-      _volumeEditText.text = widget.selectedProductCategory.volume.toString();
-      _rechargable = widget.selectedProductCategory.rechargable;
-      _showSubscriptionLink =
-          widget.selectedProductCategory.showSubscriptionLink;
-      _showPannelLink = widget.selectedProductCategory.showPannelLink;
-      _isActive = widget.selectedProductCategory.isActive;
-      if (resPannel != null && resPannel.isNotEmpty) {
-        _pannelNameList.clear();
-        for (var i in resPannel) {
-          _pannelNameList
-              .add("${i.id}: ${getPannelName(name: i.type)} - ${i.location}");
+      setStateIfMounted(() {
+        _nameEditText.text = widget.selectedProductCategory.categoryName;
+        _priceEditText.text = widget.selectedProductCategory.price.toString();
+        _priceInDollarEditText.text =
+            widget.selectedProductCategory.priceInDollar.toString();
+        _expireDayEditText.text =
+            widget.selectedProductCategory.expireDay.toString();
+        _volumeEditText.text = widget.selectedProductCategory.volume.toString();
+        _inboundIdEditText.text =
+            widget.selectedProductCategory.inboundId?.toString() ?? "";
+        _ipLimitEditText.text =
+            widget.selectedProductCategory.ipLimit?.toString() ?? "0";
+        _rechargable = widget.selectedProductCategory.rechargable;
+        _showSubscriptionLink =
+            widget.selectedProductCategory.showSubscriptionLink;
+        _showPannelLink = widget.selectedProductCategory.showPannelLink;
+        _isActive = widget.selectedProductCategory.isActive;
+
+        if (resPannel != null && resPannel.isNotEmpty) {
+          _pannelNameList.clear();
+          for (var i in resPannel) {
+            _pannelNameList
+                .add("${i.id}: ${getPannelName(name: i.type)} - ${i.location}");
+          }
+
+          _selectedPannelName =
+              "${widget.selectedProductCategory.pannel!.id}: ${getPannelName(name: widget.selectedProductCategory.pannel!.type)} - ${widget.selectedProductCategory.pannel!.location}";
+        } else {
+          _selectedPannelName = "";
         }
 
-        _selectedPannelName =
-            "${widget.selectedProductCategory.pannel!.id}: ${getPannelName(name: widget.selectedProductCategory.pannel!.type)} - ${widget.selectedProductCategory.pannel!.location}";
+        _showData = true;
+      });
+    } catch (e) {
+      if (mounted) {
+        showMsg(
+            msg: "خطا در دریافت اطلاعات پنل ها",
+            context: context,
+            type: "error");
       }
-
-      _showData = true;
-    });
+    }
   }
 
   _content(BuildContext context) {
@@ -191,56 +216,49 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   }
 
   _operationInfoCard(BuildContext context) {
-    List<Widget> actionsWidgetList = [];
-
-    setStateIfMounted(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          _submitData(context);
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش بسته"),
-      ));
-    });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "عملیات ها",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.settings, color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "عملیات ها",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
+          const Divider(height: 30),
           SizedBox(
             width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 3.2,
-                  context: context,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 1,
-                  importedList: actionsWidgetList),
-              desktop: widgetsGridview(
-                  importedList: actionsWidgetList,
-                  context: context,
-                  childAspectRatio: 2.5,
-                  crossAxisCount: 2),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppStyle.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => _submitData(context),
+              icon: const Icon(Icons.save),
+              label: const Text("ثبت تغییرات"),
             ),
           ),
         ],
@@ -250,202 +268,203 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
 
   _productInfoTabCard(BuildContext context) {
     _productDetailsWidgetLIst.clear();
-    setStateIfMounted(() {
+    bool isSanaei = _selectedPannelName.contains("Sanaei");
+    bool isHiddify = _selectedPannelName.contains("Hiddify");
+
+    _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+      controller: _nameEditText,
+      textHint: "نام بسته",
+      validationError: "نام بسته را وارد کنید.",
+      keyboardType: TextInputType.text,
+    ));
+    _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+      controller: _priceEditText,
+      textHint: "قیمت بسته (تومان)",
+      validationError: "قیمت بسته را وارد کنید.",
+      keyboardType: TextInputType.number,
+    ));
+    _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+      controller: _priceInDollarEditText,
+      textHint: "قیمت بسته (دلار)",
+      validationError: "قیمت دلاری بسته را وارد کنید.",
+      keyboardType: TextInputType.number,
+    ));
+    _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+      controller: _expireDayEditText,
+      textHint: "مدت زمان اعتبار (روز)",
+      validationError: "مدت زمان اعتبار را وارد کنید.",
+      keyboardType: TextInputType.number,
+    ));
+    _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+      controller: _volumeEditText,
+      textHint: "حجم بسته (گیگابایت)",
+      validationError: "حجم بسته را وارد کنید.",
+      keyboardType: TextInputType.number,
+    ));
+
+    if (isSanaei) {
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
-        controller: _nameEditText,
-        textHint: "نام بسته",
-        validationError: "نام بسته را وارد کنید.",
-        keyboardType: TextInputType.text,
-      ));
-      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
-        controller: _priceEditText,
-        textHint: "قیمت بسته",
-        validationError: "قیمت بسته را وارد کنید.",
+        controller: _inboundIdEditText,
+        textHint: "Inbound ID",
+        validationError: "Inbound ID را وارد کنید.",
         keyboardType: TextInputType.number,
       ));
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
-        controller: _priceInDollarEditText,
-        textHint: " قیمت بسته به دلار",
-        validationError: "قیمت دلاری بسته را وارد کنید.",
+        controller: _ipLimitEditText,
+        textHint: "محدودیت IP (0 برای بدون محدودیت)",
+        validationError: "محدودیت IP را وارد کنید.",
         keyboardType: TextInputType.number,
       ));
-      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
-        controller: _expireDayEditText,
-        textHint: "مدت زمان اعتبار (روز) بسته",
-        validationError: "مدت زمان اعتبار (روز) بسته را وارد کنید.",
-        keyboardType: TextInputType.number,
-      ));
-      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
-        controller: _volumeEditText,
-        textHint: "حجم بسته",
-        validationError: "حجم بسته را وارد کنید.",
-        keyboardType: TextInputType.number,
-      ));
-      _productDetailsWidgetLIst.add(Container(
-        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        decoration: BoxDecoration(
-          border: Border.all(
-              width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
-          ),
-        ),
-        child: DropdownButtonFormField(
+    }
+
+    _productDetailsWidgetLIst.add(Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      padding: EdgeInsets.symmetric(horizontal: AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppStyle.primaryColor.withValues(alpha: 0.2)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButtonFormField<String>(
           isExpanded: true,
-          hint: const Text('پنل'),
-          initialValue: _selectedPannelName,
-          alignment: Alignment.centerLeft,
+          initialValue:
+              _selectedPannelName.isNotEmpty ? _selectedPannelName : null,
+          decoration: const InputDecoration(
+            labelText: "انتخاب پنل",
+            border: InputBorder.none,
+          ),
           onChanged: (newValue) {
             setStateIfMounted(() {
-              _selectedPannelName = newValue.toString();
+              _selectedPannelName = newValue!;
             });
           },
           items: _pannelNameList.map((clType) {
             return DropdownMenuItem(
               value: clType,
-              alignment: Alignment.centerRight,
-              child: Text(clType),
+              child: Text(clType, style: const TextStyle(fontSize: 14)),
             );
           }).toList(),
         ),
-      ));
+      ),
+    ));
 
-      _productDetailsWidgetLIst.add(Container(
-        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        decoration: BoxDecoration(
-          border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
-          ),
-        ),
-        child: SwitchListTile(
-          value: _selectedPannelName.contains("Hiddify") != true
-              ? _showSubscriptionLink
-              : true,
-          onChanged: _selectedPannelName.contains("Hiddify") != true
-              ? (bool value) {
-                  setStateIfMounted(() {
-                    _showSubscriptionLink = value;
-                  });
-                }
-              : null,
-          title: const Text("نمایش لینک سابسکریپشن به کاربر"),
-        ),
-      ));
-      _productDetailsWidgetLIst.add(Container(
-        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        decoration: BoxDecoration(
-          border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
-          ),
-        ),
-        child: SwitchListTile(
-          value: _showPannelLink,
-          onChanged: (bool value) {
-            setStateIfMounted(() {
-              _showPannelLink = value;
-            });
-          },
-          title: const Text("نمایش لینک پنل به کاربر"),
-        ),
-      ));
-      _productDetailsWidgetLIst.add(Container(
-        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        decoration: BoxDecoration(
-          border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
-          ),
-        ),
-        child: SwitchListTile(
-          value: _selectedPannelName.contains("دیگر") != true
-              ? _rechargable
-              : false,
-          onChanged: _selectedPannelName.contains("دیگر") != true
-              ? (bool value) {
-                  setStateIfMounted(() {
-                    _rechargable = value;
-                  });
-                }
-              : null,
-          title: const Text("قابلیت شارژ مجدد توسط ربات"),
-        ),
-      ));
-      _productDetailsWidgetLIst.add(Container(
-        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        decoration: BoxDecoration(
-          border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.all(
-            Radius.circular(AppStyle.defaultPadding),
-          ),
-        ),
-        child: SwitchListTile(
-          value: _isActive,
-          onChanged: (bool value) {
-            setStateIfMounted(() {
-              _isActive = value;
-            });
-          },
-          title: const Text("قابلیت خرید (فعالسازی)"),
-        ),
-      ));
-    });
+    _productDetailsWidgetLIst.add(_buildSwitchTile(
+      title: "نمایش لینک سابسکریپشن",
+      value: isHiddify ? true : _showSubscriptionLink,
+      onChanged: isHiddify
+          ? null
+          : (val) => setStateIfMounted(() => _showSubscriptionLink = val),
+    ));
+
+    _productDetailsWidgetLIst.add(_buildSwitchTile(
+      title: "نمایش لینک پنل",
+      value: _showPannelLink,
+      onChanged: (val) => setStateIfMounted(() => _showPannelLink = val),
+    ));
+
+    _productDetailsWidgetLIst.add(_buildSwitchTile(
+      title: "قابلیت شارژ مجدد",
+      value: _selectedPannelName.contains("دیگر") ? false : _rechargable,
+      onChanged: _selectedPannelName.contains("دیگر")
+          ? null
+          : (val) => setStateIfMounted(() => _rechargable = val),
+    ));
+
+    _productDetailsWidgetLIst.add(_buildSwitchTile(
+      title: "قابلیت خرید (فعال)",
+      value: _isActive,
+      onChanged: (val) => setStateIfMounted(() => _isActive = val),
+    ));
+
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "ویرایش",
-            style: Theme.of(context).textTheme.titleMedium,
+        borderRadius: const BorderRadius.all(Radius.circular(15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.edit_note, color: AppStyle.primaryColor),
+                const SizedBox(width: 10),
+                Text(
+                  "اطلاعات بسته",
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            const Divider(height: 30),
+            SizedBox(
               width: double.infinity,
               child: Responsive(
                 mobile: widgetsGridview(
-                    childAspectRatio: 3.2,
+                    childAspectRatio: 2.8,
                     context: context,
+                    crossAxisCount: 1,
                     importedList: _productDetailsWidgetLIst),
                 tablet: widgetsGridview(
                     context: context,
-                    childAspectRatio: 4.5,
+                    childAspectRatio: 4.0,
+                    crossAxisCount: 2,
                     importedList: _productDetailsWidgetLIst),
                 desktop: widgetsGridview(
                     importedList: _productDetailsWidgetLIst,
                     context: context,
                     childAspectRatio: 4.5,
                     crossAxisCount: 2),
-              )),
-        ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchTile({
+    required String title,
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppStyle.primaryColor.withValues(alpha: 0.1)),
+      ),
+      child: SwitchListTile(
+        title: Text(title, style: const TextStyle(fontSize: 14)),
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: AppStyle.primaryColor,
       ),
     );
   }
 
   _submitData(BuildContext context) async {
-    EasyLoading.show();
-    int pannelID = 1;
-    if (_selectedPannelName != "") {
-      pannelID = int.parse(_selectedPannelName.split(":")[0]);
-    }
-    if (_nameEditText.text.isNotEmpty &&
-        _priceEditText.text.isNotEmpty &&
-        _expireDayEditText.text.isNotEmpty &&
-        _volumeEditText.text.isNotEmpty) {
+    if (!_formKey.currentState!.validate()) return;
+
+    EasyLoading.show(status: 'در حال بروزرسانی...');
+    try {
+      int pannelID = 1;
+      if (_selectedPannelName != "") {
+        pannelID = int.parse(_selectedPannelName.split(":")[0]);
+      }
+
       var res = await editProductCategory(
           name: _nameEditText.text,
           price: int.parse(_priceEditText.text),
@@ -457,21 +476,35 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           showPannelLink: _showPannelLink,
           showSubscriptionLink: _showSubscriptionLink,
           isActive: _isActive,
-          id: widget.selectedProductCategory.id.toInt());
+          id: widget.selectedProductCategory.id.toInt(),
+          inboundId: _inboundIdEditText.text.isNotEmpty
+              ? int.tryParse(_inboundIdEditText.text)
+              : null,
+          ipLimit: _ipLimitEditText.text.isNotEmpty
+              ? int.tryParse(_ipLimitEditText.text)
+              : 0);
+
       if (res) {
         if (context.mounted) {
-          showMsg(msg: "ویرایش شد.", context: context);
+          showMsg(
+              msg: "تغییرات با موفقیت ذخیره شد",
+              context: context,
+              type: "success");
           context.read<ProductCategoryProvider>().setChanged(true);
           Navigator.pop(context);
         }
       } else {
         if (context.mounted) {
-          showMsg(msg: "خطا", context: context, type: "error");
+          showMsg(
+              msg: "خطا در بروزرسانی اطلاعات", context: context, type: "error");
         }
       }
-    } else {
-      showMsg(msg: "اطلاعات درخواست شده را وارد کنید.", context: context);
+    } catch (e) {
+      if (context.mounted) {
+        showMsg(msg: "خطای غیرمنتظره رخ داد", context: context, type: "error");
+      }
+    } finally {
+      EasyLoading.dismiss();
     }
-    EasyLoading.dismiss();
   }
 }

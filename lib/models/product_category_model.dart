@@ -16,6 +16,8 @@ class ProductCategory {
   bool showSubscriptionLink = true;
   bool showPannelLink = true;
   bool isActive = true;
+  int? inboundId;
+  int? ipLimit;
   Pannel? pannel;
   AgentAddCategoriyModel? agentAddCategoriyModel;
 
@@ -32,6 +34,8 @@ class ProductCategory {
     required this.showSubscriptionLink,
     required this.showPannelLink,
     required this.isActive,
+    this.inboundId,
+    this.ipLimit,
     this.pannel,
     this.agentAddCategoriyModel,
   });
@@ -49,6 +53,8 @@ class ProductCategory {
     bool? showSubscriptionLink,
     bool? showPannelLink,
     bool? isActive,
+    int? inboundId,
+    int? ipLimit,
     AgentAddCategoriyModel? agentAddCategoriyModel,
     Pannel? pannel,
   }) {
@@ -65,6 +71,8 @@ class ProductCategory {
       showSubscriptionLink: showSubscriptionLink ?? this.showSubscriptionLink,
       showPannelLink: showPannelLink ?? this.showPannelLink,
       isActive: isActive ?? this.isActive,
+      inboundId: inboundId ?? this.inboundId,
+      ipLimit: ipLimit ?? this.ipLimit,
       agentAddCategoriyModel:
           agentAddCategoriyModel ?? this.agentAddCategoriyModel,
       pannel: pannel ?? this.pannel,
@@ -85,6 +93,8 @@ class ProductCategory {
       'showSubscriptionLink': showSubscriptionLink,
       'showPannelLink': showPannelLink,
       'isActive': isActive,
+      'inbound_id': inboundId,
+      'ip_limit': ipLimit,
       // 'agentAddCategoriyModel': agentAddCategoriyModel?.toMap(),
       // 'pannel': pannel?,
     };
@@ -104,6 +114,8 @@ class ProductCategory {
         showSubscriptionLink: map['show_subscription_link'] == 1 ? true : false,
         showPannelLink: map['show_pannel_link'] == 1 ? true : false,
         isActive: map['is_active'] == 1 ? true : false,
+        inboundId: map['inbound_id']?.toInt(),
+        ipLimit: map['ip_limit']?.toInt(),
         pannel: map['pannel'] != null ? Pannel.fromJson(map['pannel']) : null,
         agentAddCategoriyModel: map['agentAddCategoriyModel'] != null
             ? AgentAddCategoriyModel.fromMap(map['agentAddCategoriyModel'])

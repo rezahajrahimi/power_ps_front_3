@@ -1,8 +1,9 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/bot_user_model.dart';
-import 'package:powerps/models/hiffify_config_model.dart';
 
 List<BotUser> botUserList = [];
 
@@ -55,26 +56,25 @@ Future getBotUserListByPagination({int page = 1}) async {
     return null;
   }
 }
+
 Future getLast10BotUser() async {
   try {
-    Response response =
-        await GenaralApi.dio.get("/api/getLast10BotUser",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+    Response response = await GenaralApi.dio.get("/api/getLast10BotUser",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
 
     if (response.statusCode == 200) {
-
       botUserList.clear();
       for (var i in response.data) {
         botUserList.add(BotUser.fromJson(i));
       }
       return botUserList;
-    }  else {
+    } else {
       return null;
     }
   } on DioException catch (e) {
@@ -82,6 +82,7 @@ Future getLast10BotUser() async {
     return null;
   }
 }
+
 Future getUsersByPastDays({required int days}) async {
   try {
     Response response =
@@ -95,13 +96,12 @@ Future getUsersByPastDays({required int days}) async {
             }));
 
     if (response.statusCode == 200) {
-
       botUserList.clear();
       for (var i in response.data) {
         botUserList.add(BotUser.fromJson(i));
       }
       return botUserList;
-    }  else {
+    } else {
       return null;
     }
   } on DioException catch (e) {
@@ -109,26 +109,25 @@ Future getUsersByPastDays({required int days}) async {
     return null;
   }
 }
+
 Future getUsersWithZeroConfigs() async {
   try {
-    Response response =
-        await GenaralApi.dio.get("/api/getUsersWithZeroConfigs",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+    Response response = await GenaralApi.dio.get("/api/getUsersWithZeroConfigs",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
 
     if (response.statusCode == 200) {
-
       botUserList.clear();
       for (var i in response.data) {
         botUserList.add(BotUser.fromJson(i));
       }
       return botUserList;
-    }  else {
+    } else {
       return null;
     }
   } on DioException catch (e) {
@@ -136,6 +135,7 @@ Future getUsersWithZeroConfigs() async {
     return null;
   }
 }
+
 Future getUsersWithZeroBallance() async {
   try {
     Response response =
@@ -149,13 +149,12 @@ Future getUsersWithZeroBallance() async {
             }));
 
     if (response.statusCode == 200) {
-
       botUserList.clear();
       for (var i in response.data) {
         botUserList.add(BotUser.fromJson(i));
       }
       return botUserList;
-    }  else {
+    } else {
       return null;
     }
   } on DioException catch (e) {
@@ -163,26 +162,25 @@ Future getUsersWithZeroBallance() async {
     return null;
   }
 }
+
 Future getAgentRoleBotUsers() async {
   try {
-    Response response =
-        await GenaralApi.dio.get("/api/getAgentRoleBotUsers",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+    Response response = await GenaralApi.dio.get("/api/getAgentRoleBotUsers",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
 
     if (response.statusCode == 200) {
-
       botUserList.clear();
       for (var i in response.data) {
         botUserList.add(BotUser.fromJson(i));
       }
       return botUserList;
-    }  else {
+    } else {
       return null;
     }
   } on DioException catch (e) {
@@ -304,7 +302,7 @@ Future sendAdminMessageToUser(
 
     if (response.statusCode == 200) {
       return true;
-    }  else {
+    } else {
       return false;
     }
   } catch (e) {
@@ -312,22 +310,38 @@ Future sendAdminMessageToUser(
     return null;
   }
 }
-Future sendAdminMessageToAllUsers(
-    {required String message}) async {
+
+Future sendAdminMessageToAllUsers({
+  required String message,
+  String? scheduledAt,
+  String? imagePath,
+}) async {
   try {
-    Response response = await GenaralApi.dio.post("/api/sendAdminMessageToAllUsers",
-        data: {"message": message},
-        options: Options(headers: {
-          'Accept': 'application/json',
-          'Connection': 'keep-alive',
-          "Content-Type": "application/json;charset=UTF-8",
-          "Charset": "utf-8",
-          'Access-Control-Allow-Origin': '*'
-        }));
+    FormData formData = FormData.fromMap({
+      "message": message,
+      "scheduled_at": scheduledAt,
+    });
+
+    if (imagePath != null) {
+      formData.files.add(MapEntry(
+        "image",
+        await MultipartFile.fromFile(imagePath,
+            filename: imagePath.split('/').last),
+      ));
+    }
+
+    Response response = await GenaralApi.dio.post(
+      "/api/sendAdminMessageToAllUsers",
+      data: formData,
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+      }),
+    );
 
     if (response.statusCode == 200) {
       return true;
-    }  else {
+    } else {
       return false;
     }
   } catch (e) {
@@ -335,27 +349,111 @@ Future sendAdminMessageToAllUsers(
     return null;
   }
 }
-Future sendAdminMessageToAllUsersWithoutConfigs(
-    {required String message}) async {
+
+Future sendAdminMessageToSelectedUsers({
+  required List<String> userIds,
+  required String message,
+  String? scheduledAt,
+  String? imagePath,
+}) async {
   try {
-    Response response = await GenaralApi.dio.post("/api/sendAdminMessageToAllUsersWithoutConfigs",
-        data: {"message": message},
-        options: Options(headers: {
-          'Accept': 'application/json',
-          'Connection': 'keep-alive',
-          "Content-Type": "application/json;charset=UTF-8",
-          "Charset": "utf-8",
-          'Access-Control-Allow-Origin': '*'
-        }));
+    FormData formData = FormData.fromMap({
+      "user_ids": jsonEncode(userIds),
+      "message": message,
+      "scheduled_at": scheduledAt,
+    });
+
+    if (imagePath != null) {
+      formData.files.add(MapEntry(
+        "image",
+        await MultipartFile.fromFile(imagePath,
+            filename: imagePath.split('/').last),
+      ));
+    }
+
+    Response response = await GenaralApi.dio.post(
+      "/api/sendAdminMessageToSelectedUsers",
+      data: formData,
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+      }),
+    );
 
     if (response.statusCode == 200) {
       return true;
-    }  else {
+    } else {
+      return false;
+    }
+  } catch (e) {
+    debugPrint("error on sendAdminMessageToSelectedUsers $e");
+    return false;
+  }
+}
+
+Future sendAdminMessageToAllUsersWithoutConfigs({
+  required String message,
+  String? scheduledAt,
+  String? imagePath,
+}) async {
+  try {
+    FormData formData = FormData.fromMap({
+      "message": message,
+      "scheduled_at": scheduledAt,
+    });
+
+    if (imagePath != null) {
+      formData.files.add(MapEntry(
+        "image",
+        await MultipartFile.fromFile(imagePath,
+            filename: imagePath.split('/').last),
+      ));
+    }
+
+    Response response = await GenaralApi.dio.post(
+      "/api/sendAdminMessageToAllUsersWithoutConfigs",
+      data: formData,
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
       return false;
     }
   } catch (e) {
     debugPrint(e.toString());
     return null;
+  }
+}
+
+Future getAdminMessages({int page = 1}) async {
+  try {
+    Response response = await GenaralApi.dio.get(
+      "/api/getAdminMessages?page=$page",
+    );
+    if (response.statusCode == 200) {
+      return response.data;
+    }
+    return null;
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future deleteAdminMessage(int id) async {
+  try {
+    Response response = await GenaralApi.dio.delete(
+      "/api/deleteAdminMessage/$id",
+    );
+    return response.statusCode == 200;
+  } catch (e) {
+    debugPrint(e.toString());
+    return false;
   }
 }
 
@@ -395,8 +493,7 @@ Future getProductBoughtedByProductId({required int productID}) async {
             }));
 
     if (response.statusCode == 200) {
-      HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
-      return hiddifyConfig;
+      return response.data;
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {

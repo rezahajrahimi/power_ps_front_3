@@ -39,18 +39,28 @@ class _AdvancedSettingInfoWidgetState extends State<AdvancedSettingInfoWidget> {
       margin: EdgeInsets.only(top: AppStyle.defaultPadding),
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
         border: Border.all(
-            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
-        borderRadius: BorderRadius.all(
-          Radius.circular(AppStyle.defaultPadding),
+          width: 1,
+          color: AppStyle.primaryColor.withValues(alpha: 0.1),
+        ),
+        borderRadius: const BorderRadius.all(
+          Radius.circular(20),
         ),
       ),
       child: Row(
         children: [
-          const SizedBox(
-            height: 20,
-            width: 20,
-            child: Icon(Icons.menu),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppStyle.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.settings_suggest_outlined,
+              color: AppStyle.primaryColor,
+              size: 20,
+            ),
           ),
           Expanded(
             child: Padding(
@@ -61,52 +71,41 @@ class _AdvancedSettingInfoWidgetState extends State<AdvancedSettingInfoWidget> {
                 children: [
                   Text(
                     widget.description,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall!
-                        .copyWith(color: Colors.white70),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                  // height: 10,
-                  // width: 10,
-                  child: Switch(
-                      value: _newState,
-                      onChanged: (bool newValue) async {
-                        EasyLoading.show();
-                        await changeAdvancedSetting(
-                                name: widget.name, value: newValue)
-                            .then((value) {
-                          if (!context.mounted) return;
-                          if (value == true) {
-                            setState(() {
-                              _newState = newValue;
-                            });
-                            showMsg(msg: "ذخیره شد", context: context);
-                          } else {
-                            showMsg(
-                                msg: "خطا در ذخیره سازی",
-                                context: context,
-                                type: "error");
-                          }
-                        }).onError((e, s) {
-                          if (!context.mounted) return;
-                          showMsg(
-                              msg: "خطا در ذخیره سازی",
-                              context: context,
-                              type: "error");
-                        });
-
-                        EasyLoading.dismiss();
-                      })),
-            ],
-          )
+          Switch(
+            value: _newState,
+            activeThumbColor: AppStyle.primaryColor,
+            onChanged: (bool newValue) async {
+              EasyLoading.show();
+              await changeAdvancedSetting(name: widget.name, value: newValue)
+                  .then((value) {
+                if (!context.mounted) return;
+                if (value == true) {
+                  setState(() {
+                    _newState = newValue;
+                  });
+                  showMsg(msg: "ذخیره شد", context: context);
+                } else {
+                  showMsg(
+                      msg: "خطا در ذخیره سازی",
+                      context: context,
+                      type: "error");
+                }
+              }).onError((e, s) {
+                if (!context.mounted) return;
+                showMsg(msg: "خطا", context: context, type: "error");
+              }).whenComplete(() => EasyLoading.dismiss());
+            },
+          ),
         ],
       ),
     );

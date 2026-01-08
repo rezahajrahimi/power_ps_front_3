@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/transaction_model.dart';
-import 'package:powerps/provider/transaction_provider.dart';
 
 List<Transaction> transactionList = [];
 List<Transaction> confirmedTransactionList = [];
@@ -18,10 +17,10 @@ class ChangeTransactionController extends ValueNotifier {
   }
 }
 
-Future getConfirmedTransactions({int count = 10}) async {
+Future getConfirmedTransactions({int count = 10, int page = 1}) async {
   try {
-    Response response =
-        await GenaralApi.dio.get("/api/getConfirmedTransactions/$count",
+    Response response = await GenaralApi.dio
+        .get("/api/getConfirmedTransactions/$count?page=$page",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -31,21 +30,16 @@ Future getConfirmedTransactions({int count = 10}) async {
             }));
 
     if (response.statusCode == 200 && response.data != null) {
-      confirmedTransactionList.clear();
-      var data = response.data;
+      var data = response.data['data'];
+      List<Transaction> list = [];
       for (var i in data) {
-        confirmedTransactionList.add(Transaction.fromJson(i));
+        list.add(Transaction.fromJson(i));
       }
-      // transactionChangedToken = "transactionChanged";
-
-      // transactionNotifier.changedTransactionLockData();
-      return confirmedTransactionList;
-    } else if (response.statusCode == 201) {
-      return null;
-    } else if (response.statusCode == 401) {
-      return null;
-    } else if (response.statusCode == 500) {
-      return null;
+      return {
+        'data': list,
+        'last_page': response.data['last_page'],
+        'current_page': response.data['current_page'],
+      };
     } else {
       return null;
     }
@@ -55,10 +49,10 @@ Future getConfirmedTransactions({int count = 10}) async {
   }
 }
 
-Future getUnConfirmedTransactions({int count = 100}) async {
+Future getUnConfirmedTransactions({int count = 10, int page = 1}) async {
   try {
-    Response response =
-        await GenaralApi.dio.get("/api/getUnConfirmedTransactions/$count",
+    Response response = await GenaralApi.dio
+        .get("/api/getUnConfirmedTransactions/$count?page=$page",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -68,20 +62,16 @@ Future getUnConfirmedTransactions({int count = 100}) async {
             }));
 
     if (response.statusCode == 200 && response.data != null) {
-      unConfirmedTransactionList.clear();
-      var data = response.data;
+      var data = response.data['data'];
+      List<Transaction> list = [];
       for (var i in data) {
-        unConfirmedTransactionList.add(Transaction.fromJson(i));
+        list.add(Transaction.fromJson(i));
       }
-      TransactionProvider()
-          .setUnconfirmedTransaction(unConfirmedTransactionList);
-      return unConfirmedTransactionList;
-    } else if (response.statusCode == 201) {
-      return null;
-    } else if (response.statusCode == 401) {
-      return null;
-    } else if (response.statusCode == 500) {
-      return null;
+      return {
+        'data': list,
+        'last_page': response.data['last_page'],
+        'current_page': response.data['current_page'],
+      };
     } else {
       return null;
     }

@@ -303,73 +303,49 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                 deleteProducts: _deleteProducts,
                 minusBallance: _minusBallance,
                 productLimitation:
-                    int.parse(_maxProdouctLimitationTxtController.text),
+                    int.tryParse(_maxProdouctLimitationTxtController.text) ?? 0,
                 trafficLimitationTB:
-                    double.parse(_maxTrafficLimitationTxtController.text)),
+                    double.tryParse(_maxTrafficLimitationTxtController.text) ??
+                        0),
             userID: widget.agent.accountId,
             gentAddCategoriyList:
                 Provider.of<AgentProvider>(context, listen: false)
                     .getAgentCategoriesAdded())
         .then((val) {
-      if (val) {
-        // EasyLoading.dismiss();
-        // showMsg(msg: "دستیار فروش با موفقیت ایجاد شد.", context: context);
-        return;
-      }
       EasyLoading.dismiss();
       if (!context.mounted) return;
 
-      showMsg(msg: "خطا", context: context, type: "error");
-      return;
-    }).whenComplete(() async {
-      if (!context.mounted) return;
-
-      Provider.of<AgentProvider>(context, listen: false).clearAgentCategories();
-      Provider.of<AgentProvider>(context, listen: false)
-          .clearAgentCategoriesAdded();
-      await deleteBatchOfUserAgentProduct(
-              userID: widget.agent.accountId,
-              gentAddCategoriyList:
-                  Provider.of<AgentProvider>(context, listen: false)
-                      .getAgentCategories())
-          .then((val) {
-        if (!context.mounted) return;
-
-        if (val) {
-          EasyLoading.dismiss();
-          showMsg(msg: "دستیار فروش با موفقیت ویرایش شد.", context: context);
-          Navigator.of(context).pop();
-          return;
-        }
-        EasyLoading.dismiss();
-        showMsg(msg: "خطا", context: context, type: "error");
+      if (val == true) {
+        showMsg(msg: "دستیار فروش با موفقیت ویرایش شد.", context: context);
+        Navigator.of(context).pop();
         return;
-      }).onError((e, s) {
-        if (!context.mounted) return;
+      }
 
-        EasyLoading.dismiss();
-        showMsg(msg: "خطا", context: context, type: "error");
-      });
+      showMsg(
+          msg: val is String ? val : "خطا در ویرایش دستیار فروش",
+          context: context,
+          type: "error");
     }).onError((e, s) {
       if (!context.mounted) return;
       EasyLoading.dismiss();
-      showMsg(msg: "خطا", context: context, type: "error");
+      showMsg(msg: "خطا در برقراری ارتباط", context: context, type: "error");
     });
   }
 
   _productInfoTabCard(BuildContext context) {
     final agentCategories = context.watch<AgentProvider>().agentCategories;
 
-    setState(() {
-      _productCatWidgetLIst.clear();
-      for (var i in agentCategories) {
-        _productCatWidgetLIst
-            .add(AgentSelectCategoryWithPriceInputWidget(type: "add", item: i));
-      }
-      if (_productCatWidgetLIst.isEmpty) {
-        _productCatWidgetLIst.add(const Text("تمام بسته‌ها انتخاب شده‌اند."));
-      }
-    });
+    List<Widget> productCatWidgetLIst = [];
+    for (var i in agentCategories) {
+      productCatWidgetLIst
+          .add(AgentSelectCategoryWithPriceInputWidget(type: "add", item: i));
+    }
+    if (productCatWidgetLIst.isEmpty) {
+      productCatWidgetLIst.add(const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Text("تمام بسته‌ها انتخاب شده‌اند."),
+      ));
+    }
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -381,28 +357,79 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "کانفیگ ها",
+            "بسته‌های قابل انتخاب",
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          if (_productCatWidgetLIst.isNotEmpty)
-            SizedBox(
-                width: double.infinity,
-                child: Responsive(
-                  mobile: widgetsGridview(
-                      childAspectRatio: 2.8,
-                      context: context,
-                      importedList: _productCatWidgetLIst),
-                  tablet: widgetsGridview(
-                      context: context,
-                      childAspectRatio: 4,
-                      importedList: _productCatWidgetLIst),
-                  desktop: widgetsGridview(
-                      importedList: _productCatWidgetLIst,
-                      context: context,
-                      childAspectRatio: 4.0,
-                      crossAxisCount: 2),
-                )),
+          SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 2.8,
+                    context: context,
+                    importedList: productCatWidgetLIst),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4,
+                    importedList: productCatWidgetLIst),
+                desktop: widgetsGridview(
+                    importedList: productCatWidgetLIst,
+                    context: context,
+                    childAspectRatio: 4.0,
+                    crossAxisCount: 2),
+              )),
+        ],
+      ),
+    );
+  }
+
+  _productAddedInfoTabCard(BuildContext context) {
+    final agentCategoriesAdded =
+        context.watch<AgentProvider>().agentCategoriesAdded;
+
+    List<Widget> productCatWidgetLIstAdded = [];
+    for (var i in agentCategoriesAdded) {
+      productCatWidgetLIstAdded.add(
+          AgentSelectCategoryWithPriceInputWidget(type: "remove", item: i));
+    }
+    if (productCatWidgetLIstAdded.isEmpty) {
+      productCatWidgetLIstAdded.add(const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Text("هیچ بسته‌ای انتخاب نشده است."),
+      ));
+    }
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "بسته‌های انتخاب شده",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 2.8,
+                    context: context,
+                    importedList: productCatWidgetLIstAdded),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4,
+                    importedList: productCatWidgetLIstAdded),
+                desktop: widgetsGridview(
+                    importedList: productCatWidgetLIstAdded,
+                    context: context,
+                    childAspectRatio: 4.0,
+                    crossAxisCount: 2),
+              )),
         ],
       ),
     );
@@ -510,59 +537,6 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                   crossAxisCount: 2),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  _productAddedInfoTabCard(BuildContext context) {
-    final agentCategoriesAdded =
-        context.watch<AgentProvider>().agentCategoriesAdded;
-
-    setState(() {
-      _productCatWidgetLIstAdded.clear();
-      for (var i in agentCategoriesAdded) {
-        _productCatWidgetLIstAdded.add(
-            AgentSelectCategoryWithPriceInputWidget(type: "minus", item: i));
-      }
-      if (_productCatWidgetLIstAdded.isEmpty) {
-        _productCatWidgetLIstAdded
-            .add(const Text("هیچ بسته‌ای انتخاب نشده است."));
-      }
-    });
-
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            " افزوده شده",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          if (_productCatWidgetLIstAdded.isNotEmpty)
-            SizedBox(
-                width: double.infinity,
-                child: Responsive(
-                  mobile: widgetsGridview(
-                      childAspectRatio: 2.8,
-                      context: context,
-                      importedList: _productCatWidgetLIstAdded),
-                  tablet: widgetsGridview(
-                      context: context,
-                      childAspectRatio: 4,
-                      importedList: _productCatWidgetLIstAdded),
-                  desktop: widgetsGridview(
-                      importedList: _productCatWidgetLIstAdded,
-                      context: context,
-                      childAspectRatio: 4.0,
-                      crossAxisCount: 2),
-                )),
         ],
       ),
     );

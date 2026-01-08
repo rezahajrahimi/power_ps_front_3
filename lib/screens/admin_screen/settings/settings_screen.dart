@@ -100,6 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await getBotAdvancedSetting().then((value) {
       if (!mounted) return;
       if (value.isNotEmpty && value != null) {
+        _advancedSettingWidgetList.clear();
         for (var item in value) {
           _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
             state: item.value == "true" ? true : false,
@@ -162,18 +163,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
   _robotInfoTabCard(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
 
-    List<Widget> factoryWidgetList = [];
-    List<Widget> actionsWidgetList = [];
+    List<Widget> factoryWidgetList = [
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "نام ربات",
+        itemValue: _setting.botName.length > 30
+            ? "${_setting.botName.substring(0, 30)}..."
+            : _setting.botName,
+        icon: const Icon(Icons.smart_toy_outlined, color: Colors.blue),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "token ربات",
+        itemValue: _setting.botToken.length > 30
+            ? "${_setting.botToken.substring(0, 30)}..."
+            : _setting.botToken,
+        icon: const Icon(Icons.vpn_key_outlined, color: Colors.orange),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "ID ادمین ربات",
+        itemValue: _setting.adminId,
+        icon: const Icon(Icons.admin_panel_settings_outlined,
+            color: Colors.green),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "لینک اتصال به دامنه (هسته ربات)",
+        itemValue: _setting.panelAddress.length > 30
+            ? "${_setting.panelAddress.substring(0, 30)}..."
+            : _setting.panelAddress,
+        icon: const Icon(Icons.link_outlined, color: Colors.purple),
+      )),
+    ];
 
-    setState(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
+    List<Widget> actionsWidgetList = [
+      _buildSettingButton(
+        context: context,
+        label: "ویرایش اطلاعات",
+        icon: Icons.edit_outlined,
         onPressed: () async {
           Navigator.push(
               context,
@@ -183,55 +211,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _fillData(),
               });
         },
-        icon: const Icon(Icons.edit),
-        label: const Text("ویرایش اطلاعات"),
-      ));
-      factoryWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "نام ربات",
-        itemValue: _setting.botName.length > 30
-            ? "${_setting.botName.substring(0, 30)}..."
-            : _setting.botName,
-        icon: const Icon(Icons.info),
-      )));
-      factoryWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "token ربات",
-        itemValue: _setting.botToken.length > 30
-            ? "${_setting.botToken.substring(0, 30)}..."
-            : _setting.botToken,
-        icon: const Icon(Icons.info),
-      )));
-      factoryWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "ID ادمین ربات",
-        itemValue: _setting.adminId,
-        icon: const Icon(Icons.admin_panel_settings),
-      )));
+      ),
+    ];
 
-      factoryWidgetList.add(DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "لینک اتصال به دامنه (هسته ربات)",
-        itemValue: _setting.panelAddress.length > 30
-            ? "${_setting.panelAddress.substring(0, 30)}..."
-            : _setting.panelAddress,
-        icon: const Icon(Icons.link),
-      )));
-    });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(30)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "اطلاعات ربات",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "اطلاعات ربات",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
+          const Divider(height: 32, color: Colors.white10),
           SizedBox(
             width: double.infinity,
             child: Responsive(
@@ -276,314 +287,182 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildSettingButton({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18, color: color ?? Colors.white),
+      label: Text(
+        label,
+        style: TextStyle(color: color ?? Colors.white, fontSize: 12),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor:
+            (color ?? AppStyle.primaryColor).withValues(alpha: 0.1),
+        foregroundColor: color ?? Colors.white,
+        side: BorderSide(
+            color: (color ?? AppStyle.primaryColor).withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   _operationInfoCard(BuildContext context) {
-    List<Widget> actionsWidgetList = [];
+    List<Widget> actionsWidgetList = [
+      _buildSettingButton(
+        context: context,
+        label: "تغییر متن منوها",
+        icon: Icons.menu_open_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const MainMenuItemsScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "درگاه ها و پرداخت",
+        icon: Icons.credit_card_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const PaymentTypeScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "گیف کارت",
+        icon: Icons.card_giftcard_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const GifCardScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "تنظیمات پنل‌ها",
+        icon: Icons.dns_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const PannelScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "پشتیبانی و سوالات",
+        icon: Icons.support_agent_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const SupportFaqScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "قفل ربات",
+        icon: Icons.lock_outline,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const ChannelLockScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "برنامه‌های مورد نیاز",
+        icon: Icons.app_settings_alt_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const ApplicationScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "پیام‌های خودکار",
+        icon: Icons.notifications_active_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const CronjobManagingScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "بازاریابی و دعوت",
+        icon: Icons.share_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const ReferralScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "اکانت آزمایشی",
+        icon: Icons.timer_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const EditTestAccountDetailsScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "مدیران",
+        icon: Icons.admin_panel_settings_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const ManageAdminsScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "دستیاران فروش",
+        icon: Icons.people_outline,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const AgentsManageScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "پشتیبان‌گیری",
+        icon: Icons.backup_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const BackupScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "متن ها",
+        icon: Icons.text_fields_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const TextScreenScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "عملیات گروهی",
+        icon: Icons.layers_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const GroupOperationsScreen())),
+      ),
+    ];
 
-    setState(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const MainMenuItemsScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.menu),
-        label: const Text("تغییر متن منوها"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const PaymentTypeScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.credit_card),
-        label: const Text("درگاه ها و پرداخت"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const GifCardScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.discount),
-        label: const Text("گیف کارت"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const PannelScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.input),
-        label: const Text("تنظیمات پنل‌ها"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SupportFaqScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.support),
-        label: const Text("پشتتیبانی و سوالات"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ChannelLockScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.lock),
-        label: const Text("قفل ربات"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ApplicationScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.app_settings_alt),
-        label: const Text("برنامه‌های مورد نیاز"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CronjobManagingScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.notifications),
-        label: const Text("پیام‌های خودکار"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ReferralScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.featured_play_list_sharp),
-        label: const Text("بازاریابی و لینک دعوت"),
-      ));
-
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const EditTestAccountDetailsScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.first_page),
-        label: const Text("اکانت آزمایشی"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ManageAdminsScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.admin_panel_settings),
-        label: const Text("مدیران"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AgentsManageScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.supervised_user_circle),
-        label: const Text("دستیاران فروش"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const BackupScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.backup),
-        label: const Text("پشتیبان‌گیری و بازیابی"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const TextScreenScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.text_fields),
-        label: const Text("متن ها"),
-      ));
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const GroupOperationsScreen(),
-              )).then((value) => {});
-        },
-        icon: const Icon(Icons.report),
-        label: const Text("عملیات گروهی"),
-      ));
-      // actionsWidgetList.add(ElevatedButton.icon(
-      //   style: TextButton.styleFrom(
-      //     padding: EdgeInsets.symmetric(
-      //       horizontal: AppStyle.defaultPadding * 1.5,
-      //       vertical: AppStyle.defaultPadding /
-      //           (Responsive.isMobile(context) ? 2 : 1),
-      //     ),
-      //   ),
-      //   onPressed: () async {
-      //     Navigator.push(
-      //         context,
-      //         MaterialPageRoute(
-      //           builder: (context) => const AppInfoManageScreen(),
-      //         )).then((value) => {});
-      //   },
-      //   icon: const Icon(Icons.info),
-      //   label: const Text("اطلاعات وب اپلیکیشن"),
-      // ));
-    });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "عملیات ها",
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Icon(Icons.settings_outlined, color: AppStyle.primaryColor),
+              const SizedBox(width: 10),
+              Text(
+                "عملیات ها",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
+          const Divider(height: 32, color: Colors.white10),
           SizedBox(
             width: double.infinity,
             child: Responsive(
@@ -616,7 +495,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
         color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(30)),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,9 +510,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "تنظیمات پیشرفته (اکانتهای نقره ای و طلایی)",
-                style: Theme.of(context).textTheme.titleMedium,
+              Row(
+                children: [
+                  Icon(Icons.stars_outlined, color: Colors.amber),
+                  const SizedBox(width: 10),
+                  Text(
+                    "تنظیمات پیشرفته",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
               ),
               IconButton(
                 tooltip: "بازنشانی تنظیمات پیش فرض",
@@ -634,11 +528,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _advancedSettingWidgetList.clear();
                   _restoreAdvancedSettings();
                 },
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh, color: Colors.white70),
               ),
             ],
           ),
-          SizedBox(height: AppStyle.defaultPadding),
+          const Divider(height: 32, color: Colors.white10),
           SizedBox(
             width: double.infinity,
             child: Responsive(
@@ -669,9 +563,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
-              title: Text("بازنشانی تنظیمات پیش فرض"),
-              content: Text("آیا از بازنشانی تنظیمات پیش فرض مطمئن هستید؟"),
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.refresh, color: Colors.orangeAccent),
+                  SizedBox(width: 10),
+                  Text("بازنشانی تنظیمات",
+                      style: TextStyle(color: Colors.white)),
+                ],
+              ),
+              content: const Text(
+                  "آیا از بازنشانی تنظیمات پیش فرض مطمئن هستید؟",
+                  style: TextStyle(color: Colors.white70)),
               actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("انصراف",
+                        style: TextStyle(color: Colors.white60))),
                 ElevatedButton(
                     onPressed: () async {
                       EasyLoading.showInfo("در حال بازنشانی");
@@ -694,12 +604,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         EasyLoading.showError("خطا");
                       });
                     },
-                    child: Text("بازنشانی")),
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text("انصراف")),
+                    child: const Text("بازنشانی")),
               ],
             ),
           );

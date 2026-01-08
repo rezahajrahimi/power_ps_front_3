@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:persian_datetimepickers/persian_datetimepickers.dart';
 import 'package:powerps/provider/user_provider.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
@@ -28,10 +30,11 @@ class AgentBoughtProductInfoWidget extends StatefulWidget {
 
 class _AgentBoughtProductInfoWidgetState
     extends State<AgentBoughtProductInfoWidget> {
-  late HiddifyConfig? _hiddifyConfig;
+  late dynamic _config;
   bool _showdata = false;
   @override
   void initState() {
+    _config = null;
     _fillData();
     super.initState();
   }
@@ -39,7 +42,7 @@ class _AgentBoughtProductInfoWidgetState
   @override
   void dispose() {
     _showdata = false;
-    _hiddifyConfig = null;
+    _config = null;
     super.dispose();
   }
 
@@ -104,7 +107,7 @@ class _AgentBoughtProductInfoWidgetState
               SizedBox(
                 height: 20,
                 width: 20,
-                child: _hiddifyConfig!.isActive
+                child: _config!.isActive
                     ? Icon(Icons.code, color: AppStyle.primaryColor)
                     : const Icon(Icons.code_off, color: Colors.red),
               ),
@@ -127,7 +130,7 @@ class _AgentBoughtProductInfoWidgetState
                         ),
                         if (_showdata)
                           Text(
-                            "${_hiddifyConfig!.currentUsageGB.toStringAsFixed(2)} / ${_hiddifyConfig!.usageLimitGB.toStringAsFixed(2)} GB",
+                            "${_config!.currentUsageGB.toStringAsFixed(2)} / ${_config!.usageLimitGB.toStringAsFixed(2)} GB",
                             maxLines: 1,
                             textDirection: TextDirection.ltr,
                             overflow: TextOverflow.ellipsis,
@@ -176,11 +179,11 @@ class _AgentBoughtProductInfoWidgetState
     );
   }
 
-  void _showDialog(BuildContext context, HiddifyConfig hiddifyConfig) async {
+  void _showDialog(BuildContext context, dynamic config) async {
     // show a dialog with a input box
     return await showDialog(
         context: context,
-        builder: (context) {
+        builder: (dialogContext) {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
@@ -190,23 +193,23 @@ class _AgentBoughtProductInfoWidgetState
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      hiddifyConfig.lastOnline.toString() !=
-                              "0001-01-01 00:00:00"
-                          ? Text(
-                              "آخرین زمان اتصال: ${_getLastOnlineDiffrence(hiddifyConfig)}",
-                              style: AppStyle.thirdTitleStyle,
-                            )
-                          : Container(),
+                      if (config is HiddifyConfig)
+                        config.lastOnline.toString() != "0001-01-01 00:00:00"
+                            ? Text(
+                                "آخرین زمان اتصال: ${_getLastOnlineDiffrence(config)}",
+                                style: AppStyle.thirdTitleStyle,
+                              )
+                            : Container(),
                       SizedBox(width: AppStyle.defaultPadding),
                       Text(
-                          "حجم مصرفی: ${hiddifyConfig.currentUsageGB.toStringAsFixed(2)}GB",
+                          "حجم مصرفی: ${config.currentUsageGB.toStringAsFixed(2)}GB",
                           style: AppStyle.thirdTitleStyle),
                       SizedBox(width: AppStyle.defaultPadding),
-                      Text("زمان باقیمانده: ${_getRemindDate(hiddifyConfig)}",
+                      Text("زمان باقیمانده: ${_getRemindDate(config)}",
                           style: AppStyle.thirdTitleStyle),
                       SizedBox(width: AppStyle.defaultPadding),
                       Text(
-                          "وضعیت: ${hiddifyConfig.isActive == true ? "فعال" : "غیر فعال"}",
+                          "وضعیت: ${config.isActive == true ? "فعال" : "غیر فعال"}",
                           style: AppStyle.thirdTitleStyle)
                     ],
                   ),
@@ -233,7 +236,7 @@ class _AgentBoughtProductInfoWidgetState
                                   productID: widget.boughtProductDetailsModel.id
                                       .toInt(),
                                 ).then((val) {
-                                  if (!context.mounted) return;
+                                  if (!dialogContext.mounted) return;
                                   if (val == true) {
                                     // open val as a link in a new window
                                     showMsg(
@@ -241,11 +244,11 @@ class _AgentBoughtProductInfoWidgetState
                                             "شارژ مجدد بسته با موفقیت انجام گرفت",
                                         context: context);
                                     EasyLoading.dismiss();
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
                                   } else if (val
                                       .toString()
                                       .contains("Reached")) {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
 
                                     EasyLoading.dismiss();
                                     showMsg(
@@ -253,7 +256,7 @@ class _AgentBoughtProductInfoWidgetState
                                         context: context,
                                         type: "error");
                                   } else {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
 
                                     EasyLoading.dismiss();
                                     showMsg(
@@ -275,7 +278,7 @@ class _AgentBoughtProductInfoWidgetState
                                   productID: widget.boughtProductDetailsModel.id
                                       .toInt(),
                                 ).then((val) {
-                                  if (!context.mounted) return;
+                                  if (!dialogContext.mounted) return;
                                   if (val == true) {
                                     // open val as a link in a new window
                                     showMsg(
@@ -283,11 +286,11 @@ class _AgentBoughtProductInfoWidgetState
                                             "شارژ مجدد بسته با موفقیت انجام گرفت",
                                         context: context);
                                     EasyLoading.dismiss();
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
                                   } else if (val
                                       .toString()
                                       .contains("Reached")) {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
 
                                     EasyLoading.dismiss();
                                     showMsg(
@@ -295,7 +298,7 @@ class _AgentBoughtProductInfoWidgetState
                                         context: context,
                                         type: "error");
                                   } else {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
 
                                     EasyLoading.dismiss();
                                     showMsg(
@@ -323,19 +326,34 @@ class _AgentBoughtProductInfoWidgetState
                               child: const Text('تغییر بسته')),
                         ElevatedButton(
                             onPressed: () async {
+                              _showRenameDialog(context);
+                            },
+                            child: const Text('تغییر نام')),
+                        ElevatedButton(
+                            onPressed: () async {
                               EasyLoading.show();
                               await getBoughtProductsPannelLinkFromServerById(
                                       productID: widget
                                           .boughtProductDetailsModel.id
                                           .toInt())
                                   .then((link) {
-                                if (!context.mounted) return;
+                                if (!dialogContext.mounted) return;
                                 if (link != false && link != null) {
-                                  launchUrl(Uri.parse(link));
-                                  EasyLoading.dismiss();
-                                  // Navigator.of(context).pop();
+                                  if (widget.boughtProductDetailsModel
+                                              .productCategory?.pannel?.type ==
+                                          "sanaei" ||
+                                      link.startsWith("vless://") ||
+                                      link.startsWith("vmess://") ||
+                                      link.startsWith("trojan://")) {
+                                    EasyLoading.dismiss();
+                                    _showConfigDialog(context, link);
+                                  } else {
+                                    launchUrl(Uri.parse(link));
+                                    EasyLoading.dismiss();
+                                  }
+                                  // Navigator.of(dialogContext).pop();
                                 } else {
-                                  Navigator.of(context).pop();
+                                  Navigator.of(dialogContext).pop();
 
                                   EasyLoading.dismiss();
                                   showMsg(
@@ -345,11 +363,15 @@ class _AgentBoughtProductInfoWidgetState
                                 }
                               });
                             },
-                            child: const Text('مشاهده در پنل')),
+                            child: widget.boughtProductDetailsModel
+                                        .productCategory?.pannel?.type ==
+                                    "sanaei"
+                                ? Text('مشاهده در پنل')
+                                : Text('مشاهده کانفیگ')),
 
                         // ElevatedButton(
                         //     onPressed: () {
-                        //       Navigator.of(context).pop();
+                        //       Navigator.of(dialogContext).pop();
                         //     },
                         //     child: const Text('غیر فعال کردن بسته')),
                       ],
@@ -365,18 +387,18 @@ class _AgentBoughtProductInfoWidgetState
                               EasyLoading.show();
 
                               await changeActivationOfHiddifyUserByAgent(
-                                      enable: !hiddifyConfig.isActive,
+                                      enable: !config.isActive,
                                       productID: widget
                                           .boughtProductDetailsModel.id
                                           .toInt())
                                   .then((res) {
-                                if (!context.mounted) return;
+                                if (!dialogContext.mounted) return;
                                 EasyLoading.dismiss();
 
                                 if (res.runtimeType == bool) {
                                   if (res == true) {
                                     showMsg(msg: "انجام شد", context: context);
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
                                     Provider.of<AgentProvider>(context,
                                             listen: false)
                                         .setChanged(true);
@@ -385,14 +407,14 @@ class _AgentBoughtProductInfoWidgetState
                                         msg: "خطا",
                                         context: context,
                                         type: "error");
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
                                   }
                                 } else {
                                   showMsg(
                                       msg: "$res",
                                       context: context,
                                       type: "error");
-                                  Navigator.of(context).pop();
+                                  Navigator.of(dialogContext).pop();
                                 }
                               }).whenComplete(() {
                                 _fillData();
@@ -407,15 +429,15 @@ class _AgentBoughtProductInfoWidgetState
                                   productID: widget.boughtProductDetailsModel.id
                                       .toInt(),
                                 ).then((val) {
-                                  if (!context.mounted) return;
+                                  if (!dialogContext.mounted) return;
                                   if (val != false && val != null) {
                                     // open val as a link in a new window
                                     showMsg(msg: "حذف گردید", context: context);
                                     EasyLoading.dismiss();
 
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
                                   } else {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
 
                                     EasyLoading.dismiss();
                                     showMsg(
@@ -424,7 +446,7 @@ class _AgentBoughtProductInfoWidgetState
                                         type: "error");
                                   }
                                 }).then((val) {
-                                  if (!context.mounted) return;
+                                  if (!dialogContext.mounted) return;
                                   // لیست خریدها را آپدیت کن
                                 }).whenComplete(() {
                                   if (!context.mounted) return;
@@ -437,15 +459,15 @@ class _AgentBoughtProductInfoWidgetState
                                   productID: widget.boughtProductDetailsModel.id
                                       .toInt(),
                                 ).then((val) {
-                                  if (!context.mounted) return;
+                                  if (!dialogContext.mounted) return;
                                   if (val != false && val != null) {
                                     // open val as a link in a new window
                                     showMsg(msg: "حذف گردید", context: context);
                                     EasyLoading.dismiss();
 
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
                                   } else {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
 
                                     EasyLoading.dismiss();
                                     showMsg(
@@ -470,7 +492,7 @@ class _AgentBoughtProductInfoWidgetState
                             onPressed: () {
                               _fillData();
 
-                              Navigator.of(context).pop();
+                              Navigator.of(dialogContext).pop();
                             },
                             child: const Text('بستن'))
                       ],
@@ -485,10 +507,9 @@ class _AgentBoughtProductInfoWidgetState
     });
   }
 
-  _getLastOnlineDiffrence(HiddifyConfig hiddifyConfig) {
-    var diff = DateTime.now()
-        .difference(DateTime.parse(hiddifyConfig.lastOnline!))
-        .abs();
+  _getLastOnlineDiffrence(dynamic config) {
+    var diff =
+        DateTime.now().difference(DateTime.parse(config.lastOnline!)).abs();
     if (diff.inSeconds < 60) {
       return "هم اکنون";
     } else if (diff.inMinutes < 60) {
@@ -496,21 +517,21 @@ class _AgentBoughtProductInfoWidgetState
     } else if (diff.inHours < 24) {
       return "${diff.inHours} ساعت پیش";
     } else {
-      return DateTime.parse(hiddifyConfig.lastOnline!).toPersianDate();
+      return DateTime.parse(config.lastOnline!).toPersianDate();
     }
   }
 
   void _fillData() async {
     setState(() {
       _showdata = false;
-      _hiddifyConfig = null;
+      _config = null;
     });
     await getBoughtProductsStatusFromServerById(
             productID: widget.boughtProductDetailsModel.id.toInt())
         .then((value) {
       if (value != null && value != false) {
         setState(() {
-          _hiddifyConfig = value;
+          _config = value;
           _showdata = true;
         });
       }
@@ -543,24 +564,132 @@ class _AgentBoughtProductInfoWidgetState
               actionType: "agent",
             ));
   }
+
+  void _showRenameDialog(BuildContext context) {
+    String newName = widget.boughtProductDetailsModel.remark ?? "";
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text("تغییر نام بسته"),
+          content: TextField(
+            decoration: const InputDecoration(
+              hintText: "نام جدید را وارد کنید",
+              labelText: "نام بسته",
+            ),
+            controller: TextEditingController(text: newName),
+            onChanged: (value) => newName = value,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("انصراف"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (newName.isEmpty) return;
+                EasyLoading.show();
+                await renameHiddifyRemark(
+                  productID: widget.boughtProductDetailsModel.id.toInt(),
+                  remark: newName,
+                ).then((res) {
+                  if (!context.mounted) return;
+                  EasyLoading.dismiss();
+                  if (res == true) {
+                    showMsg(msg: "نام با موفقیت تغییر کرد", context: context);
+                    Navigator.pop(context); // Close rename dialog
+                    Navigator.pop(context); // Close info dialog
+                    _fillData();
+                    if (widget.userRole == "agent") {
+                      Provider.of<AgentProvider>(context, listen: false)
+                          .setChanged(true);
+                    } else {
+                      Provider.of<UserProvider>(context, listen: false)
+                          .setChanged(true);
+                    }
+                  } else {
+                    showMsg(msg: "خطا در تغییر نام", context: context);
+                  }
+                });
+              },
+              child: const Text("تغییر نام"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showConfigDialog(BuildContext context, String config) {
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('کانفیگ خریداری شده'),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  QrImageView(
+                    data: config,
+                    version: QrVersions.auto,
+                    size: 200.0,
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(height: 20),
+                  SelectableText(
+                    config,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: config));
+                showMsg(msg: "کپی شد", context: context, type: "info");
+              },
+              child: const Text('کپی'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('بستن'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-_getRemindDate(HiddifyConfig hiddifyConfig) {
+_getRemindDate(dynamic config) {
   try {
-    if (hiddifyConfig.startDate != null || hiddifyConfig.startDate != "null") {
-      DateTime expireDate = DateTime.parse(hiddifyConfig.startDate!)
-          .add(Duration(days: hiddifyConfig.packageDays));
+    if (config.startDate != null &&
+        config.startDate != "null" &&
+        config.startDate != "") {
+      DateTime expireDate = DateTime.parse(config.startDate!)
+          .add(Duration(days: config.packageDays));
 
-      var diff = DateTime.now().difference(expireDate).abs();
+      var diff = expireDate.difference(DateTime.now());
       if (diff.inDays < 1) {
-        return "آخرین روز";
+        if (diff.inHours > 0) {
+          return "${diff.inHours} ساعت دیگر";
+        }
+        return "منقضی شده";
       } else {
         return "${diff.inDays} روز دیگر";
       }
     } else {
-      return "${hiddifyConfig.packageDays} روز دیگر";
+      return "${config.packageDays} روز دیگر";
     }
   } catch (e) {
-    return "${hiddifyConfig.packageDays} روز دیگر";
+    return "${config.packageDays} روز دیگر";
   }
 }

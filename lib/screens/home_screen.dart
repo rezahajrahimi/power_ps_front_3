@@ -10,6 +10,7 @@ import 'package:powerps/screens/admin_screen/product/product_category_screen.dar
 import 'package:powerps/screens/admin_screen/settings/settings_screen.dart';
 import 'package:powerps/screens/admin_screen/transaction/transaction_list_screen.dart';
 import 'package:powerps/screens/admin_screen/user/bot_users_screen.dart';
+import 'package:powerps/screens/admin_screen/reports/resports_screen.dart';
 import 'package:powerps/repositories/authenticatiom_repository.dart';
 import 'package:powerps/screens/agent_screen/agent_dashboard_screen.dart';
 import 'package:powerps/screens/user_screens/user_dashboard_screen.dart';
@@ -27,7 +28,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
   int _selectedIndex = 0;
   String _currentPageName = "داشبورد";
   late User loggedUSer;
@@ -38,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     const TransactionListScreen(),
     const BotUsersScreen(),
     const LogsListScreen(),
-    // const ReportScreen(),
+    const ReportScreen(),
   ];
 
   static final List<Widget> _agentPages = <Widget>[
@@ -52,13 +54,13 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     _fillData();
     super.initState();
   }
-    @override
-  bool get wantKeepAlive => true;
 
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-        super.build(context);
+    super.build(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -120,12 +122,12 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
               _currentPageName = "رخدادها";
             });
           }
-          // if (val == "reports") {
-          //   _onItemTapped(6);
-          //   setState(() {
-          //     _currentPageName = "گزارشگیری";
-          //   });
-          // }
+          if (val == "reports") {
+            _onItemTapped(6);
+            setState(() {
+              _currentPageName = "گزارشات";
+            });
+          }
 
           context
               .read<MenuAppController>()
@@ -183,12 +185,12 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                         _currentPageName = "رخدادها";
                       });
                     }
-                    // if (val == "reports") {
-                    //   _onItemTapped(6);
-                    //   setState(() {
-                    //     _currentPageName = "گزارشگیری";
-                    //   });
-                    // }
+                    if (val == "reports") {
+                      _onItemTapped(6);
+                      setState(() {
+                        _currentPageName = "گزارشات";
+                      });
+                    }
                   },
                 ),
               ),

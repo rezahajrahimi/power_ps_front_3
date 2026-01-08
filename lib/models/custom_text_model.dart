@@ -123,14 +123,14 @@ class CustomTextModel {
     // متن را بر اساس خط جدید تقسیم می‌کنیم
     List<String> lines = markdownText.split('\n');
 
-    for (String line in lines) {
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
       if (line.isEmpty) {
         blocks.add({'type': 'newline'});
         continue;
       }
 
       String remainingText = line;
-      // int lastIndex = 0;
 
       // پیدا کردن تمام الگوهای فرمت در خط
       while (remainingText.isNotEmpty) {
@@ -204,6 +204,11 @@ class CustomTextModel {
           }
           break;
         }
+      }
+
+      // اضافه کردن خط جدید بعد از هر خط به جز خط آخر
+      if (i < lines.length - 1) {
+        blocks.add({'type': 'newline'});
       }
     }
 

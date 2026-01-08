@@ -10,15 +10,15 @@ import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
-class AddNewSanaeiPanelScreen extends StatefulWidget {
-  const AddNewSanaeiPanelScreen({super.key});
+class EditSanaeiPanelScreen extends StatefulWidget {
+  final Pannel selectedPannel;
+  const EditSanaeiPanelScreen({super.key, required this.selectedPannel});
 
   @override
-  State<AddNewSanaeiPanelScreen> createState() =>
-      _AddNewSanaeiPanelScreenState();
+  State<EditSanaeiPanelScreen> createState() => _EditSanaeiPanelScreenState();
 }
 
-class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
+class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
   bool _showData = false;
 
   final List<Widget> _sanaeiWidgetList = [];
@@ -31,6 +31,13 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
 
   @override
   void initState() {
+    _locationEditTxt.text = widget.selectedPannel.location ?? "";
+    _capacityEditTxt.text = widget.selectedPannel.capacity?.toString() ?? "";
+    _adminUrlEditTxt.text = widget.selectedPannel.adminUrl ?? "";
+    _subPortEditTxt.text = widget.selectedPannel.subPort ?? "";
+    _userNameEditTxt.text = widget.selectedPannel.username ?? "";
+    _userPasswordEditTxt.text = widget.selectedPannel.password ?? "";
+
     _fillData();
     super.initState();
   }
@@ -52,7 +59,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar:
-            appBarWithBackButton(context: context, title: "افزودن پنل سنایی"),
+            appBarWithBackButton(context: context, title: "ویرایش پنل سنایی"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -96,14 +103,14 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Icon(
-                      Icons.add,
+                      Icons.edit,
                       color: Colors.white,
                     ),
                     SizedBox(
                       width: 4.0,
                     ),
                     Text(
-                      "افزودن پنل",
+                      "ویرایش پنل",
                       style: TextStyle(color: Colors.white),
                     ),
                   ],
@@ -126,8 +133,6 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
                 flex: 5,
                 child: Column(
                   children: [
-                    // _selectPannelTypeCard(context),
-                    // SizedBox(height: AppStyle.defaultPadding),
                     _sanaeiPannelInfoCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                   ],
@@ -166,8 +171,8 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
         onPressed: () async {
           _submitData(context);
         },
-        icon: const Icon(Icons.add),
-        label: const Text("افزودن پنل سنایی"),
+        icon: const Icon(Icons.edit),
+        label: const Text("ویرایش پنل سنایی"),
       ));
     });
     return Container(
@@ -366,9 +371,9 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
       return;
     }
 
-    await addNewPannel(
+    await updatePannel(
       pannel: Pannel(
-          id: "1",
+          id: widget.selectedPannel.id,
           type: "sanaei",
           location: _locationEditTxt.text,
           adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
@@ -382,8 +387,8 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
       if (res == true) {
         EasyLoading.dismiss();
 
-        showMsg(msg: "با موفقیت ثبت شد.", context: context);
-        Navigator.pop(context);
+        showMsg(msg: "با موفقیت ویرایش شد.", context: context);
+        Navigator.pop(context, true);
         return;
       } else if (res.runtimeType == String) {
         EasyLoading.dismiss();

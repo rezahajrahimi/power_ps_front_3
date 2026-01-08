@@ -19,46 +19,48 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          if (!Responsive.isDesktop(context))
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: context.read<MenuAppController>().controlMenu,
-            ),
-          if (!Responsive.isMobile(context))
-            Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge,
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (!Responsive.isDesktop(context))
+              IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: context.read<MenuAppController>().controlMenu,
+              ),
+            if (!Responsive.isMobile(context))
+              Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            // if (!Responsive.isMobile(context))
+            //   Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: SearchField(
+                  autoFocousEnable: false,
+                  callBack: (val) {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SearchScreen(),
+                        ));
+                  },
+                ),
               ),
             ),
-          // if (!Responsive.isMobile(context))
-          //   Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: SearchField(
-                autoFocousEnable: false,
-                callBack: (val) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SearchScreen(),
-                      ));
-                },
-              ),
+            SizedBox(
+              width: AppStyle.defaultPadding,
             ),
-          ),
-          SizedBox(
-            width: AppStyle.defaultPadding,
-          ),
-          const ProfileCard()
-        ],
+            const ProfileCard()
+          ],
+        ),
       ),
     );
   }

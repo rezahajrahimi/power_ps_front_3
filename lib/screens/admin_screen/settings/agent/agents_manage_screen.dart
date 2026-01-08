@@ -44,7 +44,9 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "دستیاران فروش (اکانتهای نقره ای و طلایی)"),
+        appBar: appBarWithBackButton(
+            context: context,
+            title: "دستیاران فروش (اکانتهای نقره ای و طلایی)"),
         body: SafeArea(
           child: SingleChildScrollView(
             primary: false,
@@ -76,18 +78,22 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
       margin: EdgeInsets.only(top: AppStyle.defaultPadding),
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
         border: Border.all(
-            width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+            width: 1, color: AppStyle.primaryColor.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.all(
           Radius.circular(AppStyle.defaultPadding),
         ),
       ),
       child: Row(
         children: [
-          const SizedBox(
-            height: 20,
-            width: 20,
-            child: Icon(Icons.verified_user),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppStyle.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.person, color: AppStyle.primaryColor),
           ),
           Expanded(
             child: Padding(
@@ -96,66 +102,46 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        agent.accountId.toString(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        agent.name,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall!
-                            .copyWith(color: Colors.white70),
-                      ),
-                    ],
+                  Text(
+                    agent.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // IconButton(
-                      //     onPressed: () {
-                      //       Navigator.push(
-                      //         context,
-                      //         MaterialPageRoute(
-                      //           builder: (context) => BotUserDetailsScreen(
-                      //             id: BigInt.from(agent.accountId),
-                      //           ),
-                      //         ),
-                      //       );
-                      //     },
-                      //     icon: const Icon(Icons.info)),
-                      IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    EditAgentScreen(agent: agent),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.edit)),
-                      IconButton(
-                          onPressed: () {
-                            //کاربر را باید تبدیل به کاربر معمولی کنی
-                            // اگه کاربری ایجاد کرده ، تکلیف اون چی میشه
-                            // می خوای کلا دسترسی این ادمین را بگیری یا کلا حذفش کنی
-                            // اگه این کار را بکنی تکلیف موجودی حسابش چی می شه
-                            _showDeleteDialog(context, agent);
-                          },
-                          icon: const Icon(
-                            Icons.delete_forever,
-                            color: Colors.red,
-                          )),
-                    ],
+                  const SizedBox(height: 4),
+                  Text(
+                    "شناسه: ${agent.accountId}",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall!
+                        .copyWith(color: Colors.white70),
                   ),
                 ],
               ),
             ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditAgentScreen(agent: agent),
+                      ),
+                    ).then((value) => _fillData());
+                  },
+                  icon: const Icon(Icons.edit, color: Colors.blue)),
+              IconButton(
+                  onPressed: () {
+                    _showDeleteDialog(context, agent);
+                  },
+                  icon: const Icon(
+                    Icons.delete_forever,
+                    color: Colors.red,
+                  )),
+            ],
           ),
         ],
       ),
@@ -182,7 +168,7 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
               onPressed: () async {
                 EasyLoading.show();
                 await removeAgent(userID: agent.accountId).then((val) {
-                        if (!context.mounted) return;
+                  if (!context.mounted) return;
 
                   if (val != null && val == true) {
                     showMsg(msg: "با موفقیت حذف شد", context: context);
@@ -204,20 +190,29 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
   }
 
   void _fillData() async {
-    _agentsWidgetList.clear();
-    await getAgents().then((value) {
-      if (value != null) {
-        setStateIfMounted(() {
-          _agents = value;
+    setStateIfMounted(() {
+      _showData = false;
+      _agentsWidgetList.clear();
+    });
+
+    try {
+      await getAgents().then((val) {
+        if (val != null) {
+          if (!mounted) return;
+
+          _agents = val;
           for (var i in _agents) {
             _agentsWidgetList.add(_agentInfo(agent: i, context: context));
           }
-          _showData = true;
-        });
-      }
-    }).onError((e, s) {
-      debugPrint(e.toString());
-    });
+        }
+      });
+    } catch (e) {
+      debugPrint("Error fetching agents: $e");
+    } finally {
+      setStateIfMounted(() {
+        _showData = true;
+      });
+    }
   }
 
   _buildBottomNavigationBar(BuildContext context) {

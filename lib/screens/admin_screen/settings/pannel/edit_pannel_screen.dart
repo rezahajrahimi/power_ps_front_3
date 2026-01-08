@@ -56,7 +56,6 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
   final _adminUrlEditTxt = TextEditingController();
   final _secretCodeEditTxt = TextEditingController();
   final _userLinkEditTxt = TextEditingController();
-  final _inboundIdEditTxt = TextEditingController();
   final List<Widget> _sanaeiWidgetList = [];
 
   @override
@@ -67,7 +66,6 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
 
   @override
   void dispose() {
-    _inboundIdEditTxt.dispose();
     super.dispose();
   }
 
@@ -781,7 +779,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _showOtherData = false;
 
         break;
-      case 'sanaei':
+      case 'Sanaei':
         _selectedPannelType = "Sanaei";
         _showMarzbanData = false;
         _showHiddifyData = false;
@@ -818,7 +816,6 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
     _adminUrlEditTxt.text = widget.selectedPannel.adminUrl ?? "";
     _secretCodeEditTxt.text = widget.selectedPannel.secretCode ?? "";
     _userLinkEditTxt.text = widget.selectedPannel.userLink ?? "";
-    _inboundIdEditTxt.text = widget.selectedPannel.inboundId?.toString() ?? "";
     _showData = false;
     if (widget.selectedPannel.type == 'marzban') {
       await getProxiesByPannelID(pannelId: int.parse(widget.selectedPannel.id))
@@ -917,12 +914,6 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         textHint: "رمز عبور (admin)",
         validationError: "رمز عبور را وارد کنید.",
         keyboardType: TextInputType.text,
-      ));
-      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
-        controller: _inboundIdEditTxt,
-        textHint: "Inbound ID (شناسه inbound)",
-        validationError: "Inbound id را وارد کنید.",
-        keyboardType: TextInputType.number,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _capacityEditTxt,

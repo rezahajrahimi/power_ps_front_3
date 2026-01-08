@@ -572,8 +572,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         onPressed: () {
           showModalBottomSheet(
             context: context,
+            backgroundColor: AppStyle.secondaryColor,
             shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             builder: (context) {
               List<Widget> advancedOptions = [];
@@ -582,8 +583,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                   _usersList.map((e) => e.packageDays).toSet().toList()..sort();
               for (var i in dayGroup) {
                 advancedOptions.add(ListTile(
-                  leading: const Icon(Icons.calendar_today),
-                  title: Text("کانفیگ های با $i روز"),
+                  leading: const Icon(Icons.calendar_today, color: Colors.blue),
+                  title: Text("کانفیگ های با $i روز",
+                      style: const TextStyle(color: Colors.white)),
                   onTap: () {
                     Navigator.pop(context);
 
@@ -605,8 +607,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                 ..sort();
               for (var i in capacityGroup) {
                 advancedOptions.add(ListTile(
-                  leading: const Icon(Icons.storage),
-                  title: Text("کانفیگ های با $i گیگابایت"),
+                  leading: const Icon(Icons.storage, color: Colors.green),
+                  title: Text("کانفیگ های با $i گیگابایت",
+                      style: const TextStyle(color: Colors.white)),
                   onTap: () {
                     Navigator.pop(context);
                     // Provider.of<PannelChangeController>(context, listen: false).clearConfigList();
@@ -630,7 +633,10 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                     children: [
                       const Text("انتخاب پیشرفته",
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18)),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: Colors.white)),
+                      const Divider(color: Colors.white10),
                       ...advancedOptions,
                     ],
                   ),

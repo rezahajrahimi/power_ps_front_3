@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:powerps/helper/public.dart';
@@ -159,7 +160,9 @@ class _PannelScreenState extends State<PannelScreen> {
                 valueListenable: pannelNotifier,
                 builder: (BuildContext context, dynamic value, Widget? child) {
                   if (value == "pannelChanged") {
-                    _retryPannelData();
+                    SchedulerBinding.instance.addPostFrameCallback((_) {
+                      _retryPannelData();
+                    });
                   }
                   return Responsive(
                     mobile: widgetsGridview(
