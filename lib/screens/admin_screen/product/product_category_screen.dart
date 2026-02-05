@@ -166,23 +166,23 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       ),
       child: Row(
         children: <Widget>[
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () =>
-                  _openAddNewProductCategoryDialog(context: context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppStyle.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text("بسته جدید",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-          const SizedBox(width: 12),
+          // Expanded(
+          //   child: ElevatedButton.icon(
+          //     onPressed: () =>
+          //         _openAddNewProductCategoryDialog(context: context),
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: AppStyle.primaryColor,
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 12),
+          //       shape: RoundedRectangleBorder(
+          //           borderRadius: BorderRadius.circular(12)),
+          //     ),
+          //     icon: const Icon(Icons.add, size: 20),
+          //     label: const Text("بسته جدید",
+          //         style: TextStyle(fontWeight: FontWeight.bold)),
+          //   ),
+          // ),
+          // const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
@@ -339,26 +339,26 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     List<Widget> actionsWidgetList = [];
 
     setState(() {
-      actionsWidgetList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          _pannelNameList.isNotEmpty
-              ? _openAddNewProductCategoryDialog(context: context)
-              : showMsg(
-                  msg:
-                      "هیچ پنلی ثبت نشده است، ابتدا می بایست به بخش تنظیمات پنل بروید و یک پنل ثبت کنید.",
-                  context: context,
-                  type: "error");
-        },
-        icon: const Icon(Icons.add),
-        label: const Text("کانفیگ جدید"),
-      ));
+      // actionsWidgetList.add(ElevatedButton.icon(
+      //   style: TextButton.styleFrom(
+      //     padding: EdgeInsets.symmetric(
+      //       horizontal: AppStyle.defaultPadding * 1.5,
+      //       vertical: AppStyle.defaultPadding /
+      //           (Responsive.isMobile(context) ? 2 : 1),
+      //     ),
+      //   ),
+      //   onPressed: () async {
+      //     _pannelNameList.isNotEmpty
+      //         ? _openAddNewProductCategoryDialog(context: context)
+      //         : showMsg(
+      //             msg:
+      //                 "هیچ پنلی ثبت نشده است، ابتدا می بایست به بخش تنظیمات پنل بروید و یک پنل ثبت کنید.",
+      //             context: context,
+      //             type: "error");
+      //   },
+      //   icon: const Icon(Icons.add),
+      //   label: const Text("کانفیگ جدید"),
+      // ));
       actionsWidgetList.add(ElevatedButton.icon(
         style: TextButton.styleFrom(
           padding: EdgeInsets.symmetric(

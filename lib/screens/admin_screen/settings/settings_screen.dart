@@ -338,13 +338,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (context) => const GifCardScreen())),
       ),
-      _buildSettingButton(
-        context: context,
-        label: "تنظیمات پنل‌ها",
-        icon: Icons.dns_outlined,
-        onPressed: () => Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const PannelScreen())),
-      ),
+      // _buildSettingButton(
+      //   context: context,
+      //   label: "تنظیمات پنل‌ها",
+      //   icon: Icons.dns_outlined,
+      //   onPressed: () => Navigator.push(context,
+      //       MaterialPageRoute(builder: (context) => const PannelScreen())),
+      // ),
       _buildSettingButton(
         context: context,
         label: "پشتیبانی و سوالات",

@@ -364,25 +364,25 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       ));
     }
 
-    actionsWidgetList.add(ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.orangeAccent.withValues(alpha: 0.8),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onPressed: () {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EditProductDetailsScreen(
-                selectedProductCategory: widget.selectedProductCategory,
-              ),
-            )).whenComplete(() => _fillData());
-      },
-      icon: const Icon(Icons.edit_outlined),
-      label: const Text("ویرایش بسته"),
-    ));
+    // actionsWidgetList.add(ElevatedButton.icon(
+    //   style: ElevatedButton.styleFrom(
+    //     backgroundColor: Colors.orangeAccent.withValues(alpha: 0.8),
+    //     foregroundColor: Colors.white,
+    //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    //   ),
+    //   onPressed: () {
+    //     Navigator.push(
+    //         context,
+    //         MaterialPageRoute(
+    //           builder: (context) => EditProductDetailsScreen(
+    //             selectedProductCategory: widget.selectedProductCategory,
+    //           ),
+    //         )).whenComplete(() => _fillData());
+    //   },
+    //   icon: const Icon(Icons.edit_outlined),
+    //   label: const Text("ویرایش بسته"),
+    // ));
 
     if (_lastUserBoughtWidgetList.isEmpty) {
       actionsWidgetList.add(ElevatedButton.icon(
@@ -867,32 +867,32 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       ),
       child: Row(
         children: <Widget>[
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditProductDetailsScreen(
-                        selectedProductCategory: widget.selectedProductCategory,
-                      ),
-                    )).whenComplete(() => _fillData());
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppStyle.primaryColor.withValues(alpha: 0.2),
-                foregroundColor: AppStyle.primaryColor,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: AppStyle.primaryColor)),
-              ),
-              icon: const Icon(Icons.edit_outlined, size: 20),
-              label: const Text("ویرایش",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-          const SizedBox(width: 12),
+          // Expanded(
+          //   child: ElevatedButton.icon(
+          //     onPressed: () {
+          //       Navigator.push(
+          //           context,
+          //           MaterialPageRoute(
+          //             builder: (context) => EditProductDetailsScreen(
+          //               selectedProductCategory: widget.selectedProductCategory,
+          //             ),
+          //           )).whenComplete(() => _fillData());
+          //     },
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: AppStyle.primaryColor.withValues(alpha: 0.2),
+          //       foregroundColor: AppStyle.primaryColor,
+          //       elevation: 0,
+          //       padding: const EdgeInsets.symmetric(vertical: 12),
+          //       shape: RoundedRectangleBorder(
+          //           borderRadius: BorderRadius.circular(12),
+          //           side: BorderSide(color: AppStyle.primaryColor)),
+          //     ),
+          //     icon: const Icon(Icons.edit_outlined, size: 20),
+          //     label: const Text("ویرایش",
+          //         style: TextStyle(fontWeight: FontWeight.bold)),
+          //   ),
+          // ),
+          // const SizedBox(width: 12),
           Expanded(
             flex: 2,
             child: ElevatedButton.icon(
