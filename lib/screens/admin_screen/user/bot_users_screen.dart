@@ -51,12 +51,12 @@ class _BotUsersScreenState extends State<BotUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppStyle.bgColor,
-        body: SafeArea(
-          child: _showData == false
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: AppStyle.bgColor,
+          body: _showData == false
               ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

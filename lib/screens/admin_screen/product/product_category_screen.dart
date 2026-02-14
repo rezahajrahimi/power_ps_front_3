@@ -36,6 +36,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
+  final _sampleInboundEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
@@ -59,6 +60,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
     _ipLimitEditText.dispose();
+    _sampleInboundEditText.dispose();
     _selectedPannelName = "";
     _pannelNameList.clear();
     // _categoryTypeListName.clear();
@@ -75,11 +77,11 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   Widget build(BuildContext context) {
     // Provider.of<ProductCategoryProvider>(context, listen: false);
     // // _fillData();
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          body: SingleChildScrollView(
               primary: false,
               child: Padding(
                 padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -89,10 +91,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                   ],
                 ),
               )),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }
@@ -593,6 +595,13 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _sampleInboundEditText,
+                                  label: 'کانفیگ نمونه',
+                                  icon: Icons.text_fields,
+                                  keyboardType: TextInputType.text,
+                                ),
                               ],
                               const SizedBox(height: 20),
                               Container(
@@ -758,6 +767,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         ipLimit: _ipLimitEditText.text.isNotEmpty
             ? int.tryParse(_ipLimitEditText.text)
             : 0,
+        sampleInbound: _sampleInboundEditText.text,
       );
 
       if (val) {

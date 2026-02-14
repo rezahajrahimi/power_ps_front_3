@@ -80,24 +80,24 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context,
-            title:
-                "تراکنش  ${widget.item.accountId} - ${widget.item.botUser?.username ?? ''}"),
-        body: SafeArea(
-          child: _isLoading
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context,
+              title:
+                  "تراکنش  ${widget.item.accountId} - ${widget.item.botUser?.username ?? ''}"),
+          body: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                   padding: EdgeInsets.all(AppStyle.defaultPadding),
                   child: _content(context),
                 ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : null,
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : null,
       ),
     );
   }

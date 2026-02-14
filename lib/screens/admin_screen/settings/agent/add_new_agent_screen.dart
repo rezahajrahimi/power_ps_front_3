@@ -59,13 +59,13 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar:
-            appBarWithBackButton(context: context, title: "افزودن دستیار فروش"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "افزودن دستیار فروش"),
+          body: SingleChildScrollView(
             primary: false,
             child: Padding(
               padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -81,10 +81,10 @@ class _AddNewAgentScreenState extends State<AddNewAgentScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }

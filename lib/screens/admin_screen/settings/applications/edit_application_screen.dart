@@ -44,15 +44,15 @@ class _EditApplicationScreenState extends State<EditApplicationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-          context: context,
-          title: "ویرایش اپلیکیشن ${widget.application.name}",
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+            context: context,
+            title: "ویرایش اپلیکیشن ${widget.application.name}",
+          ),
+          body: SingleChildScrollView(
             primary: false,
             child: Padding(
               padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -70,10 +70,10 @@ class _EditApplicationScreenState extends State<EditApplicationScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }

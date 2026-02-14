@@ -142,74 +142,78 @@ class _FastEditProductCategoriesScreenState
   @override
   Widget build(BuildContext context) {
     bool isMobile = Responsive.isMobile(context);
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-          context: context,
-          title: "ویرایش سریع بسته‌ها",
-          actions: [
-            if (_changes.isNotEmpty)
-              IconButton(
-                onPressed: _saveAllChanges,
-                icon: Icon(Icons.save, color: Colors.green),
-                tooltip: "ذخیره همه تغییرات",
-              ),
-            IconButton(
-              onPressed: _updatePricesByTether,
-              icon: Icon(Icons.currency_exchange, color: Colors.blue),
-              tooltip: "به‌روزرسانی قیمت‌ها بر اساس دلار",
-            ),
-            IconButton(
-              onPressed: _refreshData,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.refresh),
-              tooltip: "بروزرسانی لیست",
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(isMobile ? 10 : AppStyle.defaultPadding),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'جستجو در نام بسته یا لوکیشن...',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: AppStyle.secondaryColor,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+            context: context,
+            title: "ویرایش سریع بسته‌ها",
+            actions: [
+              if (_changes.isNotEmpty)
+                IconButton(
+                  onPressed: _saveAllChanges,
+                  icon: Icon(Icons.save, color: Colors.green),
+                  tooltip: "ذخیره همه تغییرات",
                 ),
-                onChanged: (value) => setState(() => _searchQuery = value),
+              IconButton(
+                onPressed: _updatePricesByTether,
+                icon: Icon(Icons.currency_exchange, color: Colors.blue),
+                tooltip: "به‌روزرسانی قیمت‌ها بر اساس دلار",
               ),
-            ),
-            Expanded(
-              child: _filteredList.isEmpty
-                  ? const Center(child: Text("بسته‌ای یافت نشد"))
-                  : ListView.builder(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 10 : AppStyle.defaultPadding),
-                      itemCount: _filteredList.length,
-                      itemBuilder: (context, index) {
-                        return FastEditableProductCategoryWidget(
-                          key: ValueKey(
-                              '${_filteredList[index].id}_$_rebuildCounter'),
-                          productCategory: _filteredList[index],
-                          onChanged: (updated) =>
-                              setState(() => _changes[updated.id] = updated),
-                        );
-                      },
+              IconButton(
+                onPressed: _refreshData,
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.refresh),
+                tooltip: "بروزرسانی لیست",
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              Padding(
+                padding:
+                    EdgeInsets.all(isMobile ? 10 : AppStyle.defaultPadding),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'جستجو در نام بسته یا لوکیشن...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: AppStyle.secondaryColor,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
                     ),
-            ),
-          ],
+                  ),
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                ),
+              ),
+              Expanded(
+                child: _filteredList.isEmpty
+                    ? const Center(child: Text("بسته‌ای یافت نشد"))
+                    : ListView.builder(
+                        padding: EdgeInsets.symmetric(
+                            horizontal:
+                                isMobile ? 10 : AppStyle.defaultPadding),
+                        itemCount: _filteredList.length,
+                        itemBuilder: (context, index) {
+                          return FastEditableProductCategoryWidget(
+                            key: ValueKey(
+                                '${_filteredList[index].id}_$_rebuildCounter'),
+                            productCategory: _filteredList[index],
+                            onChanged: (updated) =>
+                                setState(() => _changes[updated.id] = updated),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

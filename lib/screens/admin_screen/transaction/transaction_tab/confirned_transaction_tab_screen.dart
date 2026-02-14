@@ -49,12 +49,12 @@ class _ConfirmedTransactionTabState extends State<ConfirmedTransactionTab>
     super.build(context);
     _transactionProvider = Provider.of<TransactionProvider>(context);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: RefreshIndicator(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: RefreshIndicator(
             onRefresh: () async => _fillData(refresh: true),
             child: _transactionProvider.showConfirmedTransaction == false
                 ? const Center(child: CircularProgressIndicator())

@@ -36,6 +36,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
+  final _sampleInboundEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
@@ -57,20 +58,21 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
     _ipLimitEditText.dispose();
+    _sampleInboundEditText.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-          context: context,
-          title: "ویرایش ${widget.selectedProductCategory.categoryName}",
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+            context: context,
+            title: "ویرایش ${widget.selectedProductCategory.categoryName}",
+          ),
+          body: SingleChildScrollView(
             primary: false,
             child: Padding(
               padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -92,10 +94,10 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }
@@ -151,6 +153,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
             widget.selectedProductCategory.inboundId?.toString() ?? "";
         _ipLimitEditText.text =
             widget.selectedProductCategory.ipLimit?.toString() ?? "0";
+        _sampleInboundEditText.text =
+            widget.selectedProductCategory.sampleInbound?.toString() ?? "";
         _rechargable = widget.selectedProductCategory.rechargable;
         _showSubscriptionLink =
             widget.selectedProductCategory.showSubscriptionLink;
@@ -314,6 +318,12 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         textHint: "محدودیت IP (0 برای بدون محدودیت)",
         validationError: "محدودیت IP را وارد کنید.",
         keyboardType: TextInputType.number,
+      ));
+      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+        controller: _sampleInboundEditText,
+        textHint: "کانفیگ نمونه",
+        validationError: "کانفیگ نمونه را وارد کنید.",
+        keyboardType: TextInputType.text,
       ));
     }
 
@@ -482,7 +492,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
               : null,
           ipLimit: _ipLimitEditText.text.isNotEmpty
               ? int.tryParse(_ipLimitEditText.text)
-              : 0);
+              : 0,
+          sampleInbound: _sampleInboundEditText.text);
 
       if (res) {
         if (context.mounted) {

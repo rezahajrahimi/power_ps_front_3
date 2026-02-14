@@ -32,13 +32,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context, title: "بازاریابی و لینک دعوت"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context, title: "بازاریابی و لینک دعوت"),
+          body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             child: _showData == false
@@ -166,7 +166,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
               width: double.infinity,
               child: Column(
                 children: [
-                 
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(

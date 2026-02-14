@@ -45,6 +45,7 @@ Future addNewProductCategory({
   required bool showSubscriptionLink,
   int? inboundId,
   int? ipLimit,
+  String? sampleInbound,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/addNewProductCategory",
@@ -61,6 +62,7 @@ Future addNewProductCategory({
           "show_subscription_link": showSubscriptionLink,
           "inbound_id": inboundId,
           "ip_limit": ipLimit,
+          "sample_inbound": sampleInbound,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -107,6 +109,7 @@ Future<bool> editProductCategory({
   required bool isActive,
   int? inboundId,
   int? ipLimit,
+  String? sampleInbound,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/editProductCategory",
@@ -124,6 +127,7 @@ Future<bool> editProductCategory({
           "id": id,
           "inbound_id": inboundId,
           "ip_limit": ipLimit,
+          "sample_inbound": sampleInbound,
         },
         options: Options(headers: {
           'Accept': 'application/json',

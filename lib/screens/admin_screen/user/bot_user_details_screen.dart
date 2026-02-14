@@ -57,12 +57,13 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(context: context, title: "اطلاعات کاربر"),
-        body: SafeArea(
-          child: _showData == false
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar:
+              appBarWithBackButton(context: context, title: "اطلاعات کاربر"),
+          body: _showData == false
               ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

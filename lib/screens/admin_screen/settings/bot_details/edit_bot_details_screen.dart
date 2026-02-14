@@ -30,17 +30,17 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: _showData == true
-          ? Scaffold(
-              appBar: appBarWithBackButton(
-                  context: context, title: "ویرایش اطلاعات ربات"),
-              bottomNavigationBar: Responsive.isMobile(context)
-                  ? _buildBottomNavigationBar(context)
-                  : const Opacity(opacity: 1),
-              body: SafeArea(
-                child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: _showData == true
+            ? Scaffold(
+                appBar: appBarWithBackButton(
+                    context: context, title: "ویرایش اطلاعات ربات"),
+                bottomNavigationBar: Responsive.isMobile(context)
+                    ? _buildBottomNavigationBar(context)
+                    : const Opacity(opacity: 1),
+                body: SingleChildScrollView(
                   primary: false,
                   padding: EdgeInsets.all(AppStyle.defaultPadding),
                   child: _showData == false
@@ -50,9 +50,12 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
                           child: Center(child: CircularProgressIndicator()))
                       : _content(context),
                 ),
-              ),
-            )
-          : const CircularProgressIndicator(),
+              )
+            : const SizedBox(
+                width: 50,
+                height: 50,
+                child: Center(child: CircularProgressIndicator())),
+      ),
     );
   }
 

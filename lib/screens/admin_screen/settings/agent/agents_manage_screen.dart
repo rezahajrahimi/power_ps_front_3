@@ -41,14 +41,14 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
   Widget build(BuildContext context) {
     // _fillData();
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: appBarWithBackButton(
-            context: context,
-            title: "دستیاران فروش (اکانتهای نقره ای و طلایی)"),
-        body: SafeArea(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(
+              context: context,
+              title: "دستیاران فروش (اکانتهای نقره ای و طلایی)"),
+          body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
             child: _showData == false
@@ -61,10 +61,10 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
                   )
                 : _content(context),
           ),
+          bottomNavigationBar: Responsive.isMobile(context)
+              ? _buildBottomNavigationBar(context)
+              : const Opacity(opacity: 1),
         ),
-        bottomNavigationBar: Responsive.isMobile(context)
-            ? _buildBottomNavigationBar(context)
-            : const Opacity(opacity: 1),
       ),
     );
   }

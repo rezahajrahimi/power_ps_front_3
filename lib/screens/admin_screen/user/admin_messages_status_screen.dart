@@ -48,114 +48,118 @@ class _AdminMessagesStatusScreenState extends State<AdminMessagesStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppStyle.bgColor,
-        appBar: AppBar(
-          backgroundColor: AppStyle.secondaryColor,
-          title: const Text("وضعیت پیام‌های ارسالی",
-              style: TextStyle(color: Colors.white)),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: () => _fetchMessages(page: _currentPage),
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: AppStyle.bgColor,
+          appBar: AppBar(
+            backgroundColor: AppStyle.secondaryColor,
+            title: const Text("وضعیت پیام‌های ارسالی",
+                style: TextStyle(color: Colors.white)),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _messages.isEmpty
-                ? const Center(
-                    child: Text("هیچ پیامی یافت نشد",
-                        style: TextStyle(color: Colors.white70)))
-                : Column(
-                    children: [
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            int crossAxisCount = 1;
-                            if (constraints.maxWidth > 1200) {
-                              crossAxisCount = 3;
-                            } else if (constraints.maxWidth > 800) {
-                              crossAxisCount = 2;
-                            }
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: () => _fetchMessages(page: _currentPage),
+              ),
+            ],
+          ),
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _messages.isEmpty
+                  ? const Center(
+                      child: Text("هیچ پیامی یافت نشد",
+                          style: TextStyle(color: Colors.white70)))
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              int crossAxisCount = 1;
+                              if (constraints.maxWidth > 1200) {
+                                crossAxisCount = 3;
+                              } else if (constraints.maxWidth > 800) {
+                                crossAxisCount = 2;
+                              }
 
-                            if (crossAxisCount > 1) {
-                              return GridView.builder(
+                              if (crossAxisCount > 1) {
+                                return GridView.builder(
+                                  padding:
+                                      EdgeInsets.all(AppStyle.defaultPadding),
+                                  itemCount: _messages.length,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: AppStyle.defaultPadding,
+                                    mainAxisSpacing: AppStyle.defaultPadding,
+                                    mainAxisExtent:
+                                        560, // افزایش ارتفاع برای جلوگیری از سرریزی
+                                  ),
+                                  itemBuilder: (context, index) {
+                                    final msg = _messages[index];
+                                    return _buildMessageCard(msg);
+                                  },
+                                );
+                              }
+
+                              return ListView.builder(
                                 padding:
                                     EdgeInsets.all(AppStyle.defaultPadding),
                                 itemCount: _messages.length,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxisCount,
-                                  crossAxisSpacing: AppStyle.defaultPadding,
-                                  mainAxisSpacing: AppStyle.defaultPadding,
-                                  mainAxisExtent:
-                                      560, // افزایش ارتفاع برای جلوگیری از سرریزی
-                                ),
                                 itemBuilder: (context, index) {
                                   final msg = _messages[index];
                                   return _buildMessageCard(msg);
                                 },
                               );
-                            }
-
-                            return ListView.builder(
-                              padding: EdgeInsets.all(AppStyle.defaultPadding),
-                              itemCount: _messages.length,
-                              itemBuilder: (context, index) {
-                                final msg = _messages[index];
-                                return _buildMessageCard(msg);
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                      if (_lastPage > 1)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              vertical: AppStyle.defaultPadding),
-                          color: AppStyle.secondaryColor,
-                          child: Pagination(
-                            numOfPages: _lastPage,
-                            selectedPage: _currentPage,
-                            pagesVisible: 5,
-                            onPageChanged: (page) => _fetchMessages(page: page),
-                            nextIcon: const Icon(Icons.arrow_forward_ios,
-                                color: Colors.white, size: 14),
-                            previousIcon: const Icon(Icons.arrow_back_ios,
-                                color: Colors.white, size: 14),
-                            activeTextStyle: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                            activeBtnStyle: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all(
-                                  AppStyle.primaryColor),
-                              shape: WidgetStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                            inactiveBtnStyle: ButtonStyle(
-                              shape: WidgetStateProperty.all(
-                                  RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              )),
-                              backgroundColor: WidgetStateProperty.all(
-                                  Colors.white.withValues(alpha: 0.05)),
-                            ),
-                            inactiveTextStyle:
-                                const TextStyle(color: Colors.white70),
+                            },
                           ),
                         ),
-                    ],
-                  ),
+                        if (_lastPage > 1)
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                vertical: AppStyle.defaultPadding),
+                            color: AppStyle.secondaryColor,
+                            child: Pagination(
+                              numOfPages: _lastPage,
+                              selectedPage: _currentPage,
+                              pagesVisible: 5,
+                              onPageChanged: (page) =>
+                                  _fetchMessages(page: page),
+                              nextIcon: const Icon(Icons.arrow_forward_ios,
+                                  color: Colors.white, size: 14),
+                              previousIcon: const Icon(Icons.arrow_back_ios,
+                                  color: Colors.white, size: 14),
+                              activeTextStyle: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                              activeBtnStyle: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all(
+                                    AppStyle.primaryColor),
+                                shape: WidgetStateProperty.all(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                              inactiveBtnStyle: ButtonStyle(
+                                shape: WidgetStateProperty.all(
+                                    RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                )),
+                                backgroundColor: WidgetStateProperty.all(
+                                    Colors.white.withValues(alpha: 0.05)),
+                              ),
+                              inactiveTextStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                      ],
+                    ),
+        ),
       ),
     );
   }
