@@ -17,7 +17,7 @@ import 'package:powerps/screens/admin_screen/settings/payment_type/payment_type_
 import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/reports/group_operations_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
-import 'package:powerps/screens/admin_screen/settings/test_accounts/edit_test_account_details_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/test_accounts/test_account_management_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
 import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -389,7 +389,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => const EditTestAccountDetailsScreen())),
+                builder: (context) => const TestAccountManagementScreen())),
       ),
       _buildSettingButton(
         context: context,
