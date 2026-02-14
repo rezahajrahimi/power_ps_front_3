@@ -36,6 +36,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
+  final _sampleInboundEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
@@ -59,6 +60,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
     _ipLimitEditText.dispose();
+    _sampleInboundEditText.dispose();
     _selectedPannelName = "";
     _pannelNameList.clear();
     // _categoryTypeListName.clear();
@@ -593,6 +595,13 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _sampleInboundEditText,
+                                  label: 'کانفیگ نمونه',
+                                  icon: Icons.text_fields,
+                                  keyboardType: TextInputType.text,
+                                ),
                               ],
                               const SizedBox(height: 20),
                               Container(
@@ -758,6 +767,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         ipLimit: _ipLimitEditText.text.isNotEmpty
             ? int.tryParse(_ipLimitEditText.text)
             : 0,
+        sampleInbound: _sampleInboundEditText.text,
       );
 
       if (val) {

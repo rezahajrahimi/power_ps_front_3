@@ -18,6 +18,7 @@ class ProductCategory {
   bool isActive = true;
   int? inboundId;
   int? ipLimit;
+  String? sampleInbound;
   Pannel? pannel;
   AgentAddCategoriyModel? agentAddCategoriyModel;
 
@@ -36,6 +37,7 @@ class ProductCategory {
     required this.isActive,
     this.inboundId,
     this.ipLimit,
+    this.sampleInbound,
     this.pannel,
     this.agentAddCategoriyModel,
   });
@@ -55,6 +57,7 @@ class ProductCategory {
     bool? isActive,
     int? inboundId,
     int? ipLimit,
+    String? sampleInbound,
     AgentAddCategoriyModel? agentAddCategoriyModel,
     Pannel? pannel,
   }) {
@@ -73,6 +76,7 @@ class ProductCategory {
       isActive: isActive ?? this.isActive,
       inboundId: inboundId ?? this.inboundId,
       ipLimit: ipLimit ?? this.ipLimit,
+      sampleInbound: sampleInbound ?? this.sampleInbound,
       agentAddCategoriyModel:
           agentAddCategoriyModel ?? this.agentAddCategoriyModel,
       pannel: pannel ?? this.pannel,
@@ -95,6 +99,7 @@ class ProductCategory {
       'isActive': isActive,
       'inbound_id': inboundId,
       'ip_limit': ipLimit,
+      'sample_inbound': sampleInbound,
       // 'agentAddCategoriyModel': agentAddCategoriyModel?.toMap(),
       // 'pannel': pannel?,
     };
@@ -116,6 +121,7 @@ class ProductCategory {
         isActive: map['is_active'] == 1 ? true : false,
         inboundId: map['inbound_id']?.toInt(),
         ipLimit: map['ip_limit']?.toInt(),
+        sampleInbound: map['sample_inbound']?.toString(),
         pannel: map['pannel'] != null ? Pannel.fromJson(map['pannel']) : null,
         agentAddCategoriyModel: map['agentAddCategoriyModel'] != null
             ? AgentAddCategoriyModel.fromMap(map['agentAddCategoriyModel'])
