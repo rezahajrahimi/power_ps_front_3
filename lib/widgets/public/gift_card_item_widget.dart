@@ -131,6 +131,19 @@ class _GiftCarfItemInfoWidgetState extends State<GiftCarfItemInfoWidget> {
                   child: Icon(Icons.delete_forever, color: Colors.red),
                 ),
               ),
+              const SizedBox(
+                height: 10,
+              ),
+              GestureDetector(
+                onTap: () async {
+                  await _openUsersDialog(context: context);
+                },
+                child: const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: Icon(Icons.people, color: Colors.blue),
+                ),
+              ),
             ],
           )
         ],
@@ -172,8 +185,8 @@ class _GiftCarfItemInfoWidgetState extends State<GiftCarfItemInfoWidget> {
                           keyboardType: TextInputType.text,
                           textInputAction: TextInputAction.next,
                           maxLines: null,
-                          decoration:
-                              const InputDecoration(labelText: "مبلغ گیفت کارت (تومان)"),
+                          decoration: const InputDecoration(
+                              labelText: "مبلغ گیفت کارت (تومان)"),
                         ),
                         const Text("محدودیت استفاده(عدد)"),
                         TextFormField(
@@ -415,5 +428,63 @@ class _GiftCarfItemInfoWidgetState extends State<GiftCarfItemInfoWidget> {
                 ),
               ],
             )));
+  }
+
+  _openUsersDialog({required BuildContext context}) async {
+    EasyLoading.show();
+    var users = await getGiftCardUsers(code: widget.giftCard.code);
+    EasyLoading.dismiss();
+    if (users != null && users.isNotEmpty) {
+      showDialog(
+          context: context,
+          builder: (context) => Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: Text("کاربران استفاده کننده از ${widget.giftCard.code}"),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: users.length,
+                    itemBuilder: (context, index) {
+                      var user = users[index]['user'];
+                      var createdAt = users[index]['created_at'];
+                      DateTime? dateTime;
+                      if (createdAt != null) {
+                        dateTime = DateTime.parse(createdAt);
+                      }
+                      return ListTile(
+                        title: Text(user['first_name'] ?? 'بدون نام'),
+                        subtitle:
+                            Text('@${user['username'] ?? 'بدون یوزرنیم'}'),
+                        trailing: Text(dateTime != null
+                            ? dateTime.toPersianDate()
+                            : 'بدون تاریخ'),
+                      );
+                    },
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("بستن")),
+                ],
+              )));
+    } else {
+      showDialog(
+          context: context,
+          builder: (context) => Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: const Text("کاربران"),
+                content: const Text(
+                    "هیچ کاربری از این گیفت کارت استفاده نکرده است."),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("بستن")),
+                ],
+              )));
+    }
   }
 }
