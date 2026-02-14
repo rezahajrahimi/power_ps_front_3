@@ -135,3 +135,55 @@ Future<List<ReferralLogModel>?> getReferralLogsByAccountId(
     return null;
   }
 }
+
+Future<List<ReferralLogModel>?> getAllReferralLogs() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/getAllReferralLogs",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data != null) {
+      List<ReferralLogModel> list = [];
+      for (var i in response.data) {
+        list.add(ReferralLogModel.fromMap(i));
+      }
+      return list;
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<List<Map<String, dynamic>>?> getTopReferrers() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/getTopReferrers",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data != null) {
+      List<Map<String, dynamic>> list = [];
+      for (var i in response.data) {
+        list.add(i);
+      }
+      return list;
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}

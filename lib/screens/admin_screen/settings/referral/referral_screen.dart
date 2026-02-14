@@ -8,6 +8,7 @@ import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'referral_logs_screen.dart';
 
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({super.key});
@@ -220,6 +221,23 @@ class _ReferralScreenState extends State<ReferralScreen> {
         },
         icon: const Icon(Icons.edit),
         label: const Text("ویرایش"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ReferralLogsScreen()),
+          );
+        },
+        icon: const Icon(Icons.list),
+        label: const Text("لاگ‌ها"),
       ));
     });
     return Container(
