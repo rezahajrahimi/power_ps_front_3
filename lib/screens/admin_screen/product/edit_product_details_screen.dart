@@ -322,10 +322,12 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _sampleInboundEditText,
         textHint: "کانفیگ نمونه",
-        validationError: "کانفیگ نمونه را وارد کنید.",
+        validationError: "",
         keyboardType: TextInputType.text,
       ));
     }
+
+    // همیشه sampleInbound را نمایش بده
 
     _productDetailsWidgetLIst.add(Container(
       margin: EdgeInsets.only(top: AppStyle.defaultPadding),

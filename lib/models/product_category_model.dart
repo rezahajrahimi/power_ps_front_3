@@ -133,7 +133,7 @@ class ProductCategory {
 
   @override
   String toString() {
-    return 'ProductCategory(id: $id, pannelId: $pannelId, categoryName: $categoryName, price: $price, priceInDollar: $priceInDollar, expireDay: $expireDay, volume: $volume, rechargable: $rechargable, showSubscriptionLink: $showSubscriptionLink, showPannelLink: $showPannelLink, isActive: $isActive, agentAddCategoriyModel: $agentAddCategoriyModel)';
+    return 'ProductCategory(id: $id, pannelId: $pannelId, categoryName: $categoryName, price: $price, priceInDollar: $priceInDollar, expireDay: $expireDay, volume: $volume, rechargable: $rechargable, showSubscriptionLink: $showSubscriptionLink, showPannelLink: $showPannelLink, isActive: $isActive, sampleInbound: $sampleInbound, agentAddCategoriyModel: $agentAddCategoriyModel)';
   }
 
   @override
@@ -153,6 +153,9 @@ class ProductCategory {
         other.showSubscriptionLink == showSubscriptionLink &&
         other.showPannelLink == showPannelLink &&
         other.isActive == isActive &&
+        other.inboundId == inboundId &&
+        other.ipLimit == ipLimit &&
+        other.sampleInbound == sampleInbound &&
         other.agentAddCategoriyModel == agentAddCategoriyModel;
   }
 
@@ -170,6 +173,9 @@ class ProductCategory {
         showSubscriptionLink.hashCode ^
         showPannelLink.hashCode ^
         isActive.hashCode ^
+        inboundId.hashCode ^
+        ipLimit.hashCode ^
+        sampleInbound.hashCode ^
         agentAddCategoriyModel.hashCode;
   }
 }

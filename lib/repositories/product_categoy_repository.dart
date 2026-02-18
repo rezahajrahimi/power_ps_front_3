@@ -18,7 +18,9 @@ Future getAllProdctCategory() async {
     if (response.statusCode == 200) {
       productCategoryList.clear();
       var data = response.data;
+      debugPrint("API Response: $data");
       for (var i in data) {
+        debugPrint("Product item: $i");
         productCategoryList.add(ProductCategory.fromMap(i));
       }
 
@@ -138,9 +140,11 @@ Future<bool> editProductCategory({
         }));
 
     if (response.statusCode == 200 && response.data != null) {
+      debugPrint("Edit response: ${response.data}");
       productCategoryList.clear();
       var data = response.data;
       for (var i in data) {
+        debugPrint("Updated product: $i");
         productCategoryList.add(ProductCategory.fromMap(i));
       }
       return true;
