@@ -19,6 +19,8 @@ import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/user_group_selector_widget.dart';
+import 'package:powerps/widgets/public/user_verification_toggle_widget.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -138,6 +140,28 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   children: [
                     _mainInfoItemCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
+                    if (_botUser?.panelUser != null &&
+                        _botUser!.panelUser!.role == 'user')
+                      UserVerificationToggleWidget(
+                        userId: _botUser!.panelUser!.id,
+                        isVerified: _botUser!.panelUser!.isVerified,
+                        onChanged: _fillData,
+                      ),
+                    if (_botUser?.panelUser != null &&
+                        _botUser!.panelUser!.role == 'user')
+                      SizedBox(height: AppStyle.defaultPadding),
+                    if (_botUser?.panelUser != null &&
+                        (_botUser!.panelUser!.role == 'user' ||
+                            _botUser!.panelUser!.role == 'agent'))
+                      UserGroupSelectorWidget(
+                        userId: _botUser!.panelUser!.id,
+                        roleType: _botUser!.panelUser!.role,
+                        currentGroupId: _botUser!.panelUser!.userGroupId,
+                      ),
+                    if (_botUser?.panelUser != null &&
+                        (_botUser!.panelUser!.role == 'user' ||
+                            _botUser!.panelUser!.role == 'agent'))
+                      SizedBox(height: AppStyle.defaultPadding),
                     if (Responsive.isMobile(context))
                       _accountBallanceInfoCard(context),
                     if (Responsive.isMobile(context))

@@ -14,6 +14,7 @@ import 'package:powerps/screens/admin_screen/settings/gif_card/gif_card_details_
 import 'package:powerps/screens/admin_screen/settings/main_menu_item/main_menu_item_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/pannel_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/payment_type/payment_type_details_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/user_groups/user_groups_manage_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/reports/group_operations_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
@@ -330,6 +331,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: Icons.credit_card_outlined,
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (context) => const PaymentTypeScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "دسته‌بندی کاربران",
+        icon: Icons.groups_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const UserGroupsManageScreen())),
       ),
       _buildSettingButton(
         context: context,

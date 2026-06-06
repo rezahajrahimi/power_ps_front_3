@@ -6,6 +6,7 @@ import 'package:powerps/models/log_model.dart';
 import 'package:powerps/models/product_details_model.dart';
 import 'package:powerps/models/referral_wallet_model.dart';
 import 'package:powerps/models/transaction_model.dart';
+import 'package:powerps/models/user_model.dart';
 
 class BotUser {
   BigInt id;
@@ -20,7 +21,8 @@ class BotUser {
   List<Transaction>? transactions = [];
   Ballance? ballance;
   ReferralWalletModel? referralWallet;
-  BlockedUserModel? blockedUser;  
+  BlockedUserModel? blockedUser;
+  User? panelUser;
   BotUser(
       {required this.id,
       required this.accountId,
@@ -34,7 +36,8 @@ class BotUser {
       this.referralWallet,
       this.transactions,
       this.products,
-      this.blockedUser});
+      this.blockedUser,
+      this.panelUser});
   // List<Log> itemsList = List<Log>.from(json['logs'].map<Log>((dynamic i) => Log.fromJson(i)));
 
   factory BotUser.fromJson(Map<dynamic, dynamic> json) {
@@ -68,6 +71,7 @@ class BotUser {
       blockedUser: json['blocked_user'] != null
           ? BlockedUserModel.fromJson(json['blocked_user'])
           : null,
+      panelUser: json['user'] != null ? User.fromJson(json['user']) : null,
     );
   }
 

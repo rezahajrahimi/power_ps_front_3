@@ -13,6 +13,7 @@ import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/agent/agent_select_category_with_inputs_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/user_group_selector_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class EditAgentScreen extends StatefulWidget {
@@ -138,7 +139,13 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
               child: Column(
                 children: [
                   _agentInfoTabCard(context),
-                  SizedBox(width: AppStyle.defaultPadding),
+                  SizedBox(height: AppStyle.defaultPadding),
+                  UserGroupSelectorWidget(
+                    userId: widget.agent.id,
+                    roleType: 'agent',
+                    currentGroupId: widget.agent.userGroupId,
+                  ),
+                  SizedBox(height: AppStyle.defaultPadding),
                   _productInfoTabCard(context),
                   SizedBox(width: AppStyle.defaultPadding),
                   _productAddedInfoTabCard(context),

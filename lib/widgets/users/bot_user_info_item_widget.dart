@@ -131,24 +131,53 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (widget.item.username != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color:
-                                  AppStyle.primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              "@${widget.item.username}",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppStyle.primaryColor,
-                                fontWeight: FontWeight.bold,
+                        Row(
+                          children: [
+                            if (widget.item.panelUser?.role == 'user')
+                              Container(
+                                margin: const EdgeInsets.only(left: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (widget.item.panelUser!.isVerified
+                                          ? Colors.greenAccent
+                                          : Colors.orangeAccent)
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  widget.item.panelUser!.isVerified
+                                      ? 'تایید شده'
+                                      : 'تایید نشده',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: widget.item.panelUser!.isVerified
+                                        ? Colors.greenAccent
+                                        : Colors.orangeAccent,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            if (widget.item.username != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppStyle.primaryColor
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "@${widget.item.username}",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppStyle.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
