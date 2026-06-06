@@ -48,9 +48,7 @@ class _AgentSelectCategoryWithPriceInputWidgetState
           await _showActionDialog(context);
         } else {
           Provider.of<AgentProvider>(context, listen: false)
-              .removeProductAgentAded(widget.item);
-          Provider.of<AgentProvider>(context, listen: false)
-              .addNewProductAgent(widget.item.removeNewPricesValus());
+              .moveCategoryToAvailable(widget.item);
         }
 
         // agentProcider.remove(widget.item);
@@ -60,7 +58,7 @@ class _AgentSelectCategoryWithPriceInputWidgetState
         padding: EdgeInsets.all(AppStyle.defaultPadding),
         decoration: BoxDecoration(
           border: Border.all(
-              width: 2, color: AppStyle.primaryColor..withValues(alpha: 0.15)),
+              width: 2, color: AppStyle.primaryColor.withValues(alpha: 0.15)),
           borderRadius: BorderRadius.all(
             Radius.circular(AppStyle.defaultPadding),
           ),
@@ -91,7 +89,7 @@ class _AgentSelectCategoryWithPriceInputWidgetState
                         Text(
                           widget.item.productCategories!.categoryName.length >
                                   30
-                              ? "${widget.item.productCategories!.categoryName.substring(30)}..."
+                              ? "${widget.item.productCategories!.categoryName.substring(0, 30)}..."
                               : widget.item.productCategories!.categoryName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -165,57 +163,74 @@ class _AgentSelectCategoryWithPriceInputWidgetState
   }
 
   _showActionDialog(BuildContext context) {
-    // create a dialog
     _priceInDollarController.text = widget.item.priceInDollar.toString();
     _priceInTomanController.text = widget.item.price.toString();
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
           title: Text(
               "قیمت بسته ${widget.item.productCategories!.categoryName} را برای دستیار فروش وارد کنید"),
           content: SizedBox(
-            height: 200,
-            child: Column(
-              children: [
-                Form(
-                  key: _formKey,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  child: Column(
-                    children: [
-                      const Text(
-                        "قیمت به تومان",
-                      ),
-                      TextFormField(
-                        controller: _priceInTomanController,
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "لطفا قیمت را وارد کنید";
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      const Text(
-                        "قیمت به دلار",
-                      ),
-                      TextFormField(
-                        controller: _priceInDollarController,
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "لطفا قیمت را به دلار وارد کنید";
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
+            height: 260,
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "قیمت اصلی: ${thousandSeperatorFormatter(widget.item.price.toString())} تومان / ${thousandSeperatorFormatter(widget.item.priceInDollar.toString())}\$",
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  const Text("قیمت به تومان"),
+                  TextFormField(
+                    controller: _priceInTomanController,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setDialogState(() {}),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "لطفا قیمت را وارد کنید";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  const Text("قیمت به دلار"),
+                  TextFormField(
+                    controller: _priceInDollarController,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setDialogState(() {}),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "لطفا قیمت را به دلار وارد کنید";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Builder(builder: (context) {
+                    final toman = int.tryParse(_priceInTomanController.text);
+                    if (toman == null || widget.item.price == 0) {
+                      return const SizedBox.shrink();
+                    }
+                    final diff = ((widget.item.price - toman) / widget.item.price * 100);
+                    final label = diff >= 0
+                        ? "تخفیف: ${diff.toStringAsFixed(1)}٪"
+                        : "افزایش: ${(-diff).toStringAsFixed(1)}٪";
+                    return Text(
+                      label,
+                      style: TextStyle(
+                        color: diff >= 0 ? Colors.greenAccent : Colors.orangeAccent,
+                        fontSize: 13,
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
           actions: <Widget>[
@@ -230,15 +245,13 @@ class _AgentSelectCategoryWithPriceInputWidgetState
               child: const Text("تایید"),
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  // if (widget.type == "add") {
                   Provider.of<AgentProvider>(context, listen: false)
-                      .removeProductAgent(widget.item);
-                  Provider.of<AgentProvider>(context, listen: false)
-                      .addNewProductAgentAded(
+                      .moveCategoryToAdded(
                     widget.item.setNewPricesValus(
-                        newPrice: int.parse(_priceInTomanController.text),
-                        newPriceInDollar:
-                            double.parse(_priceInDollarController.text)),
+                      newPrice: int.parse(_priceInTomanController.text),
+                      newPriceInDollar:
+                          double.parse(_priceInDollarController.text),
+                    ),
                   );
                   Navigator.of(context).pop();
                 } else {
@@ -247,6 +260,8 @@ class _AgentSelectCategoryWithPriceInputWidgetState
               },
             ),
           ],
+        );
+          },
         );
       },
     );

@@ -79,33 +79,30 @@ Future<bool> updateUserPassword({required String password}) async {
   }
 }
 
-Future getAgents() async {
+Future<List<User>?> getAgents() async {
   try {
-    List<User> userList = [];
-
-    await GenaralApi.dio.get("/api/getAgents").then((response) {
-      if (response.statusCode == 200 && response.data != null) {
-        for (var i in response.data['agents']) {
-          User user = User.fromJson(i);
-          userList.add(user);
+    final response = await GenaralApi.dio.get("/api/getAgents");
+    if (response.statusCode == 200 && response.data != null) {
+      final agents = response.data['agents'];
+      if (agents is! List) return [];
+      final userList = <User>[];
+      for (final item in agents) {
+        try {
+          if (item is Map<String, dynamic>) {
+            userList.add(User.fromJson(item));
+          }
+        } catch (e) {
+          debugPrint('Skip invalid agent: $e');
         }
-        return userList;
-      } else if (response.statusCode == 201) {
-        return null;
-      } else if (response.statusCode == 401) {
-        return null;
-      } else if (response.statusCode == 500) {
-        return null;
-      } else {
-        return null;
       }
-    }).catchError((e) {
-      debugPrint(e.toString());
-      return null;
-    });
-    return userList;
+      return userList;
+    }
+    return null;
   } on DioException catch (e) {
     debugPrint(e.message.toString());
+    return null;
+  } catch (e) {
+    debugPrint('getAgents error: $e');
     return null;
   }
 }

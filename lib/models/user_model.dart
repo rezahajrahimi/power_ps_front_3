@@ -7,6 +7,10 @@ class User {
   final int? userGroupId;
   final String? userGroupName;
   final bool isVerified;
+  final int? agentProductsCount;
+  final int? salesCount;
+  final num? balanceToman;
+  final double? balanceDollar;
 
   User({
     required this.id,
@@ -16,18 +20,42 @@ class User {
     this.userGroupId,
     this.userGroupName,
     this.isVerified = false,
+    this.agentProductsCount,
+    this.salesCount,
+    this.balanceToman,
+    this.balanceDollar,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      accountId: json['account_id'],
-      name: json['name'],
-      role: json['role'],
-      userGroupId: json['user_group_id'],
+      id: _parseInt(json['id']),
+      accountId: _parseInt(json['account_id']),
+      name: json['name']?.toString() ?? '',
+      role: json['role']?.toString() ?? '',
+      userGroupId: json['user_group_id'] != null
+          ? _parseInt(json['user_group_id'])
+          : null,
       userGroupName: json['user_group']?['name']?.toString(),
-      isVerified: json['is_verified'] == true || json['is_verified'] == 1 || json['is_verified'] == '1',
+      isVerified: json['is_verified'] == true ||
+          json['is_verified'] == 1 ||
+          json['is_verified'] == '1',
+      agentProductsCount: json['agent_products_count'] != null
+          ? _parseInt(json['agent_products_count'])
+          : null,
+      salesCount:
+          json['sales_count'] != null ? _parseInt(json['sales_count']) : null,
+      balanceToman: json['balance_toman'] != null
+          ? num.tryParse(json['balance_toman'].toString())
+          : null,
+      balanceDollar: json['balance_dollar'] != null
+          ? double.tryParse(json['balance_dollar'].toString())
+          : null,
     );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '0') ?? 0;
   }
   
   Map<String, dynamic> toJson() {
@@ -53,15 +81,7 @@ class User {
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
-    return User(
-      id: map['id']?.toInt() ?? 0,
-      name: map['name'] ?? '',
-      accountId: map['account_id']?.toInt() ?? 0,
-      role: map['role'] ?? '',
-      userGroupId: map['user_group_id']?.toInt(),
-      userGroupName: map['user_group']?['name']?.toString(),
-      isVerified: map['is_verified'] == true || map['is_verified'] == 1 || map['is_verified'] == '1',
-    );
+    return User.fromJson(map);
   }
 
 }

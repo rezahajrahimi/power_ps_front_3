@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_dashboard_model.dart';
+import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/ballance_model.dart';
 import 'package:powerps/models/bot_user_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
@@ -136,11 +137,17 @@ Future<AgentDashboard?> getAgentDashboardData() async {
       logs.add(Log.fromJson(i));
     }
 
+    AgentPermisson? permission;
+    if (response.data["agentPermisson"] != null) {
+      permission = AgentPermisson.fromMap(response.data["agentPermisson"]);
+    }
+
     final agentDashboard = AgentDashboard(
         ballance: agentBallance,
         agentProducts: agentAddCategories,
         boughtProducts: null,
-        logs: logs);
+        logs: logs,
+        permission: permission);
     return agentDashboard;
   }
   debugPrint(response.data);

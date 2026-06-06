@@ -78,16 +78,24 @@ class AgentAddCategoriyModel {
     };
   }
 
+  static int _parsePrice(dynamic value) {
+    return double.tryParse(value?.toString() ?? '0')?.toInt() ?? 0;
+  }
+
+  static double _parsePriceDouble(dynamic value) {
+    return double.tryParse(value?.toString() ?? '0') ?? 0;
+  }
+
   factory AgentAddCategoriyModel.fromMap(Map<String, dynamic> map) {
     return AgentAddCategoriyModel(
       id: map['id']?.toInt() ?? 0,
       productCategoriesId: map['product_categories_id']?.toInt(),
       userId: map['user_id']?.toInt(),
       isActive: map['is_active'] == 1 ? true : false,
-      price: double.parse(map['price'].toString()).toInt(),
-      newPrice: double.parse(map['price'].toString()).toInt(),
-      priceInDollar: double.parse(map['price_in_dollar'].toString()),
-      newPriceInDollar: double.parse(map['price_in_dollar'].toString()),
+      price: _parsePrice(map['price']),
+      newPrice: _parsePrice(map['price']),
+      priceInDollar: _parsePriceDouble(map['price_in_dollar']),
+      newPriceInDollar: _parsePriceDouble(map['price_in_dollar']),
       productCategories: map['product_categories'] != null
           ? ProductCategory.fromMap(map['product_categories'])
           : null,
