@@ -77,9 +77,16 @@ class AgentProvider extends ChangeNotifier {
   }
 
   void selectAllCategoriesWithDefaultPrice() {
-    final toMove = List<AgentAddCategoriyModel>.from(_agentCategories);
-    _agentCategories.clear();
-    for (final item in toMove) {
+    selectCategoriesWithDefaultPrice(_agentCategories);
+  }
+
+  void selectCategoriesWithDefaultPrice(
+    Iterable<AgentAddCategoriyModel> items,
+  ) {
+    for (final item in List<AgentAddCategoriyModel>.from(items)) {
+      final index = _agentCategories.indexOf(item);
+      if (index == -1) continue;
+      _agentCategories.removeAt(index);
       _agentCategoriesAdded.add(
         item.setNewPricesValus(
           newPrice: item.price,

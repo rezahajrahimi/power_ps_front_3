@@ -6,14 +6,17 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_permisson_model.dart';
+import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/repositories/agent_manage_repository.dart';
 import 'package:powerps/repositories/agent_permission_repository.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/repositories/panel_user_repository.dart';
+import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
+import 'package:powerps/widgets/agent/agent_screen_shared.dart';
 import 'package:powerps/widgets/agent/agent_select_category_with_inputs_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/user_group_selector_widget.dart';
@@ -45,6 +48,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
   final List<User> _userList = [];
   User? _selectedUser;
   User? _copySourceAgent;
+  List<Pannel> _panels = [];
+  int? _selectedPanelId;
   bool _minusBallance = false;
   bool _deleteProducts = false;
   final TextEditingController _maxTrafficLimitationTxtController =
@@ -90,8 +95,11 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
                       onRefresh: _fillData,
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.all(AppStyle.defaultPadding),
-                        child: _content(context),
+                        padding: agentScreenPadding(context),
+                        child: agentCenteredContent(
+                          context,
+                          child: _content(context),
+                        ),
                       ),
                     ),
           bottomNavigationBar: Responsive.isMobile(context)
@@ -145,159 +153,208 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
   }
 
   Widget _content(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    final isDesktop = Responsive.isDesktop(context);
+    final gap = SizedBox(height: AppStyle.defaultPadding);
+
+    final mainColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _agentInfoCard(context),
+        gap,
+        if (widget.isCreate) ...[
+          _copyFromAgentCard(context),
+          gap,
+        ],
+        if (_selectedUser != null || !widget.isCreate) ...[
+          UserGroupSelectorWidget(
+            userId: widget.isCreate ? _selectedUser!.id : widget.agent!.id,
+            roleType: 'agent',
+            currentGroupId: widget.isCreate
+                ? _selectedUser?.userGroupId
+                : widget.agent?.userGroupId,
+          ),
+          gap,
+        ],
+        if (_panels.isNotEmpty) ...[
+          _panelFilterCard(context),
+          gap,
+        ],
+        if (isDesktop)
+          _productsSectionDesktop(context)
+        else ...[
+          _productInfoCard(context),
+          gap,
+          _productAddedCard(context),
+        ],
+        if (isMobile) ...[
+          gap,
+          _operationCard(context),
+        ],
+      ],
+    );
+
+    if (isMobile) return mainColumn;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 5,
-          child: Column(
-            children: [
-              _agentInfoCard(context),
-              SizedBox(height: AppStyle.defaultPadding),
-              if (widget.isCreate) ...[
-                _copyFromAgentCard(context),
-                SizedBox(height: AppStyle.defaultPadding),
-              ],
-              if (_selectedUser != null || !widget.isCreate) ...[
-                UserGroupSelectorWidget(
-                  userId: widget.isCreate ? _selectedUser!.id : widget.agent!.id,
-                  roleType: 'agent',
-                  currentGroupId:
-                      widget.isCreate ? _selectedUser?.userGroupId : widget.agent?.userGroupId,
-                ),
-                SizedBox(height: AppStyle.defaultPadding),
-              ],
-              _productInfoCard(context),
-              SizedBox(height: AppStyle.defaultPadding),
-              _productAddedCard(context),
-            ],
-          ),
-        ),
-        if (!Responsive.isMobile(context)) ...[
-          SizedBox(width: AppStyle.defaultPadding),
-          Expanded(flex: 2, child: _operationCard(context)),
-        ],
+        Expanded(flex: 5, child: mainColumn),
+        SizedBox(width: AppStyle.defaultPadding),
+        SizedBox(width: 260, child: _operationCard(context)),
+      ],
+    );
+  }
+
+  Widget _productsSectionDesktop(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _productInfoCard(context)),
+        const SizedBox(width: 16),
+        Expanded(child: _productAddedCard(context)),
       ],
     );
   }
 
   Widget _agentInfoCard(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final userListHeight = Responsive.isMobile(context) ? 240.0 : 320.0;
+
+    return AgentSectionCard(
+      title: 'ورود اطلاعات دستیار فروش',
+      children: [
+        if (widget.isCreate) ...[
           Text(
-            "ورود اطلاعات دستیار فروش",
-            style: Theme.of(context).textTheme.titleMedium,
+            'کاربر را انتخاب کنید',
+            textAlign: TextAlign.right,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          if (widget.isCreate) ...[
-            Text(
-              "کاربر را انتخاب کنید",
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            SizedBox(height: AppStyle.defaultPadding / 2),
-            SizedBox(
-              height: 280,
-              child: SearchableList<User>(
-                initialList: _userList,
-                shrinkWrap: false,
-                itemBuilder: (user) => ListTile(
-                  selected: _selectedUser?.id == user.id,
-                  selectedTileColor:
-                      AppStyle.primaryColor.withValues(alpha: 0.15),
-                  leading: const Icon(Icons.person),
-                  title: Text(user.name),
-                  subtitle: Text("شناسه: ${user.accountId}"),
-                  onTap: () => setState(() => _selectedUser = user),
+          SizedBox(height: AppStyle.defaultPadding / 2),
+          SizedBox(
+            height: userListHeight,
+            child: SearchableList<User>(
+              initialList: _userList,
+              shrinkWrap: false,
+              itemBuilder: (user) => ListTile(
+                selected: _selectedUser?.id == user.id,
+                selectedTileColor:
+                    AppStyle.primaryColor.withValues(alpha: 0.15),
+                leading: const Icon(Icons.person),
+                title: Text(user.name, textAlign: TextAlign.right),
+                subtitle: Text(
+                  'شناسه: ${user.accountId}',
+                  textAlign: TextAlign.right,
                 ),
-                filter: (q) => _userList
-                    .where((u) =>
-                        u.name.contains(q) ||
-                        u.accountId.toString().contains(q))
-                    .toList(),
-                emptyWidget: const Center(child: Text("کاربری یافت نشد")),
-                inputDecoration: const InputDecoration(
-                  labelText: "جستجوی کاربر",
-                  border: OutlineInputBorder(),
-                ),
+                onTap: () => setState(() => _selectedUser = user),
+              ),
+              filter: (q) => _userList
+                  .where((u) =>
+                      u.name.contains(q) ||
+                      u.accountId.toString().contains(q))
+                  .toList(),
+              emptyWidget: const Center(child: Text('کاربری یافت نشد')),
+              inputDecoration: agentRtlInputDecoration(
+                label: 'جستجوی کاربر',
+                suffixIcon: const Icon(Icons.search),
               ),
             ),
-          ] else
-            Text(
-              "در حال ویرایش مشخصات ${widget.agent!.name} (شناسه: ${widget.agent!.accountId})",
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SwitchListTile(
-            title: const Text("موجودی حساب منفی"),
-            subtitle: const Text("آیا دستیار فروش می‌تواند موجودی منفی داشته باشد؟"),
-            value: _minusBallance,
-            onChanged: (val) => setState(() => _minusBallance = val),
           ),
-          SwitchListTile(
-            title: const Text("حذف اکانت‌های کم‌مصرف"),
-            subtitle: const Text(
-                "حذف اکانت‌های با مصرف کمتر از 0.5GB"),
-            value: _deleteProducts,
-            onChanged: (val) => setState(() => _deleteProducts = val),
+        ] else
+          Text(
+            'در حال ویرایش مشخصات ${widget.agent!.name} (شناسه: ${widget.agent!.accountId})',
+            textAlign: TextAlign.right,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: AppStyle.defaultPadding / 2),
-          CustomTextFromFieldWidget(
-            controller: _maxProdouctLimitationTxtController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: false),
-            textHint: "محدودیت تعداد فروش کانفیگ",
-            validationError: "تعداد کانفیگ قابل فروش را وارد کنید",
+        SizedBox(height: AppStyle.defaultPadding),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('موجودی حساب منفی', textAlign: TextAlign.right),
+          subtitle: const Text(
+            'آیا دستیار فروش می‌تواند موجودی منفی داشته باشد؟',
+            textAlign: TextAlign.right,
           ),
-          SizedBox(height: AppStyle.defaultPadding / 2),
-          CustomTextFromFieldWidget(
-            controller: _maxTrafficLimitationTxtController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textHint: "محدودیت ترافیک (ترابایت)",
-            validationError: "ترافیک قابل فروش به ترابایت را وارد کنید",
+          value: _minusBallance,
+          onChanged: (val) => setState(() => _minusBallance = val),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('حذف اکانت‌های کم‌مصرف', textAlign: TextAlign.right),
+          subtitle: const Text(
+            'حذف اکانت‌های با مصرف کمتر از 0.5GB',
+            textAlign: TextAlign.right,
           ),
-        ],
-      ),
+          value: _deleteProducts,
+          onChanged: (val) => setState(() => _deleteProducts = val),
+        ),
+        SizedBox(height: AppStyle.defaultPadding / 2),
+        if (Responsive.isMobile(context))
+          Column(
+            children: [
+              CustomTextFromFieldWidget(
+                controller: _maxProdouctLimitationTxtController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: false),
+                textHint: 'محدودیت تعداد فروش کانفیگ',
+                validationError: 'تعداد کانفیگ قابل فروش را وارد کنید',
+              ),
+              SizedBox(height: AppStyle.defaultPadding / 2),
+              CustomTextFromFieldWidget(
+                controller: _maxTrafficLimitationTxtController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                textHint: 'محدودیت ترافیک (ترابایت)',
+                validationError: 'ترافیک قابل فروش به ترابایت را وارد کنید',
+              ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: CustomTextFromFieldWidget(
+                  controller: _maxProdouctLimitationTxtController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: false),
+                  textHint: 'محدودیت تعداد فروش کانفیگ',
+                  validationError: 'تعداد کانفیگ قابل فروش را وارد کنید',
+                ),
+              ),
+              SizedBox(width: AppStyle.defaultPadding),
+              Expanded(
+                child: CustomTextFromFieldWidget(
+                  controller: _maxTrafficLimitationTxtController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  textHint: 'محدودیت ترافیک (ترابایت)',
+                  validationError:
+                      'ترافیک قابل فروش به ترابایت را وارد کنید',
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 
   Widget _copyFromAgentCard(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "کپی تنظیمات از دستیار دیگر",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding / 2),
-          const Text(
-            "با انتخاب یک دستیار، مجوزها و بسته‌های او به فرم اعمال می‌شود.",
-            style: TextStyle(fontSize: 13, color: Colors.white70),
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          ElevatedButton.icon(
+    return AgentSectionCard(
+      title: 'کپی تنظیمات از دستیار دیگر',
+      subtitle:
+          'با انتخاب یک دستیار، مجوزها و بسته‌های او به فرم اعمال می‌شود.',
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
             onPressed: _showCopyFromAgentDialog,
             icon: const Icon(Icons.copy),
             label: Text(
               _copySourceAgent != null
-                  ? "کپی از: ${_copySourceAgent!.name}"
-                  : "انتخاب دستیار برای کپی",
+                  ? 'کپی از: ${_copySourceAgent!.name}'
+                  : 'انتخاب دستیار برای کپی',
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -311,32 +368,41 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
 
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("کپی تنظیمات"),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 300,
-          child: ListView.builder(
-            itemCount: agents.length,
-            itemBuilder: (_, i) {
-              final agent = agents[i];
-              return ListTile(
-                title: Text(agent.name),
-                subtitle: Text("شناسه: ${agent.accountId}"),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _applyCopyFromAgent(agent);
-                },
-              );
-            },
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('کپی تنظیمات', textAlign: TextAlign.right),
+          content: SizedBox(
+            width: Responsive.isMobile(context) ? double.maxFinite : 480,
+            height: Responsive.isMobile(context) ? 360 : 420,
+            child: ListView.separated(
+              primary: false,
+              itemCount: agents.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final agent = agents[i];
+                return ListTile(
+                  title: Text(agent.name, textAlign: TextAlign.right),
+                  subtitle: Text(
+                    'شناسه: ${agent.accountId}',
+                    textAlign: TextAlign.right,
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _applyCopyFromAgent(agent);
+                  },
+                );
+              },
+            ),
           ),
+          actionsAlignment: MainAxisAlignment.start,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('لغو'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("لغو"),
-          ),
-        ],
       ),
     );
   }
@@ -391,109 +457,158 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
     }
   }
 
+  int? _itemPanelId(AgentAddCategoriyModel item) {
+    final pc = item.productCategories;
+    if (pc == null) return null;
+    if (pc.pannelId != 0) return pc.pannelId;
+    return int.tryParse(pc.pannel?.id ?? '');
+  }
+
+  bool _matchesPanelFilter(AgentAddCategoriyModel item) {
+    if (_selectedPanelId == null) return true;
+    return _itemPanelId(item) == _selectedPanelId;
+  }
+
+  String _panelLabel(Pannel panel) {
+    final location =
+        panel.location != null && panel.location!.isNotEmpty
+            ? ' - ${panel.location}'
+            : '';
+    return '${getPannelName(name: panel.type)}$location';
+  }
+
+  String? _selectedPanelLabel() {
+    if (_selectedPanelId == null) return null;
+    for (final panel in _panels) {
+      if (int.tryParse(panel.id) == _selectedPanelId) {
+        return _panelLabel(panel);
+      }
+    }
+    return 'پنل $_selectedPanelId';
+  }
+
+  Widget _panelFilterCard(BuildContext context) {
+    return AgentSectionCard(
+      title: 'فیلتر بر اساس پنل',
+      subtitle:
+          'پنل مورد نظر را انتخاب کنید تا فقط بسته‌های همان پنل نمایش داده شوند.',
+      children: [
+        DropdownButtonFormField<int?>(
+          value: _selectedPanelId,
+          isExpanded: true,
+          decoration: agentRtlInputDecoration(label: 'پنل'),
+          items: [
+            const DropdownMenuItem<int?>(
+              value: null,
+              child: Text('همه پنل‌ها'),
+            ),
+            ..._panels.map(
+              (p) => DropdownMenuItem<int?>(
+                value: int.tryParse(p.id),
+                child: Text('${p.id}: ${_panelLabel(p)}'),
+              ),
+            ),
+          ],
+          onChanged: (val) => setState(() => _selectedPanelId = val),
+        ),
+      ],
+    );
+  }
+
   Widget _productInfoCard(BuildContext context) {
     final agentCategories = context.watch<AgentProvider>().agentCategories;
-    final widgets = agentCategories
-        .map((i) => AgentSelectCategoryWithPriceInputWidget(type: "add", item: i))
-        .toList();
+    final filtered = agentCategories.where(_matchesPanelFilter).toList();
+    final selectedLabel = _selectedPanelLabel();
+    final panelSuffix = selectedLabel != null ? ' ($selectedLabel)' : '';
 
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "بسته‌های قابل انتخاب (${agentCategories.length})",
-                style: Theme.of(context).textTheme.titleMedium,
+    return AgentSectionCard(
+      title:
+          'بسته‌های قابل انتخاب$panelSuffix (${filtered.length}/${agentCategories.length})',
+      trailing: filtered.isNotEmpty
+          ? TextButton.icon(
+              onPressed: _selectAllWithDefaultPrice,
+              icon: const Icon(Icons.select_all, size: 18),
+              label: Text(
+                _selectedPanelId == null ? 'انتخاب همه' : 'انتخاب همه این پنل',
               ),
-              if (agentCategories.isNotEmpty)
-                TextButton.icon(
-                  onPressed: _selectAllWithDefaultPrice,
-                  icon: const Icon(Icons.select_all, size: 18),
-                  label: const Text("انتخاب همه"),
-                ),
-            ],
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          if (widgets.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: Text("تمام بسته‌ها انتخاب شده‌اند."),
             )
-          else
-            ...widgets,
-        ],
-      ),
+          : null,
+      children: [
+        if (filtered.isEmpty)
+          Text(
+            _selectedPanelId == null
+                ? 'تمام بسته‌ها انتخاب شده‌اند.'
+                : 'بسته‌ای برای این پنل در لیست قابل انتخاب نیست.',
+            textAlign: TextAlign.right,
+          )
+        else
+          agentScrollableList(
+            context: context,
+            itemCount: filtered.length,
+            itemBuilder: (_, index) => AgentSelectCategoryWithPriceInputWidget(
+              type: 'add',
+              item: filtered[index],
+            ),
+          ),
+      ],
     );
   }
 
   void _selectAllWithDefaultPrice() {
-    Provider.of<AgentProvider>(context, listen: false)
-        .selectAllCategoriesWithDefaultPrice();
+    final provider = Provider.of<AgentProvider>(context, listen: false);
+    final filtered =
+        provider.agentCategories.where(_matchesPanelFilter).toList();
+    provider.selectCategoriesWithDefaultPrice(filtered);
   }
 
   Widget _productAddedCard(BuildContext context) {
     final added = context.watch<AgentProvider>().agentCategoriesAdded;
-    final widgets = added
-        .map((i) =>
-            AgentSelectCategoryWithPriceInputWidget(type: "remove", item: i))
-        .toList();
+    final filtered = added.where(_matchesPanelFilter).toList();
+    final selectedLabel = _selectedPanelLabel();
+    final panelSuffix = selectedLabel != null ? ' ($selectedLabel)' : '';
 
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return AgentSectionCard(
+      title:
+          'بسته‌های انتخاب شده$panelSuffix (${filtered.length}/${added.length})',
+      children: [
+        if (filtered.isEmpty)
           Text(
-            "بسته‌های انتخاب شده (${added.length})",
-            style: Theme.of(context).textTheme.titleMedium,
+            _selectedPanelId == null
+                ? 'هیچ بسته‌ای انتخاب نشده است.'
+                : 'بسته‌ای از این پنل انتخاب نشده است.',
+            textAlign: TextAlign.right,
+          )
+        else
+          agentScrollableList(
+            context: context,
+            itemCount: filtered.length,
+            itemBuilder: (_, index) => AgentSelectCategoryWithPriceInputWidget(
+              type: 'remove',
+              item: filtered[index],
+            ),
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          if (widgets.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: Text("هیچ بسته‌ای انتخاب نشده است."),
-            )
-          else
-            ...widgets,
-        ],
-      ),
+      ],
     );
   }
 
   Widget _operationCard(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("عملیات", style: Theme.of(context).textTheme.titleMedium),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _submitData(context),
-              icon: Icon(widget.isCreate ? Icons.add : Icons.done),
-              label: Text(widget.isCreate ? "افزودن دستیار" : "ذخیره تغییرات"),
+    return AgentSectionCard(
+      title: 'عملیات',
+      subtitle: widget.isCreate
+          ? 'پس از تکمیل فرم، دستیار جدید ایجاد می‌شود'
+          : 'تغییرات روی دستیار فعلی ذخیره می‌شود',
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _submitData(context),
+            icon: Icon(widget.isCreate ? Icons.add : Icons.done),
+            label: Text(
+              widget.isCreate ? 'افزودن دستیار' : 'ذخیره تغییرات',
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -505,12 +620,17 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
     });
 
     final provider = Provider.of<AgentProvider>(context, listen: false);
+    final panelsResult = await getPannels();
 
     try {
       if (widget.isCreate) {
         final categories = await getAllProdctCategory();
         final users = await getNormalUsers();
         if (!mounted) return;
+
+        if (panelsResult is List<Pannel>) {
+          _panels = panelsResult;
+        }
 
         final list = categories != null
             ? categories
@@ -547,6 +667,10 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
             await getUserPremissionByAgentID(userID: agent.id);
 
         if (!mounted) return;
+
+        if (panelsResult is List<Pannel>) {
+          _panels = panelsResult;
+        }
 
         if (permission == false) {
           showMsg(
