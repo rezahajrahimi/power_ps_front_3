@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/models/advanced_setting_model.dart';
 import 'package:powerps/models/details_info.dart';
 import 'package:powerps/models/setting_model.dart';
 import 'package:powerps/screens/admin_screen/settings/admins/manage_admins_screen.dart';
@@ -105,8 +106,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         for (var item in value) {
           _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
             state: item.value == "true" ? true : false,
-            description: item.description ?? "تعریف نشده",
-            name: item.name ?? "تعریف نشده",
+            description: AdvancedSettingModel.displayDescription(
+              item.name,
+              item.description,
+            ),
+            name: item.name,
           ));
         }
         setState(() {
