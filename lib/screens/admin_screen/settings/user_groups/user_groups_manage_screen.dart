@@ -31,6 +31,7 @@ class _UserGroupsManageScreenState extends State<UserGroupsManageScreen>
   bool _usersLoaded = false;
   final Map<int, List<User>> _groupMembersCache = {};
   final Set<int> _expandedGroupIds = {};
+  final _verificationSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -42,6 +43,7 @@ class _UserGroupsManageScreenState extends State<UserGroupsManageScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _verificationSearchController.dispose();
     super.dispose();
   }
 
@@ -122,7 +124,11 @@ class _UserGroupsManageScreenState extends State<UserGroupsManageScreen>
 
   Future<void> _loadGroupingUsers() async {
     final filter = _verificationFilter == 'all' ? null : _verificationFilter;
-    final users = await getNormalUsersForGrouping(verificationFilter: filter);
+    final search = _verificationSearchController.text.trim();
+    final users = await getNormalUsersForGrouping(
+      verificationFilter: filter,
+      search: search.isEmpty ? null : search,
+    );
     if (!mounted) return;
     setState(() {
       _groupingUsers = users ?? [];
@@ -310,6 +316,37 @@ class _UserGroupsManageScreenState extends State<UserGroupsManageScreen>
             ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
+          TextField(
+            controller: _verificationSearchController,
+            decoration: InputDecoration(
+              labelText: 'جستجو (نام یا Account ID)',
+              hintText: 'مثال: علی یا 123456789',
+              border: const OutlineInputBorder(),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_verificationSearchController.text.isNotEmpty)
+                    IconButton(
+                      tooltip: 'پاک کردن',
+                      onPressed: () {
+                        _verificationSearchController.clear();
+                        setState(() {});
+                        _searchVerificationUsers();
+                      },
+                      icon: const Icon(Icons.clear),
+                    ),
+                  IconButton(
+                    tooltip: 'جستجو',
+                    onPressed: _searchVerificationUsers,
+                    icon: const Icon(Icons.search),
+                  ),
+                ],
+              ),
+            ),
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _searchVerificationUsers(),
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
           if (!_usersLoaded)
             const Center(child: CircularProgressIndicator(strokeWidth: 2))
           else if (_groupingUsers.isEmpty)
@@ -326,6 +363,11 @@ class _UserGroupsManageScreenState extends State<UserGroupsManageScreen>
       _verificationFilter = filter;
       _usersLoaded = false;
     });
+    await _loadGroupingUsers();
+  }
+
+  Future<void> _searchVerificationUsers() async {
+    setState(() => _usersLoaded = false);
     await _loadGroupingUsers();
   }
 
