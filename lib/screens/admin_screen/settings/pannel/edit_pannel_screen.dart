@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helpers/sanaei_inbound_sync.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -56,6 +57,8 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
   final _adminUrlEditTxt = TextEditingController();
   final _secretCodeEditTxt = TextEditingController();
   final _userLinkEditTxt = TextEditingController();
+  final _subPortEditTxt = TextEditingController();
+  final _apiTokenEditTxt = TextEditingController();
   final List<Widget> _sanaeiWidgetList = [];
 
   @override
@@ -383,54 +386,14 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Row(
-                children: [
-                  ElevatedButton.icon(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppStyle.defaultPadding * 1.5,
-                        vertical: AppStyle.defaultPadding /
-                            (Responsive.isMobile(context) ? 2 : 1),
-                      ),
-                    ),
-                    onPressed: () async {
-                      if (_adminUrlEditTxt.text.isNotEmpty &&
-                          _userNameEditTxt.text.isNotEmpty &&
-                          _userPasswordEditTxt.text.isNotEmpty) {
-                        EasyLoading.show();
-                        await checkSanaeiLogin(
-                                url: _getHiddifyUrl(_adminUrlEditTxt.text),
-                                username: _userNameEditTxt.text,
-                                password: _userPasswordEditTxt.text)
-                            .then((value) {
-                          EasyLoading.dismiss();
-                          if (!context.mounted) return;
-
-                          if (value == true) {
-                            showMsg(
-                                msg: "موفق، اطلاعات وارد شده صحیح است.",
-                                context: context);
-                            return;
-                          }
-                          showMsg(
-                              msg: "ناموفق، اطلاعات وارد شده را بررسی کنید.",
-                              context: context,
-                              type: "error");
-                        });
-                      } else {
-                        showMsg(
-                            msg: "لطفاً آدرس، نام کاربری و رمز را وارد کنید.",
-                            context: context,
-                            type: "error");
-                      }
-                    },
-                    icon: const Icon(Icons.checklist_rtl),
-                    label: const Text("بررسی لینک "),
-                  )
-                ],
-              )),
+          SanaeiPanelActionButtons(
+            pannelId: int.tryParse(widget.selectedPannel.id),
+            adminUrlController: _adminUrlEditTxt,
+            usernameController: _userNameEditTxt,
+            passwordController: _userPasswordEditTxt,
+            apiTokenController: _apiTokenEditTxt,
+            normalizeUrl: _getHiddifyUrl,
+          ),
         ],
       ),
     );
@@ -779,6 +742,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _showOtherData = false;
 
         break;
+      case 'sanaei':
       case 'Sanaei':
         _selectedPannelType = "Sanaei";
         _showMarzbanData = false;
@@ -808,11 +772,13 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _selectedPannelType = "دیگر";
     }
     _marzbanToken = widget.selectedPannel.token ?? "";
+    _apiTokenEditTxt.text = widget.selectedPannel.token ?? "";
     _locationEditTxt.text = widget.selectedPannel.location ?? "";
     _capacityEditTxt.text = widget.selectedPannel.capacity.toString();
     _userNameEditTxt.text = widget.selectedPannel.username ?? "";
     _userPasswordEditTxt.text = widget.selectedPannel.password ?? "";
     _urlPortEditTxt.text = widget.selectedPannel.urlPort ?? "";
+    _subPortEditTxt.text = widget.selectedPannel.subPort ?? "";
     _adminUrlEditTxt.text = widget.selectedPannel.adminUrl ?? "";
     _secretCodeEditTxt.text = widget.selectedPannel.secretCode ?? "";
     _userLinkEditTxt.text = widget.selectedPannel.userLink ?? "";
@@ -904,6 +870,13 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         keyboardType: TextInputType.text,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _subPortEditTxt,
+        textHint: "پورت سابسکریپشن (اختیاری)",
+        textDirection: TextDirection.ltr,
+        validationError: "",
+        keyboardType: TextInputType.number,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _userNameEditTxt,
         textHint: "نام کاربری (admin)",
         validationError: "نام کاربری را وارد کنید.",
@@ -913,6 +886,13 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         controller: _userPasswordEditTxt,
         textHint: "رمز عبور (admin)",
         validationError: "رمز عبور را وارد کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _apiTokenEditTxt,
+        textHint: "API Token (اختیاری - 3x-ui v3)",
+        textDirection: TextDirection.ltr,
+        validationError: "",
         keyboardType: TextInputType.text,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
@@ -1009,6 +989,43 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
 
     str = "${uri.scheme}://${uri.host}:${uri.port}";
     return str;
+  }
+
+  _submitSanaeiSection(BuildContext context) async {
+    EasyLoading.show();
+    final capacity = int.tryParse(_capacityEditTxt.text) ?? 0;
+    if (capacity <= 0) {
+      EasyLoading.dismiss();
+      showMsg(msg: "ظرفیت نامعتبر است.", context: context, type: "error");
+      return;
+    }
+    var res = await updatePannel(
+      pannel: Pannel(
+        id: widget.selectedPannel.id,
+        type: "sanaei",
+        location: _locationEditTxt.text,
+        adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
+        subPort: _subPortEditTxt.text,
+        username: _userNameEditTxt.text,
+        password: _userPasswordEditTxt.text,
+        token: _apiTokenEditTxt.text.trim().isEmpty
+            ? null
+            : _apiTokenEditTxt.text.trim(),
+        capacity: capacity,
+      ),
+    );
+    EasyLoading.dismiss();
+    if (!context.mounted) return;
+    if (res == true) {
+      showMsg(msg: "با موفقیت ثبت شد.", context: context);
+      Navigator.pop(context, true);
+    } else {
+      showMsg(
+        msg: "خطا، اطلاعات وارد شده را بررسی کنید.",
+        context: context,
+        type: "error",
+      );
+    }
   }
 
   _submitOtherSection(BuildContext context) async {
@@ -1126,6 +1143,11 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
             showMsg(
                 msg: "ابتدا بر روی بررسی لینک کلیک کنید.", context: context);
           }
+        }
+        break;
+      case "Sanaei":
+        if (context.mounted) {
+          await _submitSanaeiSection(context);
         }
         break;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
+import 'package:powerps/helpers/sanaei_inbound_sync.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -325,6 +326,24 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         validationError: "",
         keyboardType: TextInputType.text,
       ));
+      _productDetailsWidgetLIst.add(
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              final id = int.tryParse(_selectedPannelName.split(':')[0]);
+              if (id == null) return;
+              runSanaeiInboundSync(
+                context,
+                pannelId: id,
+                inboundIdController: _inboundIdEditText,
+              );
+            },
+            icon: const Icon(Icons.sync, size: 18),
+            label: const Text('انتخاب Inbound از پنل'),
+          ),
+        ),
+      );
     }
 
     // همیشه sampleInbound را نمایش بده

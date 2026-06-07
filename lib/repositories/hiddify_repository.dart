@@ -37,16 +37,41 @@ Future<bool> checkIsHiddifyUrl(
 }
 
 /// Check Sanaei (x-ui) admin login using provided admin URL, username and password.
-/// Returns true if login successful (HTTP 200 and cookie set), false otherwise.
+/// When [apiToken] is provided, validates via /panel/api/server/status first (3x-ui v3).
+/// Returns true if login successful, false otherwise.
 Future<bool> checkSanaeiLogin(
     {required String url,
     required String username,
-    required String password}) async {
+    required String password,
+    String? apiToken}) async {
   try {
-    // Ensure url ends with a slash only once
-    String loginUrl = url;
-    if (!loginUrl.endsWith('/')) loginUrl = '$loginUrl/';
-    loginUrl = '${loginUrl}login';
+    String baseUrl = url;
+    if (!baseUrl.endsWith('/')) baseUrl = '$baseUrl/';
+
+    if (apiToken != null && apiToken.trim().isNotEmpty) {
+      String token = apiToken.trim();
+      if (!token.toLowerCase().startsWith('bearer ')) {
+        token = 'Bearer $token';
+      }
+      final statusUrl = '${baseUrl}panel/api/server/status';
+      Dio tokenDio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
+        validateStatus: (status) => status! < 500,
+      ));
+      Response tokenResponse = await tokenDio.get(statusUrl,
+          options: Options(headers: {
+            'Accept': 'application/json',
+            'Authorization': token,
+          }));
+      if (tokenResponse.statusCode == 200 &&
+          tokenResponse.data is Map &&
+          tokenResponse.data['success'] == true) {
+        return true;
+      }
+    }
+
+    String loginUrl = '${baseUrl}login';
 
     // Use a fresh Dio instance for panel calls
     Dio dio = Dio(BaseOptions(
