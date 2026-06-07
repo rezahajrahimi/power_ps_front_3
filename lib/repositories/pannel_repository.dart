@@ -92,16 +92,7 @@ Future<bool> addNewPannel({required Pannel pannel}) async {
 
 Future<bool> addNewPannelMarzban({
   required Pannel pannel,
-  required bool vmess,
-  required bool vless,
-  required bool trojan,
-  required bool shadowsocks,
-  required bool vmessTCP,
-  required bool vmessWebSocket,
-  required bool vlessTcpReality,
-  required bool vlessGprcReality,
-  required bool trojanWebsocketTLS,
-  required bool shadowsocksTCP,
+  required List<Map<String, dynamic>> dynamicInbounds,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/addNewPannelMarzban",
@@ -113,18 +104,7 @@ Future<bool> addNewPannelMarzban({
           "location": pannel.location,
           "url_port": pannel.urlPort,
           "capacity": pannel.capacity,
-          "user_link": pannel.userLink,
-          "secret_code": pannel.secretCode,
-          "vmess": vmess,
-          "vless": vless,
-          "trojan": trojan,
-          "shadowsocks": shadowsocks,
-          "vmessTCP": vmessTCP,
-          "vmessWebSocket": vmessWebSocket,
-          "vlessTcpReality": vlessTcpReality,
-          "vlessGprcReality": vlessGprcReality,
-          "trojanWebsocketTLS": trojanWebsocketTLS,
-          "shadowsocksTCP": shadowsocksTCP,
+          "dynamic_inbounds": dynamicInbounds,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -152,16 +132,7 @@ Future<bool> addNewPannelMarzban({
 
 Future<bool> editMarzbanPannel({
   required Pannel pannel,
-  required bool vmess,
-  required bool vless,
-  required bool trojan,
-  required bool shadowsocks,
-  required bool vmessTCP,
-  required bool vmessWebSocket,
-  required bool vlessTcpReality,
-  required bool vlessGprcReality,
-  required bool trojanWebsocketTLS,
-  required bool shadowsocksTCP,
+  required List<Map<String, dynamic>> dynamicInbounds,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/editMarzbanPannel",
@@ -173,18 +144,7 @@ Future<bool> editMarzbanPannel({
           "location": pannel.location,
           "url_port": pannel.urlPort,
           "capacity": pannel.capacity,
-          "user_link": pannel.userLink,
-          "secret_code": pannel.secretCode,
-          "vmess": vmess,
-          "vless": vless,
-          "trojan": trojan,
-          "shadowsocks": shadowsocks,
-          "vmessTCP": vmessTCP,
-          "vmessWebSocket": vmessWebSocket,
-          "vlessTcpReality": vlessTcpReality,
-          "vlessGprcReality": vlessGprcReality,
-          "trojanWebsocketTLS": trojanWebsocketTLS,
-          "shadowsocksTCP": shadowsocksTCP,
+          "dynamic_inbounds": dynamicInbounds,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -323,41 +283,31 @@ Future<List<Proxy>> getProxiesByPannelID({required int pannelId}) async {
               "Charset": "utf-8",
               'Access-Control-Allow-Origin': '*'
             }));
-    debugPrint("statement:${response.data}");
 
     if (response.statusCode == 200 && response.data != null) {
-      // Pannel pannel = Pannel.fromJson(response.data[0]);
-      List<Proxy> proxies = [];
-      if (response.data != null) {
-        for (var i in response.data) {
-          proxies.add(Proxy.fromJson(i));
+      final List<Proxy> proxies = [];
+      final raw = response.data;
+      if (raw is List) {
+        for (final item in raw) {
+          if (item is! Map) continue;
+          try {
+            proxies.add(
+              Proxy.fromJson(Map<String, dynamic>.from(item)),
+            );
+          } catch (e) {
+            debugPrint("getProxiesByPannelID parse error: $e");
+          }
         }
       }
-      debugPrint("statement:${proxies.length}");
-      debugPrint("statement:${proxies[0].inbounds!.length}");
-
-      return proxies;
-    } else if (response.statusCode == 201) {
-      List<Proxy> proxies = [];
-
-      return proxies;
-    } else if (response.statusCode == 401) {
-      List<Proxy> proxies = [];
-
-      return proxies;
-    } else if (response.statusCode == 500) {
-      List<Proxy> proxies = [];
-
-      return proxies;
-    } else {
-      List<Proxy> proxies = [];
-
       return proxies;
     }
+
+    return [];
   } on DioException catch (e) {
     debugPrint(e.message.toString());
-    List<Proxy> proxies = [];
-
-    return proxies;
+    return [];
+  } catch (e, st) {
+    debugPrint("getProxiesByPannelID error: $e\n$st");
+    return [];
   }
 }

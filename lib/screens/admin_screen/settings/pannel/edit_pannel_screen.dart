@@ -8,6 +8,7 @@ import 'package:powerps/models/proxy_model.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
 import 'package:powerps/repositories/marzban_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/edit_marzban_panel_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custom_switch_widget.dart';
@@ -63,8 +64,22 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
 
   @override
   void initState() {
-    _fillData();
     super.initState();
+    if (widget.selectedPannel.type == 'marzban') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditMarzbanPanelScreen(
+              selectedPannel: widget.selectedPannel,
+            ),
+          ),
+        );
+      });
+      return;
+    }
+    _fillData();
   }
 
   @override
@@ -785,73 +800,54 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
     _showData = false;
     if (widget.selectedPannel.type == 'marzban') {
       await getProxiesByPannelID(pannelId: int.parse(widget.selectedPannel.id))
-          .then((value) => {
-                if (value != [])
-                  {
-                    for (var i in value)
-                      {
-                        if (i.type == 'vmess')
-                          {
-                            setState(
-                              () {
-                                _vmessProxy = i.isActive;
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'VMess TCP') {
-                                    _vmessInboundTCP = j.isActive;
-                                  }
-                                  if (j.name == 'VMess Websocket') {
-                                    _vmessinboundWebSocket = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                        else if (i.type == 'vless')
-                          {
-                            setState(
-                              () {
-                                _vlessProxy = i.isActive;
-
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'VLESS TCP REALITY') {
-                                    _vlessInboundTcpReality = j.isActive;
-                                  }
-                                  if (j.name == 'VLESS GRPC REALITY') {
-                                    _vlessInboundGprcReality = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                        else if (i.type == 'trojan')
-                          {
-                            setState(
-                              () {
-                                _trojanProxy = i.isActive;
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'Trojan Websocket TLS') {
-                                    _trojanInboundWebsocketTLS = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                        else if (i.type == 'shadowsocks')
-                          {
-                            setState(
-                              () {
-                                _shadowsocksProxy = i.isActive;
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'Shadowsocks TCP') {
-                                    _shadowsocksIboundTCP = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                      }
-                  }
-              });
+          .then((value) {
+        if (value.isEmpty) return;
+        for (final i in value) {
+          if (i.type == 'vmess') {
+            setState(() {
+              _vmessProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'VMess TCP') {
+                  _vmessInboundTCP = j.isActive;
+                }
+                if (j.name == 'VMess Websocket') {
+                  _vmessinboundWebSocket = j.isActive;
+                }
+              }
+            });
+          } else if (i.type == 'vless') {
+            setState(() {
+              _vlessProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'VLESS TCP REALITY') {
+                  _vlessInboundTcpReality = j.isActive;
+                }
+                if (j.name == 'VLESS GRPC REALITY') {
+                  _vlessInboundGprcReality = j.isActive;
+                }
+              }
+            });
+          } else if (i.type == 'trojan') {
+            setState(() {
+              _trojanProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'Trojan Websocket TLS') {
+                  _trojanInboundWebsocketTLS = j.isActive;
+                }
+              }
+            });
+          } else if (i.type == 'shadowsocks') {
+            setState(() {
+              _shadowsocksProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'Shadowsocks TCP') {
+                  _shadowsocksIboundTCP = j.isActive;
+                }
+              }
+            });
+          }
+        }
+      });
     }
     setState(() {
       _otherWidgetList.add(CustomTextFromFieldWidget(
@@ -1095,16 +1091,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
           token: _marzbanToken,
           capacity: int.parse(_capacityEditTxt.text),
         ),
-        vmess: _vmessProxy,
-        vless: _vlessProxy,
-        trojan: _trojanProxy,
-        shadowsocks: _shadowsocksProxy,
-        vmessTCP: _vmessInboundTCP,
-        shadowsocksTCP: _shadowsocksIboundTCP,
-        trojanWebsocketTLS: _trojanInboundWebsocketTLS,
-        vlessGprcReality: _vlessInboundGprcReality,
-        vlessTcpReality: _vlessInboundTcpReality,
-        vmessWebSocket: _vmessinboundWebSocket);
+        dynamicInbounds: []);
     if (res) {
       if (context.mounted) {
         showMsg(msg: "با موفقیت ثبت شد.", context: context);

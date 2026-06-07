@@ -9,8 +9,8 @@ import 'package:powerps/provider/category_type_provider.dart';
 import 'package:powerps/repositories/category_type_repository.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/add_new_marzban_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
-// import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/obtain_exist_panel_users_to_agents_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -296,6 +296,24 @@ class _PannelScreenState extends State<PannelScreen> {
       },
       icon: const Icon(Icons.add),
       label: const Text("افزودن پنل سنایی"),
+    ));
+    actionsWidgetList.add(ElevatedButton.icon(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppStyle.defaultPadding * 1.5,
+          vertical:
+              AppStyle.defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
+        ),
+      ),
+      onPressed: () async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddNewMarzbanPanelScreen(),
+            )).then((value) => {_fillData()});
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("افزودن پنل مرزبان"),
     ));
     if (_pannelList.isNotEmpty) {
       actionsWidgetList.add(ElevatedButton.icon(

@@ -342,6 +342,9 @@ class _AgentBoughtProductInfoWidgetState
                                   if (widget.boughtProductDetailsModel
                                               .productCategory?.pannel?.type ==
                                           "sanaei" ||
+                                      widget.boughtProductDetailsModel
+                                              .productCategory?.pannel?.type ==
+                                          "marzban" ||
                                       link.startsWith("vless://") ||
                                       link.startsWith("vmess://") ||
                                       link.startsWith("trojan://")) {
@@ -366,8 +369,12 @@ class _AgentBoughtProductInfoWidgetState
                             child: widget.boughtProductDetailsModel
                                         .productCategory?.pannel?.type ==
                                     "sanaei"
-                                ? Text('مشاهده در پنل')
-                                : Text('مشاهده کانفیگ')),
+                                ? const Text('مشاهده در پنل')
+                                : widget.boughtProductDetailsModel
+                                            .productCategory?.pannel?.type ==
+                                        "marzban"
+                                    ? const Text('مشاهده لینک اشتراک')
+                                    : const Text('مشاهده کانفیگ')),
 
                         // ElevatedButton(
                         //     onPressed: () {

@@ -426,6 +426,10 @@ Future getBoughtProductsStatusFromServerById({required int productID}) async {
           response.data.containsKey('inbound')) {
         return SanaeiConfig.fromJson(response.data);
       }
+      if (response.data.containsKey('used_traffic') &&
+          response.data.containsKey('username')) {
+        return SanaeiConfig.fromJson(response.data);
+      }
       HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
       return hiddifyConfig;
     } else if (response.statusCode == 201) {
@@ -458,6 +462,10 @@ Future getProductBoughtedByProductIdUserMode({required int productID}) async {
     if (response.statusCode == 200) {
       if (response.data.containsKey('client') ||
           response.data.containsKey('inbound')) {
+        return SanaeiConfig.fromJson(response.data);
+      }
+      if (response.data.containsKey('used_traffic') &&
+          response.data.containsKey('username')) {
         return SanaeiConfig.fromJson(response.data);
       }
       HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);

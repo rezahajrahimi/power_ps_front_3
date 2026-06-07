@@ -47,11 +47,30 @@ class _BotUserBoughtProductDetailsScreenState
   MarzbanConfig? _marzbanConfig;
   SanaeiConfig? _sanaeiConfig;
 
-  String? _url;
   @override
   void initState() {
     super.initState();
     _fillData();
+  }
+
+  ({String url, String admin, String password, String username})?
+      get _marzbanCredentials {
+    final admin = _pannel?.username;
+    final password = _pannel?.password;
+    final remark = widget.productDetails.remark;
+    final urlPort = _pannel?.urlPort;
+    if (admin == null ||
+        password == null ||
+        remark == null ||
+        urlPort == null) {
+      return null;
+    }
+    return (
+      url: getMarzbanConfigApiUrl(adminUrl: urlPort),
+      admin: admin,
+      password: password,
+      username: remark,
+    );
   }
 
   @override
@@ -180,18 +199,26 @@ class _BotUserBoughtProductDetailsScreenState
               _showdata = true;
             });
           } else if (_pannel!.type == "marzban") {
-            _url = getMarzbanConfigApiUrl(adminUrl: _pannel!.urlPort!);
-
-            await getMarzbanUserInfo(
-                    url: _url!,
-                    admin: _pannel!.username,
-                    password: _pannel!.password,
-                    username: widget.productDetails.remark)
-                .then((value) {
-              setState(() {
-                _marzbanConfig = value;
+            final creds = _marzbanCredentials;
+            if (creds == null) {
+              if (mounted) {
+                showMsg(
+                    msg: "اطلاعات پنل مرزبان ناقص است.",
+                    context: context,
+                    type: "error");
+              }
+            } else {
+              await getMarzbanUserInfo(
+                      url: creds.url,
+                      admin: creds.admin,
+                      password: creds.password,
+                      username: creds.username)
+                  .then((value) {
+                setState(() {
+                  _marzbanConfig = value;
+                });
               });
-            });
+            }
           }
         }
       }).whenComplete(() async {
@@ -775,12 +802,20 @@ class _BotUserBoughtProductDetailsScreenState
         label: "ریست کردن بسته",
         icon: Icons.refresh,
         onPressed: () async {
+          final creds = _marzbanCredentials;
+          if (creds == null) {
+            showMsg(
+                msg: "اطلاعات پنل مرزبان ناقص است.",
+                context: context,
+                type: "error");
+            return;
+          }
           EasyLoading.show();
           await resetMarzbanUser(
-                  url: _url!,
-                  admin: _pannel!.username,
-                  password: _pannel!.password,
-                  username: widget.productDetails.remark)
+                  url: creds.url,
+                  admin: creds.admin,
+                  password: creds.password,
+                  username: creds.username)
               .then((value) {
             EasyLoading.dismiss();
             if (!context.mounted) return;
@@ -984,11 +1019,20 @@ class _BotUserBoughtProductDetailsScreenState
                         EasyLoading.show();
 
                         if (_pannel!.type == "marzban") {
+                          final creds = _marzbanCredentials;
+                          if (creds == null) {
+                            EasyLoading.dismiss();
+                            showMsg(
+                                msg: "اطلاعات پنل مرزبان ناقص است.",
+                                context: context,
+                                type: "error");
+                            return;
+                          }
                           await deleteMarzbanUser(
-                                  url: _url!,
-                                  admin: _pannel!.username,
-                                  password: _pannel!.password,
-                                  username: widget.productDetails.remark,
+                                  url: creds.url,
+                                  admin: creds.admin,
+                                  password: creds.password,
+                                  username: creds.username,
                                   productID: widget.productDetails.id.toInt())
                               .then((value) {
                             if (!context.mounted) return;
