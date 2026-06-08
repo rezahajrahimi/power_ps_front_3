@@ -1423,18 +1423,30 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     List<String> productCategoryItemList = [];
     String selectedItem = "";
     final nameEditText = TextEditingController();
+    final userGroupId = _botUser?.panelUser?.userGroupId;
 
     await getAllProdctCategory().then((res) {
       if (res != null && res != false) {
-        productCategoryList = res;
+        productCategoryList =
+            (res as List<ProductCategory>).where((c) => c.isAllowedForUserGroup(userGroupId)).toList();
         for (var i in productCategoryList) {
           productCategoryItemList.add("${i.id} - ${i.categoryName}");
         }
-        selectedItem = productCategoryItemList[0];
+        if (productCategoryItemList.isNotEmpty) {
+          selectedItem = productCategoryItemList[0];
+        }
       }
     }).whenComplete(() async {
       if (!context.mounted) return;
       EasyLoading.dismiss();
+      if (productCategoryItemList.isEmpty) {
+        showMsg(
+          msg: "برای گروه این کاربر، کانفیگ قابل خریدی وجود ندارد",
+          context: context,
+          type: "warning",
+        );
+        return;
+      }
 
       showDialog(
           context: context,

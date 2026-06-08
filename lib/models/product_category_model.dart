@@ -16,6 +16,9 @@ class ProductCategory {
   bool showSubscriptionLink = true;
   bool showPannelLink = true;
   bool isActive = true;
+  /// If null/empty => visible/buyable for all groups.
+  /// Uses `0` as sentinel for "بدون گروه".
+  List<int>? allowedUserGroupIds;
   int? inboundId;
   int? ipLimit;
   String? sampleInbound;
@@ -35,12 +38,20 @@ class ProductCategory {
     required this.showSubscriptionLink,
     required this.showPannelLink,
     required this.isActive,
+    this.allowedUserGroupIds,
     this.inboundId,
     this.ipLimit,
     this.sampleInbound,
     this.pannel,
     this.agentAddCategoriyModel,
   });
+
+  bool isAllowedForUserGroup(int? userGroupId) {
+    final allowed = allowedUserGroupIds;
+    if (allowed == null || allowed.isEmpty) return true;
+    final normalized = userGroupId ?? 0;
+    return allowed.contains(normalized);
+  }
 
   ProductCategory copyWith({
     int? id,
@@ -55,6 +66,7 @@ class ProductCategory {
     bool? showSubscriptionLink,
     bool? showPannelLink,
     bool? isActive,
+    List<int>? allowedUserGroupIds,
     int? inboundId,
     int? ipLimit,
     String? sampleInbound,
@@ -74,6 +86,7 @@ class ProductCategory {
       showSubscriptionLink: showSubscriptionLink ?? this.showSubscriptionLink,
       showPannelLink: showPannelLink ?? this.showPannelLink,
       isActive: isActive ?? this.isActive,
+      allowedUserGroupIds: allowedUserGroupIds ?? this.allowedUserGroupIds,
       inboundId: inboundId ?? this.inboundId,
       ipLimit: ipLimit ?? this.ipLimit,
       sampleInbound: sampleInbound ?? this.sampleInbound,
@@ -97,12 +110,37 @@ class ProductCategory {
       'showSubscriptionLink': showSubscriptionLink,
       'showPannelLink': showPannelLink,
       'isActive': isActive,
+      'allowed_user_group_ids': allowedUserGroupIds,
       'inbound_id': inboundId,
       'ip_limit': ipLimit,
       'sample_inbound': sampleInbound,
       // 'agentAddCategoriyModel': agentAddCategoriyModel?.toMap(),
       // 'pannel': pannel?,
     };
+  }
+
+  static List<int>? _parseAllowedGroupIds(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is List) {
+      final out = <int>[];
+      for (final v in raw) {
+        final i = int.tryParse(v.toString());
+        if (i != null) out.add(i);
+      }
+      return out;
+    }
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return null;
+      final parts = s.split(RegExp(r'[,; ]+')).where((p) => p.trim().isNotEmpty);
+      final out = <int>[];
+      for (final p in parts) {
+        final i = int.tryParse(p.trim());
+        if (i != null) out.add(i);
+      }
+      return out;
+    }
+    return null;
   }
 
   factory ProductCategory.fromMap(Map<String, dynamic> map) {
@@ -119,6 +157,7 @@ class ProductCategory {
         showSubscriptionLink: map['show_subscription_link'] == 1 ? true : false,
         showPannelLink: map['show_pannel_link'] == 1 ? true : false,
         isActive: map['is_active'] == 1 ? true : false,
+        allowedUserGroupIds: _parseAllowedGroupIds(map['allowed_user_group_ids']),
         inboundId: map['inbound_id']?.toInt(),
         ipLimit: map['ip_limit']?.toInt(),
         sampleInbound: map['sample_inbound']?.toString(),

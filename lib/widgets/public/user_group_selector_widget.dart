@@ -20,7 +20,8 @@ class UserGroupSelectorWidget extends StatefulWidget {
   final VoidCallback? onChanged;
 
   @override
-  State<UserGroupSelectorWidget> createState() => _UserGroupSelectorWidgetState();
+  State<UserGroupSelectorWidget> createState() =>
+      _UserGroupSelectorWidgetState();
 }
 
 class _UserGroupSelectorWidgetState extends State<UserGroupSelectorWidget> {
@@ -72,7 +73,8 @@ class _UserGroupSelectorWidgetState extends State<UserGroupSelectorWidget> {
           ),
           SizedBox(height: AppStyle.defaultPadding / 2),
           DropdownButtonFormField<int?>(
-            value: widget.roleType == 'user' ? _selectedGroupId : _selectedGroupId,
+            initialValue:
+                widget.roleType == 'user' ? _selectedGroupId : _selectedGroupId,
             decoration: InputDecoration(
               labelText: 'انتخاب گروه',
               border: const OutlineInputBorder(),

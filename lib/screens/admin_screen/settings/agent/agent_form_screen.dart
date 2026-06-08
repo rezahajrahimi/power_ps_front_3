@@ -85,7 +85,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         child: Scaffold(
           appBar: appBarWithBackButton(
             context: context,
-            title: widget.isCreate ? "افزودن دستیار فروش" : "ویرایش دستیار فروش",
+            title:
+                widget.isCreate ? "افزودن دستیار فروش" : "ویرایش دستیار فروش",
           ),
           body: !_showData
               ? const Center(child: CircularProgressIndicator())
@@ -249,8 +250,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
               ),
               filter: (q) => _userList
                   .where((u) =>
-                      u.name.contains(q) ||
-                      u.accountId.toString().contains(q))
+                      u.name.contains(q) || u.accountId.toString().contains(q))
                   .toList(),
               emptyWidget: const Center(child: Text('کاربری یافت نشد')),
               inputDecoration: agentRtlInputDecoration(
@@ -278,7 +278,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('حذف اکانت‌های کم‌مصرف', textAlign: TextAlign.right),
+          title:
+              const Text('حذف اکانت‌های کم‌مصرف', textAlign: TextAlign.right),
           subtitle: const Text(
             'حذف اکانت‌های با مصرف کمتر از 0.5GB',
             textAlign: TextAlign.right,
@@ -326,8 +327,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   textHint: 'محدودیت ترافیک (ترابایت)',
-                  validationError:
-                      'ترافیک قابل فروش به ترابایت را وارد کنید',
+                  validationError: 'ترافیک قابل فروش به ترابایت را وارد کنید',
                 ),
               ),
             ],
@@ -413,7 +413,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
     EasyLoading.dismiss();
     if (!mounted) return;
     if (detail == null) {
-      showMsg(msg: "خطا در دریافت تنظیمات دستیار", context: context, type: "error");
+      showMsg(
+          msg: "خطا در دریافت تنظیمات دستیار", context: context, type: "error");
       return;
     }
 
@@ -470,10 +471,9 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
   }
 
   String _panelLabel(Pannel panel) {
-    final location =
-        panel.location != null && panel.location!.isNotEmpty
-            ? ' - ${panel.location}'
-            : '';
+    final location = panel.location != null && panel.location!.isNotEmpty
+        ? ' - ${panel.location}'
+        : '';
     return '${getPannelName(name: panel.type)}$location';
   }
 
@@ -494,7 +494,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           'پنل مورد نظر را انتخاب کنید تا فقط بسته‌های همان پنل نمایش داده شوند.',
       children: [
         DropdownButtonFormField<int?>(
-          value: _selectedPanelId,
+          initialValue: _selectedPanelId,
           isExpanded: true,
           decoration: agentRtlInputDecoration(label: 'پنل'),
           items: [
@@ -663,8 +663,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         final notSelected =
             await getAgentProductsWithNotSelectedByUserID(userID: agent.id);
         final selected = await getAgentProductsByUserID(userID: agent.id);
-        final permission =
-            await getUserPremissionByAgentID(userID: agent.id);
+        final permission = await getUserPremissionByAgentID(userID: agent.id);
 
         if (!mounted) return;
 
@@ -721,12 +720,12 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
 
   Future<void> _submitData(BuildContext context) async {
     if (widget.isCreate && _selectedUser == null) {
-      showMsg(msg: "لطفا یک کاربر را انتخاب کنید", context: context, type: "error");
+      showMsg(
+          msg: "لطفا یک کاربر را انتخاب کنید", context: context, type: "error");
       return;
     }
 
-    final productLimit =
-        int.tryParse(_maxProdouctLimitationTxtController.text);
+    final productLimit = int.tryParse(_maxProdouctLimitationTxtController.text);
     final trafficLimit =
         double.tryParse(_maxTrafficLimitationTxtController.text);
 
@@ -747,8 +746,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
       return;
     }
 
-    final selectedProducts =
-        Provider.of<AgentProvider>(context, listen: false).getAgentCategoriesAdded();
+    final selectedProducts = Provider.of<AgentProvider>(context, listen: false)
+        .getAgentCategoriesAdded();
     if (selectedProducts.isEmpty) {
       showMsg(
         msg: "حداقل یک بسته باید انتخاب شود",
@@ -798,7 +797,10 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
     } catch (e) {
       EasyLoading.dismiss();
       if (!context.mounted) return;
-      showMsg(msg: "خطا در برقراری ارتباط با سرور", context: context, type: "error");
+      showMsg(
+          msg: "خطا در برقراری ارتباط با سرور",
+          context: context,
+          type: "error");
     }
   }
 }

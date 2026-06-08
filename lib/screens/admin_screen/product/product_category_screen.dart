@@ -4,8 +4,10 @@ import 'package:powerps/helpers/sanaei_inbound_sync.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/product_category_model.dart';
+import 'package:powerps/models/user_group_model.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
+import 'package:powerps/repositories/user_group_repository.dart';
 import 'package:powerps/screens/admin_screen/product/fast_edit_product_categories_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/product_category/product_category_info_item_card_widget.dart';
@@ -27,6 +29,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final List _selectedPanelIDFiltered = [];
   final List<String> _pannelNameList = [];
   String _selectedPannelName = "";
+  List<UserGroup> _userGroups = [];
 
   // String _selectedCategoryType = "";
   // List<CategoryTypeModel> _fetchedCategoryType = [];
@@ -42,6 +45,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
   bool _showPannelLink = true;
+  final Set<int> _allowedGroupIds = {};
   // create a form key
   final _formKey = GlobalKey<FormState>();
 
@@ -141,6 +145,9 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         _selectedPannelName =
             "${resPannel[0].id}: ${getPannelName(name: resPannel[0].type)} - ${resPannel[0].location}";
       }
+
+      final groupsData = await getUserGroups(roleType: 'user');
+      _userGroups = (groupsData?['groups'] as List<UserGroup>?) ?? [];
 
       setStateIfMounted(() {
         _showData = true;
@@ -427,11 +434,13 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     );
   }
 
-  _openAddNewProductCategoryDialog({required BuildContext context}) {
+  Future<void> _openAddNewProductCategoryDialog(
+      {required BuildContext context}) async {
     final theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
     final dialogWidth =
         screenSize.width > 600 ? 550.0 : screenSize.width * 0.95;
+    _allowedGroupIds.clear();
 
     return showDialog(
       context: context,
@@ -665,6 +674,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                   ],
                                 ),
                               ),
+                              const SizedBox(height: 12),
+                              _allowedGroupsWidget(context, setState),
                             ],
                           ),
                         ),
@@ -763,6 +774,79 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     );
   }
 
+  Widget _allowedGroupsWidget(
+      BuildContext context, void Function(VoidCallback fn) setDialogState) {
+    final theme = Theme.of(context);
+    final groups = _userGroups.where((g) => !g.isDefault).toList();
+
+    String helper;
+    if (_allowedGroupIds.isEmpty) {
+      helper = 'اگر چیزی انتخاب نکنید، برای همه نمایش داده می‌شود';
+    } else {
+      helper = 'فقط گروه‌های انتخاب‌شده نمایش داده می‌شود';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('محدودیت گروه کاربری (اختیاری)',
+              style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 4),
+          Text(helper,
+              style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('بدون گروه'),
+                selected: _allowedGroupIds.contains(0),
+                onSelected: (v) => setDialogState(() {
+                  if (v) {
+                    _allowedGroupIds.add(0);
+                  } else {
+                    _allowedGroupIds.remove(0);
+                  }
+                }),
+              ),
+              ...groups.map((g) {
+                final selected = _allowedGroupIds.contains(g.id);
+                return FilterChip(
+                  label: Text(g.name),
+                  selected: selected,
+                  onSelected: (v) => setDialogState(() {
+                    if (v) {
+                      _allowedGroupIds.add(g.id);
+                    } else {
+                      _allowedGroupIds.remove(g.id);
+                    }
+                  }),
+                );
+              }),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _allowedGroupIds.isEmpty
+                  ? null
+                  : () => setDialogState(() => _allowedGroupIds.clear()),
+              child: const Text('حذف محدودیت (همه)'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitData(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -783,6 +867,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         rechargable: _rechargable,
         showPannelLink: _showPannelLink,
         showSubscriptionLink: _showSubscriptionLink,
+        allowedUserGroupIds:
+            _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),
         inboundId: _inboundIdEditText.text.isNotEmpty
             ? int.tryParse(_inboundIdEditText.text)
             : null,

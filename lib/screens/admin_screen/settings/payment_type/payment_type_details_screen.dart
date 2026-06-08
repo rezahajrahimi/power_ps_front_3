@@ -612,16 +612,9 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                       child: const Text("دانلود از کافه بازار"),
                       onPressed: () {
                         launchUrl(Uri.parse(
-                            "https://cafebazaar.ir/app/com.example.shetab_verification"));
+                            "https://cafebazaar.ir/app/ir.webdide.verify"));
                       },
                     ),
-                    TextButton(
-                      child: const Text("دانلود از مایکت"),
-                      onPressed: () {
-                        launchUrl(Uri.parse(
-                            "https://myket.ir/app/com.example.shetab_verification"));
-                      },
-                    )
                   ],
                 )
               ],

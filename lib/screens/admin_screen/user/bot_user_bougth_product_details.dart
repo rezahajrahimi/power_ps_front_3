@@ -1148,20 +1148,31 @@ class _BotUserBoughtProductDetailsScreenState
     EasyLoading.show();
     List<ProductCategory> productCategoryList = [];
     List<String> productCategoryItemList = [];
+    final userGroupId = widget.productDetails.botUser?.panelUser?.userGroupId;
 
     await getAllProdctCategory().then((res) {
       if (res != null && res != false) {
         productCategoryList = res;
         for (var i in productCategoryList) {
           if (i.pannelId == widget.productDetails.productCategory!.pannelId) {
-            productCategoryItemList
-                .add("${i.id} - ${i.categoryName} - ${i.price} تومان");
+            if (i.isAllowedForUserGroup(userGroupId)) {
+              productCategoryItemList
+                  .add("${i.id} - ${i.categoryName} - ${i.price} تومان");
+            }
           }
         }
       }
     }).whenComplete(() async {
       EasyLoading.dismiss();
       if (!context.mounted) return;
+      if (productCategoryItemList.isEmpty) {
+        showMsg(
+          msg: "برای گروه این کاربر، بسته‌ی جایگزین مجازی وجود ندارد",
+          context: context,
+          type: "warning",
+        );
+        return;
+      }
       showDialog(
           barrierDismissible: false,
           context: context,
