@@ -49,7 +49,8 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
             .where((a) =>
                 a.name.contains(query) ||
                 a.accountId.toString().contains(query) ||
-                (a.userGroupName?.contains(query) ?? false))
+                (a.userGroupName?.contains(query) ?? false) ||
+                (a.adminAlias?.contains(query) ?? false))
             .toList();
       }
     });
@@ -247,7 +248,7 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
       title: "لیست دستیاران فروش (${_agents.length})",
       subtitle: _filteredAgents.length != _agents.length
           ? "${_filteredAgents.length} نتیجه از ${_agents.length} دستیار"
-          : "جستجو بر اساس نام، شناسه تلگرام یا گروه کاربری",
+          : "جستجو بر اساس نام، شناسه تلگرام، گروه یا اسم مستعار",
       children: [
         TextField(
         controller: _searchController,
@@ -255,7 +256,7 @@ class _AgentsManageScreenState extends State<AgentsManageScreen> {
         textDirection: TextDirection.rtl,
         decoration: agentRtlInputDecoration(
           label: "جستجو",
-          hint: "نام، شناسه یا گروه...",
+          hint: "نام، شناسه، گروه یا اسم مستعار...",
           suffixIcon: const Icon(Icons.search),
           prefixIcon: _searchController.text.isNotEmpty
               ? IconButton(

@@ -47,7 +47,7 @@ class _SearchFieldState extends State<SearchField> {
         // widget.searchOnChanged;
       },
       decoration: InputDecoration(
-        hintText: "جستجو",
+        hintText: "جستجو (نام، ID، یوزرنیم، اسم مستعار...)",
         fillColor: AppStyle.secondaryColor,
         filled: true,
         border: OutlineInputBorder(

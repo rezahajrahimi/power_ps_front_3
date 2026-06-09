@@ -121,15 +121,46 @@ class _BotUserInfoItemCardWidgetState extends State<BotUserInfoItemCardWidget> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          widget.item.accountId.toString(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: Colors.white,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.item.accountId.toString(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (widget.item.adminAlias != null &&
+                                  widget.item.adminAlias!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.label_outline,
+                                          size: 12, color: Colors.amberAccent),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          widget.item.adminAlias!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.amberAccent,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         Row(
                           children: [

@@ -3,6 +3,11 @@ import 'package:dio/dio.dart';
 String marzbanURL = "";
 // const String baseURL = "https://powernad.ir/public";
 
+void setMarzbanBaseUrl(String url) {
+  marzbanURL = url;
+  MarzbanApi.dio.options.baseUrl = url;
+}
+
 class MarzbanApi {
   static final BaseOptions _baseOptions = BaseOptions(
     baseUrl: marzbanURL,

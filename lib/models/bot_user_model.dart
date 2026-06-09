@@ -14,6 +14,7 @@ class BotUser {
   String? username;
   String? firstName;
   String? lastName;
+  String? adminAlias;
   String createdAt;
   String updatedAt;
   List<Log>? logs = [];
@@ -29,6 +30,7 @@ class BotUser {
       required this.username,
       required this.firstName,
       required this.lastName,
+      this.adminAlias,
       required this.createdAt,
       required this.updatedAt,
       this.logs,
@@ -48,6 +50,9 @@ class BotUser {
       firstName:
           json['first_name'] != null ? json['first_name'].toString() : "",
       lastName: json['last_name'] != null ? json['last_name'].toString() : "",
+      adminAlias: json['admin_alias']?.toString().trim().isEmpty == true
+          ? null
+          : json['admin_alias']?.toString(),
       createdAt: json['created_at'].toString(),
       updatedAt: json['updated_at'].toString(),
       ballance:
@@ -82,6 +87,7 @@ class BotUser {
       'username': username,
       'firstName': firstName,
       'lastName': lastName,
+      'adminAlias': adminAlias,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'ballance': ballance?.toMap(),
@@ -97,6 +103,7 @@ class BotUser {
       username: map['username'],
       firstName: map['firstName'],
       lastName: map['lastName'],
+      adminAlias: map['adminAlias'],
       createdAt: map['createdAt'] ?? '',
       updatedAt: map['updatedAt'] ?? '',
       ballance: map['ballance'] != null

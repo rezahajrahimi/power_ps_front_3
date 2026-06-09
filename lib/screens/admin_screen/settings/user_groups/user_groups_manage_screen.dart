@@ -386,9 +386,15 @@ class _UserGroupsManageScreenState extends State<UserGroupsManageScreen>
   Widget _userVerificationTile(BuildContext context, User user) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(user.name.isNotEmpty ? user.name : 'کاربر ${user.accountId}'),
+      title: Text(
+        user.adminAlias?.isNotEmpty == true
+            ? user.adminAlias!
+            : (user.name.isNotEmpty ? user.name : 'کاربر ${user.accountId}'),
+      ),
       subtitle: Text(
-        'ID: ${user.accountId}${user.userGroupName != null ? ' | گروه: ${user.userGroupName}' : ''}',
+        'ID: ${user.accountId}'
+        '${user.adminAlias?.isNotEmpty == true ? ' | نام: ${user.name}' : ''}'
+        '${user.userGroupName != null ? ' | گروه: ${user.userGroupName}' : ''}',
       ),
       trailing: Switch(
         value: user.isVerified,
@@ -728,8 +734,15 @@ class _UserGroupsManageScreenState extends State<UserGroupsManageScreen>
       contentPadding: EdgeInsets.zero,
       dense: true,
       leading: const Icon(Icons.person_outline),
-      title: Text(user.name.isNotEmpty ? user.name : 'کاربر ${user.accountId}'),
-      subtitle: Text('ID: ${user.accountId}'),
+      title: Text(
+        user.adminAlias?.isNotEmpty == true
+            ? user.adminAlias!
+            : (user.name.isNotEmpty ? user.name : 'کاربر ${user.accountId}'),
+      ),
+      subtitle: Text(
+        'ID: ${user.accountId}'
+        '${user.adminAlias?.isNotEmpty == true ? ' | نام: ${user.name}' : ''}',
+      ),
       trailing: IconButton(
         tooltip: 'حذف از گروه',
         onPressed: () => _confirmRemoveUserFromGroup(user, group),
@@ -932,12 +945,16 @@ class _AddUsersToGroupDialogState extends State<_AddUsersToGroupDialog> {
                                 });
                               },
                               title: Text(
-                                user.name.isNotEmpty
-                                    ? user.name
-                                    : 'کاربر ${user.accountId}',
+                                user.adminAlias?.isNotEmpty == true
+                                    ? user.adminAlias!
+                                    : (user.name.isNotEmpty
+                                        ? user.name
+                                        : 'کاربر ${user.accountId}'),
                               ),
                               subtitle: Text(
-                                'ID: ${user.accountId}${user.userGroupName != null ? ' | گروه فعلی: ${user.userGroupName}' : ''}',
+                                'ID: ${user.accountId}'
+                                '${user.adminAlias?.isNotEmpty == true ? ' | نام: ${user.name}' : ''}'
+                                '${user.userGroupName != null ? ' | گروه فعلی: ${user.userGroupName}' : ''}',
                               ),
                               secondary: user.isVerified
                                   ? const Icon(Icons.verified_user,

@@ -11,6 +11,8 @@ class User {
   final int? salesCount;
   final num? balanceToman;
   final double? balanceDollar;
+  final int? botUserId;
+  final String? adminAlias;
 
   User({
     required this.id,
@@ -24,6 +26,8 @@ class User {
     this.salesCount,
     this.balanceToman,
     this.balanceDollar,
+    this.botUserId,
+    this.adminAlias,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -50,6 +54,12 @@ class User {
       balanceDollar: json['balance_dollar'] != null
           ? double.tryParse(json['balance_dollar'].toString())
           : null,
+      botUserId: json['bot_user_id'] != null
+          ? _parseInt(json['bot_user_id'])
+          : null,
+      adminAlias: json['admin_alias']?.toString().trim().isEmpty == true
+          ? null
+          : json['admin_alias']?.toString(),
     );
   }
 

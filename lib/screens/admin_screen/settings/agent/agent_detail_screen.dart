@@ -13,6 +13,7 @@ import 'package:powerps/screens/admin_screen/settings/agent/agent_form_screen.da
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/agent/agent_screen_shared.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/bot_user_admin_alias_widget.dart';
 
 class AgentDetailScreen extends StatefulWidget {
   const AgentDetailScreen({super.key, required this.agent});
@@ -83,7 +84,9 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
         child: Scaffold(
           appBar: appBarWithBackButton(
             context: context,
-            title: isMobile ? 'جزئیات دستیار' : 'جزئیات دستیار فروش',
+            title: _detail?.user.adminAlias?.isNotEmpty == true
+                ? _detail!.user.adminAlias!
+                : (isMobile ? 'جزئیات دستیار' : 'جزئیات دستیار فروش'),
           ),
           body: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -150,6 +153,15 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          if (user.botUserId != null || user.accountId != 0)
+            AdminAliasEditorWidget(
+              botUserId: user.botUserId,
+              accountId: user.botUserId == null ? user.accountId : null,
+              adminAlias: user.adminAlias,
+              onChanged: _loadDetail,
+            ),
+          if (user.botUserId != null || user.accountId != 0)
+            const SizedBox(height: 16),
           if (permission != null) ...[
             _permissionsCard(context, permission),
             const SizedBox(height: 16),
@@ -173,6 +185,15 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
       children: [
         _infoCard(context, detail),
         SizedBox(height: AppStyle.defaultPadding),
+        if (user.botUserId != null || user.accountId != 0)
+          AdminAliasEditorWidget(
+            botUserId: user.botUserId,
+            accountId: user.botUserId == null ? user.accountId : null,
+            adminAlias: user.adminAlias,
+            onChanged: _loadDetail,
+          ),
+        if (user.botUserId != null || user.accountId != 0)
+          SizedBox(height: AppStyle.defaultPadding),
         _balanceCard(context, user),
         SizedBox(height: AppStyle.defaultPadding),
         if (permission != null) ...[
@@ -193,6 +214,8 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
       title: 'اطلاعات کاربر',
       children: [
         AgentRtlRow(label: 'نام', value: detail.user.name),
+        if (detail.user.adminAlias != null && detail.user.adminAlias!.isNotEmpty)
+          AgentRtlRow(label: 'اسم مستعار', value: detail.user.adminAlias!),
         AgentRtlRow(
           label: 'شناسه تلگرام',
           value: detail.user.accountId.toString(),

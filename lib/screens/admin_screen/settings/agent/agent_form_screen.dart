@@ -19,6 +19,7 @@ import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/agent/agent_screen_shared.dart';
 import 'package:powerps/widgets/agent/agent_select_category_with_inputs_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/bot_user_admin_alias_widget.dart';
 import 'package:powerps/widgets/public/user_group_selector_widget.dart';
 import 'package:searchable_listview/searchable_listview.dart';
 
@@ -48,6 +49,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
   final List<User> _userList = [];
   User? _selectedUser;
   User? _copySourceAgent;
+  User? _agentProfile;
   List<Pannel> _panels = [];
   int? _selectedPanelId;
   bool _minusBallance = false;
@@ -177,6 +179,17 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           ),
           gap,
         ],
+        if (!widget.isCreate && _agentProfile != null) ...[
+          AdminAliasEditorWidget(
+            botUserId: _agentProfile!.botUserId,
+            accountId: _agentProfile!.botUserId == null
+                ? _agentProfile!.accountId
+                : null,
+            adminAlias: _agentProfile!.adminAlias,
+            onChanged: _fillData,
+          ),
+          gap,
+        ],
         if (_panels.isNotEmpty) ...[
           _panelFilterCard(context),
           gap,
@@ -243,14 +256,16 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
                 leading: const Icon(Icons.person),
                 title: Text(user.name, textAlign: TextAlign.right),
                 subtitle: Text(
-                  'شناسه: ${user.accountId}',
+                  'شناسه: ${user.accountId}${user.adminAlias != null && user.adminAlias!.isNotEmpty ? ' | مستعار: ${user.adminAlias}' : ''}',
                   textAlign: TextAlign.right,
                 ),
                 onTap: () => setState(() => _selectedUser = user),
               ),
               filter: (q) => _userList
                   .where((u) =>
-                      u.name.contains(q) || u.accountId.toString().contains(q))
+                      u.name.contains(q) ||
+                      u.accountId.toString().contains(q) ||
+                      (u.adminAlias?.contains(q) ?? false))
                   .toList(),
               emptyWidget: const Center(child: Text('کاربری یافت نشد')),
               inputDecoration: agentRtlInputDecoration(
@@ -660,6 +675,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         }
       } else {
         final agent = widget.agent!;
+        final detail = await getAgentDetailById(id: agent.id);
         final notSelected =
             await getAgentProductsWithNotSelectedByUserID(userID: agent.id);
         final selected = await getAgentProductsByUserID(userID: agent.id);
@@ -706,6 +722,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           _maxTrafficLimitationTxtController.text =
               permission.trafficLimitationTB.toString();
         }
+
+        _agentProfile = detail?.user ?? agent;
       }
     } catch (e) {
       debugPrint("Error loading agent form: $e");

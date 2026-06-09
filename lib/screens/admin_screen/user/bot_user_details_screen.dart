@@ -19,6 +19,7 @@ import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/bot_user_admin_alias_widget.dart';
 import 'package:powerps/widgets/public/user_group_selector_widget.dart';
 import 'package:powerps/widgets/public/user_verification_toggle_widget.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
@@ -63,8 +64,12 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          appBar:
-              appBarWithBackButton(context: context, title: "اطلاعات کاربر"),
+          appBar: appBarWithBackButton(
+            context: context,
+            title: _botUser?.adminAlias?.isNotEmpty == true
+                ? _botUser!.adminAlias!
+                : "اطلاعات کاربر",
+          ),
           body: _showData == false
               ? const Center(
                   child: Column(
@@ -139,6 +144,11 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                 child: Column(
                   children: [
                     _mainInfoItemCard(context),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    BotUserAdminAliasWidget(
+                      botUser: _botUser!,
+                      onChanged: _fillData,
+                    ),
                     SizedBox(height: AppStyle.defaultPadding),
                     if (_botUser?.panelUser != null &&
                         _botUser!.panelUser!.role == 'user')
@@ -244,6 +254,12 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               icon: const Icon(Icons.person_outline, color: Colors.green),
               itemName: "نام",
               itemValue: "${_botUser!.firstName} ${_botUser!.lastName}")),
+      if (_botUser!.adminAlias != null && _botUser!.adminAlias!.isNotEmpty)
+        DetailsInfoItemWidget(
+            item: DetailsInfoItem(
+                icon: const Icon(Icons.label_outline, color: Colors.amberAccent),
+                itemName: "اسم مستعار",
+                itemValue: _botUser!.adminAlias!)),
       DetailsInfoItemWidget(
           item: DetailsInfoItem(
               icon: const Icon(Icons.calendar_today_outlined,

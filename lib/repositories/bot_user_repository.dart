@@ -258,6 +258,38 @@ Future searchBotUsers({required String searchUserText}) async {
   }
 }
 
+Future<BotUser?> updateBotUserAdminAlias({
+  int? botUserId,
+  int? accountId,
+  String? adminAlias,
+}) async {
+  try {
+    final response = await GenaralApi.dio.patch(
+      '/api/updateBotUserAdminAlias',
+      data: {
+        if (botUserId != null) 'bot_user_id': botUserId,
+        if (accountId != null) 'account_id': accountId,
+        'admin_alias': adminAlias,
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data?['bot_user'] != null) {
+      return BotUser.fromJson(response.data['bot_user']);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
 Future getBotUserByID({required int id}) async {
   try {
     Response response = await GenaralApi.dio.get("/api/getBotUserByID/$id",

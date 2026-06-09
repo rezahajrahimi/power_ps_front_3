@@ -98,12 +98,25 @@ class AgentInfoWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          agent.name,
+          agent.adminAlias?.isNotEmpty == true ? agent.adminAlias! : agent.name,
           textAlign: TextAlign.right,
           style: Theme.of(context).textTheme.titleMedium,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        if (agent.adminAlias?.isNotEmpty == true) ...[
+          const SizedBox(height: 2),
+          Text(
+            agent.name,
+            textAlign: TextAlign.right,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: Colors.white54),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
         const SizedBox(height: 4),
         Text(
           "شناسه تلگرام: ${agent.accountId}",

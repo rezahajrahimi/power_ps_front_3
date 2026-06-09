@@ -10,21 +10,19 @@ Future<String?> checkIsMarzbanUrl({
   required String password,
 }) async {
   try {
-    marzbanURL = url;
-    var formData = FormData.fromMap({
-      'username': username,
-      'password': password,
-    });
+    setMarzbanBaseUrl(url);
     Response response = await MarzbanApi.dio.post(
       "/api/admin/token",
-      data: formData,
-      options: Options(headers: {
-        'Accept': 'application/json',
-        'Connection': 'keep-alive',
-        "Content-Type": "application/json",
-        "Charset": "utf-8",
-        'Access-Control-Allow-Origin': '*'
-      }),
+      data: {
+        'username': username,
+        'password': password,
+      },
+      options: Options(
+        contentType: Headers.formUrlEncodedContentType,
+        headers: {
+          'Accept': 'application/json',
+        },
+      ),
     );
     if (response.statusCode == 200 && response.data != null) {
       final tokenType = response.data["token_type"];
@@ -45,7 +43,7 @@ Future<Map<String, List<String>>?> fetchMarzbanPanelInbounds({
   required String token,
 }) async {
   try {
-    marzbanURL = url;
+    setMarzbanBaseUrl(url);
     final response = await MarzbanApi.dio.get(
       '/api/inbounds',
       options: Options(headers: {
@@ -65,8 +63,20 @@ Future<Map<String, List<String>>?> fetchMarzbanPanelInbounds({
     final result = <String, List<String>>{};
     data.forEach((key, value) {
       if (value is List) {
-        result[key.toString()] =
-            value.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+        final tags = <String>[];
+        for (final item in value) {
+          if (item is String && item.isNotEmpty) {
+            tags.add(item);
+          } else if (item is Map) {
+            final tag = item['tag'] ?? item['name'] ?? item['remark'];
+            if (tag != null && tag.toString().isNotEmpty) {
+              tags.add(tag.toString());
+            }
+          }
+        }
+        if (tags.isNotEmpty) {
+          result[key.toString()] = tags;
+        }
       }
     });
     return result.isEmpty ? null : result;
@@ -83,7 +93,7 @@ Future<MarzbanConfig?> getMarzbanUserInfo({
   required String password,
 }) async {
   try {
-    marzbanURL = url;
+    setMarzbanBaseUrl(url);
     final token = await checkIsMarzbanUrl(
       url: url,
       password: password,
@@ -121,7 +131,7 @@ Future<bool> resetMarzbanUser({
   required String password,
 }) async {
   try {
-    marzbanURL = url;
+    setMarzbanBaseUrl(url);
     final token = await checkIsMarzbanUrl(
       url: url,
       password: password,
@@ -157,7 +167,7 @@ Future<bool> deleteMarzbanUser({
   required int productID,
 }) async {
   try {
-    marzbanURL = url;
+    setMarzbanBaseUrl(url);
     final token = await checkIsMarzbanUrl(
       url: url,
       password: password,
