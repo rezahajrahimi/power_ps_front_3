@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/sanaei_panel_version.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -61,6 +62,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
   final _subPortEditTxt = TextEditingController();
   final _apiTokenEditTxt = TextEditingController();
   final List<Widget> _sanaeiWidgetList = [];
+  String _selectedApiVersion = SanaeiApiVersion.v3;
 
   @override
   void initState() {
@@ -401,13 +403,22 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
+          SanaeiApiVersionDropdown(
+            value: _selectedApiVersion,
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _selectedApiVersion = v);
+            },
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
           SanaeiPanelActionButtons(
             pannelId: int.tryParse(widget.selectedPannel.id),
             adminUrlController: _adminUrlEditTxt,
             usernameController: _userNameEditTxt,
             passwordController: _userPasswordEditTxt,
             apiTokenController: _apiTokenEditTxt,
-            normalizeUrl: _getHiddifyUrl,
+            normalizeUrl: normalizeSanaeiAdminUrl,
+            apiVersion: _selectedApiVersion,
           ),
         ],
       ),
@@ -765,6 +776,8 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _showProxiesData = false;
         _showOtherData = false;
         _showSanaeiData = true;
+        _selectedApiVersion =
+            SanaeiApiVersion.normalize(widget.selectedPannel.apiVersion);
 
         break;
       case "custome":
@@ -995,29 +1008,34 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
       showMsg(msg: "ظرفیت نامعتبر است.", context: context, type: "error");
       return;
     }
-    var res = await updatePannel(
+    final res = await updateSanaeiPannel(
       pannel: Pannel(
         id: widget.selectedPannel.id,
         type: "sanaei",
         location: _locationEditTxt.text,
-        adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
-        subPort: _subPortEditTxt.text,
+        adminUrl: normalizeSanaeiAdminUrl(_adminUrlEditTxt.text),
+        subPort: _subPortEditTxt.text.trim().isEmpty
+            ? null
+            : _subPortEditTxt.text.trim(),
         username: _userNameEditTxt.text,
         password: _userPasswordEditTxt.text,
         token: _apiTokenEditTxt.text.trim().isEmpty
             ? null
             : _apiTokenEditTxt.text.trim(),
+        apiVersion: _selectedApiVersion,
         capacity: capacity,
       ),
     );
     EasyLoading.dismiss();
     if (!context.mounted) return;
-    if (res == true) {
+    if (res) {
       showMsg(msg: "با موفقیت ثبت شد.", context: context);
       Navigator.pop(context, true);
     } else {
       showMsg(
-        msg: "خطا، اطلاعات وارد شده را بررسی کنید.",
+        msg: lastPannelAddError.isNotEmpty
+            ? lastPannelAddError
+            : "خطا، اطلاعات وارد شده را بررسی کنید.",
         context: context,
         type: "error",
       );

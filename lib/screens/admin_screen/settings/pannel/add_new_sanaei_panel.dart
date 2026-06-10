@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/sanaei_panel_version.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
+import 'package:powerps/repositories/hiddify_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -29,6 +31,7 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
   final _apiTokenEditTxt = TextEditingController();
+  String _selectedApiVersion = SanaeiApiVersion.v3;
 
   @override
   void initState() {
@@ -244,25 +247,25 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
+          SanaeiApiVersionDropdown(
+            value: _selectedApiVersion,
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _selectedApiVersion = v);
+            },
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
           SanaeiPanelActionButtons(
             adminUrlController: _adminUrlEditTxt,
             usernameController: _userNameEditTxt,
             passwordController: _userPasswordEditTxt,
             apiTokenController: _apiTokenEditTxt,
-            normalizeUrl: _getHiddifyUrl,
+            normalizeUrl: normalizeSanaeiAdminUrl,
+            apiVersion: _selectedApiVersion,
           ),
         ],
       ),
     );
-  }
-
-  String _getHiddifyUrl(String str) {
-    try {
-      var res = str.substring(0, str.indexOf('admin'));
-      return res;
-    } catch (e) {
-      return str;
-    }
   }
 
   void _fillData() {
@@ -335,18 +338,21 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
     }
 
     try {
-      final res = await addNewPannel(
+      final res = await addSanaeiPannel(
         pannel: Pannel(
             id: "1",
             type: "sanaei",
             location: _locationEditTxt.text,
-            adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
-            subPort: _subPortEditTxt.text,
+            adminUrl: normalizeSanaeiAdminUrl(_adminUrlEditTxt.text),
+            subPort: _subPortEditTxt.text.trim().isEmpty
+                ? null
+                : _subPortEditTxt.text.trim(),
             username: _userNameEditTxt.text,
             password: _userPasswordEditTxt.text,
             token: _apiTokenEditTxt.text.trim().isEmpty
                 ? null
                 : _apiTokenEditTxt.text.trim(),
+            apiVersion: _selectedApiVersion,
             capacity: capacity),
       );
 
@@ -364,14 +370,20 @@ class _AddNewSanaeiPanelScreenState extends State<AddNewSanaeiPanelScreen> {
 
       EasyLoading.dismiss();
       showMsg(
-        msg: "خطا، اطلاعات وارد شده را بررسی کنید.",
+        msg: lastPannelAddError.isNotEmpty
+            ? lastPannelAddError
+            : "خطا، اطلاعات وارد شده را بررسی کنید.",
         context: context,
         type: "error",
       );
     } catch (e) {
       EasyLoading.dismiss();
       if (!context.mounted) return;
-      showMsg(msg: "خطا", context: context, type: "error");
+      showMsg(
+        msg: lastPannelAddError.isNotEmpty ? lastPannelAddError : "خطا",
+        context: context,
+        type: "error",
+      );
     }
   }
 }

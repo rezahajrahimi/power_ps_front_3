@@ -4,6 +4,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
+import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 
 class SanaeiInboundItem {
@@ -225,6 +226,7 @@ class SanaeiPanelActionButtons extends StatelessWidget {
   final TextEditingController? apiTokenController;
   final TextEditingController? inboundIdController;
   final String Function(String url) normalizeUrl;
+  final String? apiVersion;
 
   const SanaeiPanelActionButtons({
     super.key,
@@ -235,6 +237,7 @@ class SanaeiPanelActionButtons extends StatelessWidget {
     this.apiTokenController,
     this.inboundIdController,
     required this.normalizeUrl,
+    this.apiVersion,
   });
 
   Future<void> _checkLogin(BuildContext context) async {
@@ -256,11 +259,16 @@ class SanaeiPanelActionButtons extends StatelessWidget {
       username: username,
       password: password,
       apiToken: apiToken?.trim().isEmpty ?? true ? null : apiToken!.trim(),
+      apiVersion: apiVersion,
     );
     EasyLoading.dismiss();
     if (!context.mounted) return;
     showMsg(
-      msg: ok ? 'موفق، اطلاعات وارد شده صحیح است.' : 'ناموفق، اطلاعات را بررسی کنید.',
+      msg: ok
+          ? 'موفق، اطلاعات وارد شده صحیح است.'
+          : (lastPannelAddError.isNotEmpty
+              ? lastPannelAddError
+              : 'ناموفق، اطلاعات را بررسی کنید.'),
       context: context,
       type: ok ? 'info' : 'error',
     );

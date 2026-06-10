@@ -7,7 +7,25 @@ import 'package:powerps/models/proxy_model.dart';
 List<Pannel> pannelList = [];
 String pannelChangedToken = "aa";
 int lastPannelID = 0;
+String lastPannelAddError = '';
 ChangePannelController pannelNotifier = ChangePannelController(0);
+
+int? _extractPanelId(dynamic data) {
+  if (data is int) return data;
+  if (data is num) return data.toInt();
+  if (data is String) return int.tryParse(data);
+  if (data is Map && data['id'] != null) {
+    return int.tryParse(data['id'].toString());
+  }
+  return null;
+}
+
+String? _extractApiError(dynamic data) {
+  if (data is Map && data['message'] != null) {
+    return data['message'].toString();
+  }
+  return null;
+}
 
 class ChangePannelController extends ValueNotifier {
   ChangePannelController(super.value);
@@ -51,6 +69,7 @@ Future getPannels() async {
 }
 
 Future<bool> addNewPannel({required Pannel pannel}) async {
+  lastPannelAddError = '';
   try {
     Response response = await GenaralApi.dio.post("/api/addNewPannel",
         data: {
@@ -74,18 +93,25 @@ Future<bool> addNewPannel({required Pannel pannel}) async {
           'Access-Control-Allow-Origin': '*'
         }));
 
-    if (response.statusCode == 201) {
-      lastPannelID = response.data;
-      return true;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final panelId = _extractPanelId(response.data);
+      if (panelId != null && panelId > 0) {
+        lastPannelID = panelId;
+        return true;
+      }
+      if (response.data == true) {
+        return true;
+      }
     }
+
+    lastPannelAddError = _extractApiError(response.data) ??
+        'خطا، اطلاعات وارد شده را بررسی کنید.';
+    return false;
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
+    final data = e.response?.data;
+    lastPannelAddError =
+        _extractApiError(data) ?? e.message ?? 'خطا در ارتباط با سرور.';
+    debugPrint(lastPannelAddError);
     return false;
   }
 }
@@ -170,7 +196,7 @@ Future<bool> editMarzbanPannel({
   }
 }
 
-Future updatePannel({required Pannel pannel}) async {
+Future<bool> updatePannel({required Pannel pannel}) async {
   try {
     Response response = await GenaralApi.dio.post("/api/updatePannel",
         data: {
@@ -196,20 +222,24 @@ Future updatePannel({required Pannel pannel}) async {
         }));
     debugPrint(response.statusMessage);
 
-    if (response.statusCode == 200 && response.data != null) {
-      return true;
-    } else if (response.statusCode == 201) {
-      return true;
-    } else if (response.statusCode == 401) {
-      return null;
-    } else if (response.statusCode == 500) {
-      return null;
-    } else {
-      return null;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.data is Map && response.data['success'] == true) {
+        return true;
+      }
+      if (response.data == true) {
+        return true;
+      }
     }
+
+    lastPannelAddError = _extractApiError(response.data) ??
+        'خطا، اطلاعات وارد شده را بررسی کنید.';
+    return false;
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
-    return null;
+    final data = e.response?.data;
+    lastPannelAddError =
+        _extractApiError(data) ?? e.message ?? 'خطا در ارتباط با سرور.';
+    debugPrint(lastPannelAddError);
+    return false;
   }
 }
 

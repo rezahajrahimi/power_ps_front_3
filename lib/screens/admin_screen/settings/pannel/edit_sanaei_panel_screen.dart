@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/sanaei_panel_version.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
+import 'package:powerps/repositories/hiddify_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -29,9 +31,12 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
   final _apiTokenEditTxt = TextEditingController();
+  late String _selectedApiVersion;
 
   @override
   void initState() {
+    _selectedApiVersion =
+        SanaeiApiVersion.normalize(widget.selectedPannel.apiVersion);
     _locationEditTxt.text = widget.selectedPannel.location ?? "";
     _capacityEditTxt.text = widget.selectedPannel.capacity?.toString() ?? "";
     _adminUrlEditTxt.text = widget.selectedPannel.adminUrl ?? "";
@@ -250,26 +255,26 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
+          SanaeiApiVersionDropdown(
+            value: _selectedApiVersion,
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _selectedApiVersion = v);
+            },
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
           SanaeiPanelActionButtons(
             pannelId: int.tryParse(widget.selectedPannel.id),
             adminUrlController: _adminUrlEditTxt,
             usernameController: _userNameEditTxt,
             passwordController: _userPasswordEditTxt,
             apiTokenController: _apiTokenEditTxt,
-            normalizeUrl: _getHiddifyUrl,
+            normalizeUrl: normalizeSanaeiAdminUrl,
+            apiVersion: _selectedApiVersion,
           ),
         ],
       ),
     );
-  }
-
-  String _getHiddifyUrl(String str) {
-    try {
-      var res = str.substring(0, str.indexOf('admin'));
-      return res;
-    } catch (e) {
-      return str;
-    }
   }
 
   void _fillData() {
@@ -341,46 +346,49 @@ class _EditSanaeiPanelScreenState extends State<EditSanaeiPanelScreen> {
       return;
     }
 
-    await updatePannel(
-      pannel: Pannel(
-          id: widget.selectedPannel.id,
-          type: "sanaei",
-          location: _locationEditTxt.text,
-          adminUrl: _getHiddifyUrl(_adminUrlEditTxt.text),
-          subPort: _subPortEditTxt.text,
-          username: _userNameEditTxt.text,
-          password: _userPasswordEditTxt.text,
-          token: _apiTokenEditTxt.text.trim().isEmpty
-              ? null
-              : _apiTokenEditTxt.text.trim(),
-          capacity: capacity),
-    ).then((res) {
+    try {
+      final res = await updateSanaeiPannel(
+        pannel: Pannel(
+            id: widget.selectedPannel.id,
+            type: "sanaei",
+            location: _locationEditTxt.text,
+            adminUrl: normalizeSanaeiAdminUrl(_adminUrlEditTxt.text),
+            subPort: _subPortEditTxt.text.trim().isEmpty
+                ? null
+                : _subPortEditTxt.text.trim(),
+            username: _userNameEditTxt.text,
+            password: _userPasswordEditTxt.text,
+            token: _apiTokenEditTxt.text.trim().isEmpty
+                ? null
+                : _apiTokenEditTxt.text.trim(),
+            apiVersion: _selectedApiVersion,
+            capacity: capacity),
+      );
+
       if (!context.mounted) return;
 
-      if (res == true) {
-        EasyLoading.dismiss();
-
+      EasyLoading.dismiss();
+      if (res) {
         showMsg(msg: "با موفقیت ویرایش شد.", context: context);
         Navigator.pop(context, true);
         return;
-      } else if (res.runtimeType == String) {
-        EasyLoading.dismiss();
-
-        showMsg(msg: "$res", context: context, type: "error");
-        Navigator.pop(context);
-        return;
       }
+
       showMsg(
-          msg: "خطا، اطلاعات وارد شده را بررسی کنید.",
-          context: context,
-          type: "error");
-
+        msg: lastPannelAddError.isNotEmpty
+            ? lastPannelAddError
+            : "خطا، اطلاعات وارد شده را بررسی کنید.",
+        context: context,
+        type: "error",
+      );
+    } catch (e) {
       EasyLoading.dismiss();
-    }).onError((e, s) {
-      EasyLoading.dismiss();
-
       if (!context.mounted) return;
-      showMsg(msg: "خطا", context: context, type: "error");
-    });
+      showMsg(
+        msg: lastPannelAddError.isNotEmpty ? lastPannelAddError : "خطا",
+        context: context,
+        type: "error",
+      );
+    }
   }
 }

@@ -36,75 +36,181 @@ Future<bool> checkIsHiddifyUrl(
   }
 }
 
-/// Check Sanaei (x-ui) admin login using provided admin URL, username and password.
-/// When [apiToken] is provided, validates via /panel/api/server/status first (3x-ui v3).
-/// Returns true if login successful, false otherwise.
+String normalizeSanaeiAdminUrl(String url) {
+  var panelUrl = url.trim();
+  if (panelUrl.endsWith('/')) {
+    panelUrl = panelUrl.substring(0, panelUrl.length - 1);
+  }
+  final adminIndex = panelUrl.toLowerCase().indexOf('admin');
+  if (adminIndex >= 0) {
+    panelUrl = panelUrl.substring(0, adminIndex);
+    if (panelUrl.endsWith('/')) {
+      panelUrl = panelUrl.substring(0, panelUrl.length - 1);
+    }
+  }
+  return panelUrl;
+}
+
+/// Add Sanaei panel: saves to DB and verifies panel login on the server.
+Future<bool> addSanaeiPannel({required Pannel pannel}) async {
+  lastPannelAddError = '';
+  try {
+    final response = await GenaralApi.dio.post(
+      '/api/addSanaeiPannel',
+      data: {
+        'type': pannel.type,
+        'username': pannel.username,
+        'password': pannel.password,
+        'token': pannel.token,
+        'location': pannel.location,
+        'url_port': pannel.urlPort,
+        'sub_port': pannel.subPort,
+        'admin_url': normalizeSanaeiAdminUrl(pannel.adminUrl ?? ''),
+        'user_link': pannel.userLink,
+        'capacity': pannel.capacity,
+        'api_version': pannel.apiVersion ?? 'v3',
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 &&
+        response.data is Map &&
+        response.data['success'] == true) {
+      final panelId = int.tryParse(response.data['id']?.toString() ?? '');
+      if (panelId != null && panelId > 0) {
+        lastPannelID = panelId;
+      }
+      return true;
+    }
+
+    lastPannelAddError = (response.data is Map &&
+            response.data['message'] != null)
+        ? response.data['message'].toString()
+        : 'خطا، اطلاعات وارد شده را بررسی کنید.';
+    return false;
+  } on DioException catch (e) {
+    final data = e.response?.data;
+    lastPannelAddError = (data is Map && data['message'] != null)
+        ? data['message'].toString()
+        : (e.message ?? 'خطا در ارتباط با سرور.');
+    debugPrint(lastPannelAddError);
+    return false;
+  }
+}
+
+/// Update Sanaei panel: saves changes, clears old session, re-validates login.
+Future<bool> updateSanaeiPannel({required Pannel pannel}) async {
+  lastPannelAddError = '';
+  try {
+    final response = await GenaralApi.dio.post(
+      '/api/updateSanaeiPannel',
+      data: {
+        'id': int.parse(pannel.id),
+        'type': pannel.type,
+        'username': pannel.username,
+        'password': pannel.password,
+        'token': pannel.token,
+        'location': pannel.location,
+        'url_port': pannel.urlPort,
+        'sub_port': pannel.subPort,
+        'admin_url': normalizeSanaeiAdminUrl(pannel.adminUrl ?? ''),
+        'user_link': pannel.userLink,
+        'capacity': pannel.capacity,
+        'api_version': pannel.apiVersion ?? 'v3',
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 &&
+        response.data is Map &&
+        response.data['success'] == true) {
+      final panelId = int.tryParse(response.data['id']?.toString() ?? '');
+      if (panelId != null && panelId > 0) {
+        lastPannelID = panelId;
+      }
+      return true;
+    }
+
+    lastPannelAddError = (response.data is Map &&
+            response.data['message'] != null)
+        ? response.data['message'].toString()
+        : 'خطا، اطلاعات وارد شده را بررسی کنید.';
+    return false;
+  } on DioException catch (e) {
+    final data = e.response?.data;
+    lastPannelAddError = (data is Map && data['message'] != null)
+        ? data['message'].toString()
+        : (e.message ?? 'خطا در ارتباط با سرور.');
+    debugPrint(lastPannelAddError);
+    return false;
+  }
+}
+
+/// Check Sanaei (3x-ui) admin credentials via backend (handles CSRF + SSL).
 Future<bool> checkSanaeiLogin(
     {required String url,
     required String username,
     required String password,
-    String? apiToken}) async {
+    String? apiToken,
+    String? apiVersion}) async {
   try {
-    String baseUrl = url;
-    if (!baseUrl.endsWith('/')) baseUrl = '$baseUrl/';
+    final panelUrl = normalizeSanaeiAdminUrl(url);
 
-    if (apiToken != null && apiToken.trim().isNotEmpty) {
-      String token = apiToken.trim();
-      if (!token.toLowerCase().startsWith('bearer ')) {
-        token = 'Bearer $token';
-      }
-      final statusUrl = '${baseUrl}panel/api/server/status';
-      Dio tokenDio = Dio(BaseOptions(
-        connectTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 5),
-        validateStatus: (status) => status! < 500,
-      ));
-      Response tokenResponse = await tokenDio.get(statusUrl,
-          options: Options(headers: {
-            'Accept': 'application/json',
-            'Authorization': token,
-          }));
-      if (tokenResponse.statusCode == 200 &&
-          tokenResponse.data is Map &&
-          tokenResponse.data['success'] == true) {
-        return true;
-      }
+    final data = <String, dynamic>{
+      'pannelUrl': panelUrl,
+      'username': username,
+      'password': password,
+      'api_version': apiVersion ?? 'v3',
+    };
+    final token = apiToken?.trim();
+    if (token != null && token.isNotEmpty) {
+      data['token'] = token;
     }
 
-    String loginUrl = '${baseUrl}login';
+    final response = await GenaralApi.dio.post(
+      '/api/checkSanaeiPanelUrl',
+      data: data,
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
 
-    // Use a fresh Dio instance for panel calls
-    Dio dio = Dio(BaseOptions(
-      baseUrl: loginUrl,
-      followRedirects: false,
-      validateStatus: (status) => status! < 500,
-      connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 5),
-    ));
+    if (response.statusCode == 200) {
+      if (response.data == true) return true;
+      if (response.data is Map && response.data['success'] == true) return true;
+    }
 
-    Response response = await dio.post(loginUrl,
-        data: {'username': username, 'password': password},
-        options: Options(headers: {
-          'Accept': 'application/json, text/html, */*',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }));
-
-    // Successful login typically returns 200 and sets a cookie
-    if (response.statusCode == 200 && response.data["success"] != false) {
-      try {
-        // Check for Set-Cookie header (some servers use lowercase)
-        if (response.headers.map.containsKey('set-cookie') ||
-            response.headers.map.containsKey('Set-Cookie')) {
-          return true;
-        }
-        // Even if cookie not present in headers, consider 200 as success
-        return true;
-      } catch (e) {
-        return true;
-      }
+    if (response.data is Map && response.data['message'] != null) {
+      lastPannelAddError = response.data['message'].toString();
+    } else {
+      lastPannelAddError = 'اتصال به پنل برقرار نشد.';
     }
     return false;
+  } on DioException catch (e) {
+    final data = e.response?.data;
+    lastPannelAddError = (data is Map && data['message'] != null)
+        ? data['message'].toString()
+        : (e.message ?? 'خطا در ارتباط با سرور.');
+    debugPrint(lastPannelAddError);
+    return false;
   } catch (e) {
+    lastPannelAddError = 'خطا در بررسی اتصال پنل.';
     debugPrint(e.toString());
     return false;
   }
