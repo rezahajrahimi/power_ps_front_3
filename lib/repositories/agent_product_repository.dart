@@ -21,7 +21,9 @@ Future createAndEditBatchOfUserAgentProduct(
     'createProducts': agentPermisson.createProducts,
     'trafficLimitationTB': agentPermisson.trafficLimitationTB,
     'productLimitation': agentPermisson.productLimitation,
-    'selectedProductList': json.encode(gentAddCategoriyList),
+    'selectedProductList': json.encode(
+      gentAddCategoriyList.map((item) => item.toMap()).toList(),
+    ),
   });
 
   try {
@@ -135,7 +137,9 @@ Future deleteBatchOfUserAgentProduct({
 }) async {
   var formData = FormData.fromMap({
     'UserID': userID,
-    'selectedProductList': json.encode(gentAddCategoriyList),
+    'selectedProductList': json.encode(
+      gentAddCategoriyList.map((item) => item.toMap()).toList(),
+    ),
   });
 
   // try {
@@ -261,7 +265,9 @@ Future getAgentProductsByUserID({required int userID}) async {
       List<AgentAddCategoriyModel> selected = [];
       var dataSelected = response.data;
       for (var i in dataSelected) {
-        selected.add(AgentAddCategoriyModel.fromMap(i));
+        selected.add(AgentAddCategoriyModel.fromMap(
+          Map<String, dynamic>.from(i as Map),
+        ));
       }
 
       return selected;

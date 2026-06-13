@@ -1,4 +1,6 @@
 
+import 'package:powerps/models/agent_limit_usage_model.dart';
+
 class User {
   final int id;
   final int accountId;
@@ -13,6 +15,7 @@ class User {
   final double? balanceDollar;
   final int? botUserId;
   final String? adminAlias;
+  final AgentLimitUsage? agentLimitUsage;
 
   User({
     required this.id,
@@ -28,6 +31,7 @@ class User {
     this.balanceDollar,
     this.botUserId,
     this.adminAlias,
+    this.agentLimitUsage,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -60,6 +64,10 @@ class User {
       adminAlias: json['admin_alias']?.toString().trim().isEmpty == true
           ? null
           : json['admin_alias']?.toString(),
+      agentLimitUsage: json['agent_limit_usage'] != null
+          ? AgentLimitUsage.fromMap(
+              Map<String, dynamic>.from(json['agent_limit_usage']))
+          : null,
     );
   }
 

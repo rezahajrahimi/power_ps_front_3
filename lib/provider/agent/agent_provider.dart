@@ -51,6 +51,30 @@ class AgentProvider extends ChangeNotifier {
     _notify();
   }
 
+  List<AgentAddCategoriyModel> _parseCategoryList(dynamic source) {
+    if (source is! List) return [];
+    return source
+        .map((item) {
+          if (item is AgentAddCategoriyModel) return item;
+          if (item is Map) {
+            return AgentAddCategoriyModel.fromMap(
+              Map<String, dynamic>.from(item),
+            );
+          }
+          throw ArgumentError('Invalid agent category item: $item');
+        })
+        .toList();
+  }
+
+  void setFormCategoriesFromDynamic({
+    required dynamic available,
+    required dynamic added,
+  }) {
+    _agentCategories = _parseCategoryList(available);
+    _agentCategoriesAdded = _parseCategoryList(added);
+    _notify();
+  }
+
   void resetFormCategories() {
     _agentCategories = [];
     _agentCategoriesAdded = [];
@@ -63,17 +87,38 @@ class AgentProvider extends ChangeNotifier {
       _agentCategoriesAdded;
 
   void moveCategoryToAdded(AgentAddCategoriyModel item) {
-    final index = _agentCategories.indexOf(item);
-    if (index != -1) _agentCategories.removeAt(index);
-    _agentCategoriesAdded.add(item);
+    final availableIndex = _indexByCategoryId(_agentCategories, item);
+    if (availableIndex != -1) {
+      _agentCategories.removeAt(availableIndex);
+    }
+
+    final addedIndex = _indexByCategoryId(_agentCategoriesAdded, item);
+    if (addedIndex != -1) {
+      _agentCategoriesAdded[addedIndex] = item;
+    } else {
+      _agentCategoriesAdded.add(item);
+    }
     _notify();
   }
 
   void moveCategoryToAvailable(AgentAddCategoriyModel item) {
-    final index = _agentCategoriesAdded.indexOf(item);
-    if (index != -1) _agentCategoriesAdded.removeAt(index);
-    _agentCategories.add(item.removeNewPricesValus());
+    final addedIndex = _indexByCategoryId(_agentCategoriesAdded, item);
+    if (addedIndex != -1) {
+      _agentCategoriesAdded.removeAt(addedIndex);
+    }
+
+    final availableIndex = _indexByCategoryId(_agentCategories, item);
+    if (availableIndex == -1) {
+      _agentCategories.add(item.removeNewPricesValus());
+    }
     _notify();
+  }
+
+  int _indexByCategoryId(
+    List<AgentAddCategoriyModel> list,
+    AgentAddCategoriyModel item,
+  ) {
+    return list.indexWhere((entry) => entry.categoryId == item.categoryId);
   }
 
   void selectAllCategoriesWithDefaultPrice() {
@@ -84,15 +129,19 @@ class AgentProvider extends ChangeNotifier {
     Iterable<AgentAddCategoriyModel> items,
   ) {
     for (final item in List<AgentAddCategoriyModel>.from(items)) {
-      final index = _agentCategories.indexOf(item);
+      final index = _indexByCategoryId(_agentCategories, item);
       if (index == -1) continue;
       _agentCategories.removeAt(index);
-      _agentCategoriesAdded.add(
-        item.setNewPricesValus(
-          newPrice: item.price,
-          newPriceInDollar: item.priceInDollar,
-        ),
+      final pricedItem = item.setNewPricesValus(
+        newPrice: item.price,
+        newPriceInDollar: item.priceInDollar,
       );
+      final addedIndex = _indexByCategoryId(_agentCategoriesAdded, pricedItem);
+      if (addedIndex != -1) {
+        _agentCategoriesAdded[addedIndex] = pricedItem;
+      } else {
+        _agentCategoriesAdded.add(pricedItem);
+      }
     }
     _notify();
   }

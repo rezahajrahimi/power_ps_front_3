@@ -7,6 +7,7 @@ import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/pannel_model.dart';
+import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/repositories/agent_manage_repository.dart';
@@ -443,6 +444,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         if (!selectedIds.contains(cat.id)) {
           available.add(AgentAddCategoriyModel(
             id: cat.id,
+            productCategoriesId: cat.id,
             productCategories: cat,
             price: cat.price,
             newPrice: null,
@@ -452,7 +454,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         }
       }
     }
-    provider.setFormCategories(
+    provider.setFormCategoriesFromDynamic(
       available: available,
       added: detail.products,
     );
@@ -647,19 +649,22 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           _panels = panelsResult;
         }
 
-        final list = categories != null
+        final List<AgentAddCategoriyModel> list = categories is List<ProductCategory>
             ? categories
-                .map((i) => AgentAddCategoriyModel(
-                      id: i.id,
-                      productCategories: i,
-                      price: i.price,
-                      newPrice: null,
-                      priceInDollar: i.priceInDollar,
-                      newPriceInDollar: null,
-                    ))
+                .map(
+                  (i) => AgentAddCategoriyModel(
+                    id: i.id,
+                    productCategoriesId: i.id,
+                    productCategories: i,
+                    price: i.price,
+                    newPrice: null,
+                    priceInDollar: i.priceInDollar,
+                    newPriceInDollar: null,
+                  ),
+                )
                 .toList()
             : <AgentAddCategoriyModel>[];
-        provider.setFormCategories(available: list, added: []);
+        provider.setFormCategories(available: list, added: const []);
 
         if (users != null && users.isNotEmpty) {
           setState(() {
@@ -697,21 +702,26 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           return;
         }
 
-        final available = notSelected != null && notSelected is List
-            ? notSelected
-                .map((i) => AgentAddCategoriyModel(
-                      id: i.id,
-                      price: i.price,
-                      productCategories: i,
-                      newPrice: null,
-                      priceInDollar: i.priceInDollar,
-                      newPriceInDollar: null,
-                    ))
-                .toList()
-            : <AgentAddCategoriyModel>[];
-        final added = selected != null
-            ? List<AgentAddCategoriyModel>.from(selected)
-            : <AgentAddCategoriyModel>[];
+        final List<AgentAddCategoriyModel> available =
+            notSelected is List<ProductCategory>
+                ? notSelected
+                    .map(
+                      (i) => AgentAddCategoriyModel(
+                        id: i.id,
+                        productCategoriesId: i.id,
+                        price: i.price,
+                        productCategories: i,
+                        newPrice: null,
+                        priceInDollar: i.priceInDollar,
+                        newPriceInDollar: null,
+                      ),
+                    )
+                    .toList()
+                : <AgentAddCategoriyModel>[];
+        final List<AgentAddCategoriyModel> added =
+            selected is List<AgentAddCategoriyModel>
+                ? List<AgentAddCategoriyModel>.from(selected)
+                : <AgentAddCategoriyModel>[];
         provider.setFormCategories(available: available, added: added);
 
         if (permission is AgentPermisson) {

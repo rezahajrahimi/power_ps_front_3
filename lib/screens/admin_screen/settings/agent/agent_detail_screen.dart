@@ -4,13 +4,14 @@ import 'package:pagination_flutter/pagination.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/agent_detail_model.dart';
-import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/repositories/agent_manage_repository.dart';
+import 'package:powerps/repositories/agent_permission_repository.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/screens/admin_screen/settings/agent/agent_form_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
+import 'package:powerps/widgets/agent/agent_limits_info_card_widget.dart';
 import 'package:powerps/widgets/agent/agent_screen_shared.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/bot_user_admin_alias_widget.dart';
@@ -163,7 +164,12 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
           if (user.botUserId != null || user.accountId != 0)
             const SizedBox(height: 16),
           if (permission != null) ...[
-            _permissionsCard(context, permission),
+            AgentLimitsInfoCardWidget(
+              permission: permission,
+              usage: user.agentLimitUsage,
+              showResetButton: true,
+              onReset: () => _resetAgentLimits(user.id),
+            ),
             const SizedBox(height: 16),
           ],
           Row(
@@ -197,7 +203,12 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
         _balanceCard(context, user),
         SizedBox(height: AppStyle.defaultPadding),
         if (permission != null) ...[
-          _permissionsCard(context, permission),
+          AgentLimitsInfoCardWidget(
+            permission: permission,
+            usage: user.agentLimitUsage,
+            showResetButton: true,
+            onReset: () => _resetAgentLimits(user.id),
+          ),
           SizedBox(height: AppStyle.defaultPadding),
         ],
         _productsCard(context, detail),
@@ -255,30 +266,44 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
     );
   }
 
-  Widget _permissionsCard(BuildContext context, AgentPermisson permission) {
-    return AgentSectionCard(
-      title: 'مجوزها و محدودیت‌ها',
-      children: [
-        AgentRtlRow(
-          label: 'موجودی منفی',
-          value: permission.minusBallance ? 'بله' : 'خیر',
-        ),
-        AgentRtlRow(
-          label: 'حذف اکانت کم‌مصرف',
-          value: permission.deleteProducts ? 'بله' : 'خیر',
-        ),
-        AgentRtlRow(
-          label: 'محدودیت کانفیگ',
-          value: thousandSeperatorFormatter(
-            permission.productLimitation.toString(),
+  Future<void> _resetAgentLimits(int userId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('ریست مصرف محدودیت‌ها'),
+          content: const Text(
+            'مصرف فعلی کانفیگ و ترافیک صفر در نظر گرفته می‌شود. '
+            'کانفیگ‌های موجود حذف نمی‌شوند، فقط شمارنده مصرف از این لحظه ریست می‌شود.',
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('لغو'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('ریست'),
+            ),
+          ],
         ),
-        AgentRtlRow(
-          label: 'محدودیت ترافیک',
-          value: '${permission.trafficLimitationTB} ترابایت',
-        ),
-      ],
+      ),
     );
+
+    if (confirmed != true || !mounted) return;
+
+    EasyLoading.show();
+    final result = await resetAgentLimitUsage(userId: userId);
+    EasyLoading.dismiss();
+
+    if (!mounted) return;
+    if (result != null) {
+      showMsg(context: context, msg: 'مصرف محدودیت‌ها ریست شد');
+      await _loadDetail();
+    } else {
+      showMsg(context: context, msg: 'خطا در ریست محدودیت‌ها', type: 'error');
+    }
   }
 
   Widget _productsCard(BuildContext context, AgentDetailModel detail) {

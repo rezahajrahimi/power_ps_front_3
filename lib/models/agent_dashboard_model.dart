@@ -1,4 +1,5 @@
 import 'package:powerps/models/agent_add_categoriy_model.dart';
+import 'package:powerps/models/agent_limit_usage_model.dart';
 import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/ballance_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
@@ -10,6 +11,7 @@ class AgentDashboard {
   List<BoughtProductDetailsModel>? boughtProducts;
   List<Log>? logs = [];
   AgentPermisson? permission;
+  AgentLimitUsage? limitUsage;
 
   AgentDashboard({
     required this.ballance,
@@ -17,5 +19,6 @@ class AgentDashboard {
     required this.boughtProducts,
     required this.logs,
     this.permission,
+    this.limitUsage,
   });
 }

@@ -1438,7 +1438,11 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     List<ProductCategory> productCategoryList = [];
     List<String> productCategoryItemList = [];
     String selectedItem = "";
-    final nameEditText = TextEditingController();
+    final nameEditText = TextEditingController(
+      text: _botUser?.adminAlias?.isNotEmpty == true
+          ? _botUser!.adminAlias!
+          : _botUser?.accountId.toString() ?? '',
+    );
     final userGroupId = _botUser?.panelUser?.userGroupId;
 
     await getAllProdctCategory().then((res) {

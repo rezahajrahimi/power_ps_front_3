@@ -102,6 +102,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   Widget _content(BuildContext context) {
     final dashboard = context.watch<AgentProvider>().agentDashboard;
     final permission = dashboard.permission;
+    final limitUsage = dashboard.limitUsage;
 
     return Column(
       children: [
@@ -120,7 +121,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     const AgentBallanceInfoItemCardWidget(),
                   if (Responsive.isMobile(context) && permission != null) ...[
                     SizedBox(height: AppStyle.defaultPadding),
-                    AgentLimitsInfoCardWidget(permission: permission),
+                    AgentLimitsInfoCardWidget(
+                      permission: permission,
+                      usage: limitUsage,
+                    ),
                   ],
                   if (Responsive.isMobile(context))
                     SizedBox(height: AppStyle.defaultPadding),
@@ -143,7 +147,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     const AgentBallanceInfoItemCardWidget(),
                     if (permission != null) ...[
                       SizedBox(height: AppStyle.defaultPadding),
-                      AgentLimitsInfoCardWidget(permission: permission),
+                      AgentLimitsInfoCardWidget(
+                      permission: permission,
+                      usage: limitUsage,
+                    ),
                     ],
                     SizedBox(height: AppStyle.defaultPadding),
                   ],
