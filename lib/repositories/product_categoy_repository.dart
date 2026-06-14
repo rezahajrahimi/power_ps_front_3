@@ -45,6 +45,7 @@ Future addNewProductCategory({
   required bool rechargable,
   required bool showPannelLink,
   required bool showSubscriptionLink,
+  required bool sendConfigToUser,
   List<int>? allowedUserGroupIds,
   int? inboundId,
   int? ipLimit,
@@ -63,6 +64,7 @@ Future addNewProductCategory({
           "rechargable": rechargable,
           "show_pannel_link": showPannelLink,
           "show_subscription_link": showSubscriptionLink,
+          "send_config_to_user": sendConfigToUser,
           if (allowedUserGroupIds != null)
             "allowed_user_group_ids": allowedUserGroupIds,
           "inbound_id": inboundId,
@@ -111,6 +113,7 @@ Future<bool> editProductCategory({
   required bool rechargable,
   required bool showPannelLink,
   required bool showSubscriptionLink,
+  required bool sendConfigToUser,
   required bool isActive,
   List<int>? allowedUserGroupIds,
   int? inboundId,
@@ -129,6 +132,7 @@ Future<bool> editProductCategory({
           "rechargable": rechargable,
           "show_pannel_link": showPannelLink,
           "show_subscription_link": showSubscriptionLink,
+          "send_config_to_user": sendConfigToUser,
           'is_active': isActive,
           "id": id,
           if (allowedUserGroupIds != null)

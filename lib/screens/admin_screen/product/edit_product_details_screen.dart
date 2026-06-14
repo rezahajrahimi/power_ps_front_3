@@ -44,6 +44,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
   bool _showPannelLink = true;
+  bool _sendConfigToUser = true;
   bool _isActive = true;
   List<UserGroup> _userGroups = [];
   final Set<int> _allowedGroupIds = {};
@@ -165,6 +166,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         _showSubscriptionLink =
             widget.selectedProductCategory.showSubscriptionLink;
         _showPannelLink = widget.selectedProductCategory.showPannelLink;
+        _sendConfigToUser = widget.selectedProductCategory.sendConfigToUser;
         _isActive = widget.selectedProductCategory.isActive;
         _userGroups = (groupsData?['groups'] as List<UserGroup>?) ?? [];
         _allowedGroupIds
@@ -284,6 +286,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     _productDetailsWidgetLIst.clear();
     bool isSanaei = _selectedPannelName.contains("Sanaei");
     bool isHiddify = _selectedPannelName.contains("Hiddify");
+    bool isMarzban = _selectedPannelName.contains("Marzban");
 
     _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
       controller: _nameEditText,
@@ -397,11 +400,21 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           : (val) => setStateIfMounted(() => _showSubscriptionLink = val),
     ));
 
-    _productDetailsWidgetLIst.add(_buildSwitchTile(
-      title: "نمایش لینک پنل",
-      value: _showPannelLink,
-      onChanged: (val) => setStateIfMounted(() => _showPannelLink = val),
-    ));
+    if (isHiddify) {
+      _productDetailsWidgetLIst.add(_buildSwitchTile(
+        title: "نمایش لینک پنل",
+        value: _showPannelLink,
+        onChanged: (val) => setStateIfMounted(() => _showPannelLink = val),
+      ));
+    }
+
+    if (isMarzban || isSanaei) {
+      _productDetailsWidgetLIst.add(_buildSwitchTile(
+        title: "ارسال کانفیگ به کاربر",
+        value: _sendConfigToUser,
+        onChanged: (val) => setStateIfMounted(() => _sendConfigToUser = val),
+      ));
+    }
 
     _productDetailsWidgetLIst.add(_buildSwitchTile(
       title: "قابلیت شارژ مجدد",
@@ -580,6 +593,10 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         pannelID = int.parse(_selectedPannelName.split(":")[0]);
       }
 
+      final isHiddify = _selectedPannelName.contains("Hiddify");
+      final isMarzban = _selectedPannelName.contains("Marzban");
+      final isSanaei = _selectedPannelName.contains("Sanaei");
+
       var res = await editProductCategory(
           name: _nameEditText.text,
           price: int.parse(_priceEditText.text),
@@ -588,8 +605,9 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           expDay: int.parse(_expireDayEditText.text),
           volume: int.parse(_volumeEditText.text),
           rechargable: _rechargable,
-          showPannelLink: _showPannelLink,
+          showPannelLink: isHiddify ? _showPannelLink : false,
           showSubscriptionLink: _showSubscriptionLink,
+          sendConfigToUser: (isMarzban || isSanaei) ? _sendConfigToUser : false,
           isActive: _isActive,
           allowedUserGroupIds:
               _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),

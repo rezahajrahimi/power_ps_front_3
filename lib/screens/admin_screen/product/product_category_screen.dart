@@ -45,6 +45,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
   bool _showPannelLink = true;
+  bool _sendConfigToUser = true;
   final Set<int> _allowedGroupIds = {};
   // create a form key
   final _formKey = GlobalKey<FormState>();
@@ -76,6 +77,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _rechargable = true;
     _showSubscriptionLink = true;
     _showPannelLink = true;
+    _sendConfigToUser = true;
   }
 
   @override
@@ -655,12 +657,19 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                           : (v) => setState(
                                               () => _showSubscriptionLink = v),
                                     ),
-                                    _buildSwitchTile(
-                                      'نمایش لینک پنل',
-                                      _showPannelLink,
-                                      (v) =>
-                                          setState(() => _showPannelLink = v),
-                                    ),
+                                    if (_selectedPannelName.contains("Hiddify"))
+                                      _buildSwitchTile(
+                                        'نمایش لینک پنل',
+                                        _showPannelLink,
+                                        (v) => setState(() => _showPannelLink = v),
+                                      ),
+                                    if (_selectedPannelName.contains("Marzban") ||
+                                        _selectedPannelName.contains("Sanaei"))
+                                      _buildSwitchTile(
+                                        'ارسال کانفیگ به کاربر',
+                                        _sendConfigToUser,
+                                        (v) => setState(() => _sendConfigToUser = v),
+                                      ),
                                     _buildSwitchTile(
                                       'قابلیت شارژ مجدد',
                                       _selectedPannelName.contains("دیگر")
@@ -865,8 +874,14 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         expDay: int.parse(_expireDayEditText.text),
         volume: int.parse(_volumeEditText.text),
         rechargable: _rechargable,
-        showPannelLink: _showPannelLink,
+        showPannelLink: _selectedPannelName.contains("Hiddify")
+            ? _showPannelLink
+            : false,
         showSubscriptionLink: _showSubscriptionLink,
+        sendConfigToUser: _selectedPannelName.contains("Marzban") ||
+                _selectedPannelName.contains("Sanaei")
+            ? _sendConfigToUser
+            : false,
         allowedUserGroupIds:
             _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),
         inboundId: _inboundIdEditText.text.isNotEmpty

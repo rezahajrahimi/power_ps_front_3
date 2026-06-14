@@ -245,6 +245,26 @@ class _PannelScreenState extends State<PannelScreen> {
       icon: const Icon(Icons.add),
       label: const Text("افزودن پنل مرزبان"),
     ));
+    actionsWidgetList.add(ElevatedButton.icon(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppStyle.defaultPadding * 1.5,
+          vertical:
+              AppStyle.defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
+        ),
+      ),
+      onPressed: () async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddNewMarzbanPanelScreen(
+                panelType: 'pasarguard',
+              ),
+            )).then((value) => {_fillData()});
+      },
+      icon: const Icon(Icons.add),
+      label: const Text("افزودن پنل پاسارگارد"),
+    ));
     if (_pannelList.isNotEmpty) {
       actionsWidgetList.add(ElevatedButton.icon(
         style: TextButton.styleFrom(

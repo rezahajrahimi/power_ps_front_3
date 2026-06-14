@@ -830,7 +830,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                 if (messageController.text.isEmpty) return;
                 EasyLoading.show();
                 await sendAdminMessageToUser(
-                  userID: _botUser!.accountId.toInt(),
+                  userID: _botUser!.id.toInt(),
                   message: messageController.text,
                 ).then((value) {
                   if (!context.mounted) return;

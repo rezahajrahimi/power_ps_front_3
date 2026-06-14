@@ -67,7 +67,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.selectedPannel.type == 'marzban') {
+    if (isMarzbanCompatiblePanel(widget.selectedPannel.type)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         Navigator.pushReplacement(
@@ -75,6 +75,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
           MaterialPageRoute(
             builder: (context) => EditMarzbanPanelScreen(
               selectedPannel: widget.selectedPannel,
+              panelType: widget.selectedPannel.type,
             ),
           ),
         );

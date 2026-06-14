@@ -335,6 +335,12 @@ Future sendAdminMessageToUser(
     if (response.statusCode == 200) {
       return true;
     } else {
+      final errorMessage = response.data is Map
+          ? response.data['message']?.toString()
+          : null;
+      if (errorMessage != null && errorMessage.isNotEmpty) {
+        debugPrint("sendAdminMessageToUser failed: $errorMessage");
+      }
       return false;
     }
   } catch (e) {

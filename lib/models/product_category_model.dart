@@ -15,6 +15,7 @@ class ProductCategory {
   bool rechargable = true;
   bool showSubscriptionLink = true;
   bool showPannelLink = true;
+  bool sendConfigToUser = true;
   bool isActive = true;
   /// If null/empty => visible/buyable for all groups.
   /// Uses `0` as sentinel for "بدون گروه".
@@ -37,6 +38,7 @@ class ProductCategory {
     required this.rechargable,
     required this.showSubscriptionLink,
     required this.showPannelLink,
+    required this.sendConfigToUser,
     required this.isActive,
     this.allowedUserGroupIds,
     this.inboundId,
@@ -65,6 +67,7 @@ class ProductCategory {
     bool? rechargable,
     bool? showSubscriptionLink,
     bool? showPannelLink,
+    bool? sendConfigToUser,
     bool? isActive,
     List<int>? allowedUserGroupIds,
     int? inboundId,
@@ -85,6 +88,7 @@ class ProductCategory {
       rechargable: rechargable ?? this.rechargable,
       showSubscriptionLink: showSubscriptionLink ?? this.showSubscriptionLink,
       showPannelLink: showPannelLink ?? this.showPannelLink,
+      sendConfigToUser: sendConfigToUser ?? this.sendConfigToUser,
       isActive: isActive ?? this.isActive,
       allowedUserGroupIds: allowedUserGroupIds ?? this.allowedUserGroupIds,
       inboundId: inboundId ?? this.inboundId,
@@ -109,6 +113,7 @@ class ProductCategory {
       'rechargable': rechargable,
       'showSubscriptionLink': showSubscriptionLink,
       'showPannelLink': showPannelLink,
+      'sendConfigToUser': sendConfigToUser,
       'isActive': isActive,
       'allowed_user_group_ids': allowedUserGroupIds,
       'inbound_id': inboundId,
@@ -156,6 +161,9 @@ class ProductCategory {
         rechargable: map['rechargable'] == 1 ? true : false,
         showSubscriptionLink: map['show_subscription_link'] == 1 ? true : false,
         showPannelLink: map['show_pannel_link'] == 1 ? true : false,
+        sendConfigToUser: map['send_config_to_user'] == null
+            ? true
+            : map['send_config_to_user'] == 1,
         isActive: map['is_active'] == 1 ? true : false,
         allowedUserGroupIds: _parseAllowedGroupIds(map['allowed_user_group_ids']),
         inboundId: map['inbound_id']?.toInt(),
@@ -172,7 +180,7 @@ class ProductCategory {
 
   @override
   String toString() {
-    return 'ProductCategory(id: $id, pannelId: $pannelId, categoryName: $categoryName, price: $price, priceInDollar: $priceInDollar, expireDay: $expireDay, volume: $volume, rechargable: $rechargable, showSubscriptionLink: $showSubscriptionLink, showPannelLink: $showPannelLink, isActive: $isActive, sampleInbound: $sampleInbound, agentAddCategoriyModel: $agentAddCategoriyModel)';
+    return 'ProductCategory(id: $id, pannelId: $pannelId, categoryName: $categoryName, price: $price, priceInDollar: $priceInDollar, expireDay: $expireDay, volume: $volume, rechargable: $rechargable, showSubscriptionLink: $showSubscriptionLink, showPannelLink: $showPannelLink, sendConfigToUser: $sendConfigToUser, isActive: $isActive, sampleInbound: $sampleInbound, agentAddCategoriyModel: $agentAddCategoriyModel)';
   }
 
   @override
@@ -191,6 +199,7 @@ class ProductCategory {
         other.rechargable == rechargable &&
         other.showSubscriptionLink == showSubscriptionLink &&
         other.showPannelLink == showPannelLink &&
+        other.sendConfigToUser == sendConfigToUser &&
         other.isActive == isActive &&
         other.inboundId == inboundId &&
         other.ipLimit == ipLimit &&
@@ -211,6 +220,7 @@ class ProductCategory {
         rechargable.hashCode ^
         showSubscriptionLink.hashCode ^
         showPannelLink.hashCode ^
+        sendConfigToUser.hashCode ^
         isActive.hashCode ^
         inboundId.hashCode ^
         ipLimit.hashCode ^

@@ -84,7 +84,7 @@ class _PannelItemInfoWidgetState extends State<PannelItemInfoWidget> {
                             selectedPannel: widget.pannel,
                           ),
                         )).then((value) => {widget.callback!(true)});
-                  } else if (widget.pannel.type == "marzban") {
+                  } else if (isMarzbanCompatiblePanel(widget.pannel.type)) {
                     Navigator.push(
                         context,
                         MaterialPageRoute(

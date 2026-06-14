@@ -13,7 +13,13 @@ import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class EditMarzbanPanelScreen extends StatefulWidget {
   final Pannel selectedPannel;
-  const EditMarzbanPanelScreen({super.key, required this.selectedPannel});
+  final String panelType;
+
+  const EditMarzbanPanelScreen({
+    super.key,
+    required this.selectedPannel,
+    this.panelType = 'marzban',
+  });
 
   @override
   State<EditMarzbanPanelScreen> createState() => _EditMarzbanPanelScreenState();
@@ -22,6 +28,13 @@ class EditMarzbanPanelScreen extends StatefulWidget {
 class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
   bool _showData = false;
   String _marzbanToken = "";
+
+  String get _panelType =>
+      isMarzbanCompatiblePanel(widget.selectedPannel.type)
+          ? widget.selectedPannel.type
+          : widget.panelType;
+
+  String get _panelLabel => getMarzbanCompatiblePanelLabel(_panelType);
 
   final List<Widget> _marzbanWidgetList = [];
   final _locationEditTxt = TextEditingController();
@@ -97,7 +110,7 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           appBar: appBarWithBackButton(
-              context: context, title: "ویرایش پنل مرزبان"),
+              context: context, title: "ویرایش پنل $_panelLabel"),
           body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -244,7 +257,7 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
 
               if (inbounds == null || inbounds.isEmpty) {
                 showMsg(
-                    msg: "inbound فعالی در پنل مرزبان یافت نشد.",
+                    msg: "inbound فعالی در پنل $_panelLabel یافت نشد.",
                     context: context,
                     type: "error");
                 return;
@@ -288,7 +301,7 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
         controller: _urlPortEditTxt,
         textHint: "url و port صفحه لاگین",
         textDirection: TextDirection.ltr,
-        validationError: "آدرس داشبورد مرزبان را وارد کنید.",
+        validationError: "آدرس داشبورد $_panelLabel را وارد کنید.",
         keyboardType: TextInputType.url,
       ),
       CustomTextFromFieldWidget(
@@ -349,7 +362,7 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
       final res = await editMarzbanPannel(
         pannel: Pannel(
           id: widget.selectedPannel.id,
-          type: "marzban",
+          type: _panelType,
           location: _locationEditTxt.text,
           urlPort: _urlPortEditTxt.text,
           username: _userNameEditTxt.text,

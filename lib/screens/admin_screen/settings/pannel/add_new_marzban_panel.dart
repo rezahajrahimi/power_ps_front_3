@@ -12,7 +12,9 @@ import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 
 class AddNewMarzbanPanelScreen extends StatefulWidget {
-  const AddNewMarzbanPanelScreen({super.key});
+  final String panelType;
+
+  const AddNewMarzbanPanelScreen({super.key, this.panelType = 'marzban'});
 
   @override
   State<AddNewMarzbanPanelScreen> createState() =>
@@ -22,6 +24,8 @@ class AddNewMarzbanPanelScreen extends StatefulWidget {
 class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
   bool _showData = false;
   String _marzbanToken = "";
+
+  String get _panelLabel => getMarzbanCompatiblePanelLabel(widget.panelType);
 
   final List<Widget> _marzbanWidgetList = [];
   final _locationEditTxt = TextEditingController();
@@ -54,7 +58,7 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           appBar: appBarWithBackButton(
-              context: context, title: "افزودن پنل مرزبان"),
+              context: context, title: "افزودن پنل $_panelLabel"),
           body: SingleChildScrollView(
             primary: false,
             padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -134,7 +138,7 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
           ElevatedButton.icon(
             onPressed: () => _submitData(context),
             icon: const Icon(Icons.add),
-            label: const Text("افزودن پنل مرزبان"),
+            label: Text("افزودن پنل $_panelLabel"),
           ),
         ],
       ),
@@ -207,7 +211,7 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
 
               if (inbounds == null || inbounds.isEmpty) {
                 showMsg(
-                    msg: "inbound فعالی در پنل مرزبان یافت نشد.",
+                    msg: "inbound فعالی در پنل $_panelLabel یافت نشد.",
                     context: context,
                     type: "error");
                 return;
@@ -243,7 +247,7 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
         controller: _urlPortEditTxt,
         textHint: "url و port صفحه لاگین",
         textDirection: TextDirection.ltr,
-        validationError: "آدرس داشبورد مرزبان را وارد کنید.",
+        validationError: "آدرس داشبورد $_panelLabel را وارد کنید.",
         keyboardType: TextInputType.url,
       ),
       CustomTextFromFieldWidget(
@@ -304,7 +308,7 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
       final res = await addNewPannelMarzban(
         pannel: Pannel(
           id: "1",
-          type: "marzban",
+          type: widget.panelType,
           location: _locationEditTxt.text,
           urlPort: _urlPortEditTxt.text,
           username: _userNameEditTxt.text,

@@ -70,6 +70,7 @@ class _FastEditProductCategoriesScreenState
           rechargable: updated.rechargable,
           showPannelLink: updated.showPannelLink,
           showSubscriptionLink: updated.showSubscriptionLink,
+          sendConfigToUser: updated.sendConfigToUser,
           isActive: updated.isActive,
           id: updated.id,
         ));

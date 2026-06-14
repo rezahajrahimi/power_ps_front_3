@@ -218,6 +218,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
           rechargable: i.productCategories!.rechargable,
           showPannelLink: i.productCategories!.showPannelLink,
           showSubscriptionLink: i.productCategories!.showSubscriptionLink,
+          sendConfigToUser: i.productCategories!.sendConfigToUser,
           pannelId: i.productCategories!.pannelId,
           id: i.productCategories!.id,
           categoryName: i.productCategories!.categoryName,

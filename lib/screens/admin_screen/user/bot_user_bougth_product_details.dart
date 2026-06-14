@@ -115,7 +115,7 @@ class _BotUserBoughtProductDetailsScreenState
                                   _hiddifyConfigCardData(context),
                                 if (_pannel!.type == "sanaei")
                                   _sanaeiConfigCardData(context),
-                                if (_pannel!.type == "marzban")
+                                if (isMarzbanCompatiblePanel(_pannel!.type))
                                   _marzbanConfigCardData(context),
                                 if (Responsive.isMobile(context)) ...[
                                   SizedBox(height: AppStyle.defaultPadding),
@@ -198,7 +198,7 @@ class _BotUserBoughtProductDetailsScreenState
             setState(() {
               _showdata = true;
             });
-          } else if (_pannel!.type == "marzban") {
+          } else if (isMarzbanCompatiblePanel(_pannel!.type)) {
             final creds = _marzbanCredentials;
             if (creds == null) {
               if (mounted) {
@@ -1018,7 +1018,7 @@ class _BotUserBoughtProductDetailsScreenState
                       onPressed: () async {
                         EasyLoading.show();
 
-                        if (_pannel!.type == "marzban") {
+                        if (isMarzbanCompatiblePanel(_pannel!.type)) {
                           final creds = _marzbanCredentials;
                           if (creds == null) {
                             EasyLoading.dismiss();

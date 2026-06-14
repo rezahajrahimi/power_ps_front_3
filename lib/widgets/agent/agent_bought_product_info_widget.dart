@@ -345,6 +345,9 @@ class _AgentBoughtProductInfoWidgetState
                                       widget.boughtProductDetailsModel
                                               .productCategory?.pannel?.type ==
                                           "marzban" ||
+                                      widget.boughtProductDetailsModel
+                                              .productCategory?.pannel?.type ==
+                                          "pasarguard" ||
                                       link.startsWith("vless://") ||
                                       link.startsWith("vmess://") ||
                                       link.startsWith("trojan://")) {
@@ -372,7 +375,10 @@ class _AgentBoughtProductInfoWidgetState
                                 ? const Text('مشاهده در پنل')
                                 : widget.boughtProductDetailsModel
                                             .productCategory?.pannel?.type ==
-                                        "marzban"
+                                        "marzban" ||
+                                    widget.boughtProductDetailsModel
+                                            .productCategory?.pannel?.type ==
+                                        "pasarguard"
                                     ? const Text('مشاهده لینک اشتراک')
                                     : const Text('مشاهده کانفیگ')),
 

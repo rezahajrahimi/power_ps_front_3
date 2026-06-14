@@ -83,6 +83,9 @@ String getPannelName({required String name, String type = "main"}) {
       case "marzban":
         str = "Marzban";
         break;
+      case "pasarguard":
+        str = "PasarGuard";
+        break;
       default:
         str = "دیگر";
     }
@@ -100,11 +103,22 @@ String getPannelName({required String name, String type = "main"}) {
       case "Marzban":
         str = "marzban";
         break;
+      case "PasarGuard":
+        str = "pasarguard";
+        break;
       default:
         str = "custome";
     }
   }
   return str;
+}
+
+bool isMarzbanCompatiblePanel(String type) {
+  return type == 'marzban' || type == 'pasarguard';
+}
+
+String getMarzbanCompatiblePanelLabel(String type) {
+  return type == 'pasarguard' ? 'PasarGuard' : 'Marzban';
 }
 
 String getHiddifyUserUUIDbySubscriptionLInk({required String pannelLink}) {
