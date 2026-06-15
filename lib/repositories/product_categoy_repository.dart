@@ -65,8 +65,7 @@ Future addNewProductCategory({
           "show_pannel_link": showPannelLink,
           "show_subscription_link": showSubscriptionLink,
           "send_config_to_user": sendConfigToUser,
-          if (allowedUserGroupIds != null)
-            "allowed_user_group_ids": allowedUserGroupIds,
+          "allowed_user_group_ids": allowedUserGroupIds ?? [],
           "inbound_id": inboundId,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
@@ -135,8 +134,7 @@ Future<bool> editProductCategory({
           "send_config_to_user": sendConfigToUser,
           'is_active': isActive,
           "id": id,
-          if (allowedUserGroupIds != null)
-            "allowed_user_group_ids": allowedUserGroupIds,
+          "allowed_user_group_ids": allowedUserGroupIds ?? [],
           "inbound_id": inboundId,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
