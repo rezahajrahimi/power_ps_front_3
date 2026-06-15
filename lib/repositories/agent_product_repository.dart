@@ -416,66 +416,58 @@ Future buyProductByAdmin(
 }
 
 Future getBoughtProductsStatusFromServerById({required int productID}) async {
-  try {
-    Response response = await GenaralApi.dio
-        .get("/api/getBoughtProductsStatusFromServerById/$productID",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
-
-    if (response.statusCode == 200) {
-      if (response.data.containsKey('client') ||
-          response.data.containsKey('inbound')) {
-        return SanaeiConfig.fromJson(response.data);
-      }
-      if (response.data.containsKey('used_traffic') &&
-          response.data.containsKey('username')) {
-        return SanaeiConfig.fromJson(response.data);
-      }
-      HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
-      return hiddifyConfig;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
-    }
-  } on DioException catch (e) {
-    debugPrint(e.error.toString());
-    return false;
-  }
+  return _fetchBoughtProductStatus(
+    endpoint: "/api/getBoughtProductsStatusFromServerById/$productID",
+  );
 }
 
 Future getProductBoughtedByProductIdUserMode({required int productID}) async {
-  try {
-    Response response = await GenaralApi.dio
-        .get("/api/getProductBoughtedByProductIdUserMode/$productID",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+  return _fetchBoughtProductStatus(
+    endpoint: "/api/getProductBoughtedByProductIdUserMode/$productID",
+  );
+}
 
-    if (response.statusCode == 200) {
-      if (response.data.containsKey('client') ||
-          response.data.containsKey('inbound')) {
-        return SanaeiConfig.fromJson(response.data);
-      }
-      if (response.data.containsKey('used_traffic') &&
-          response.data.containsKey('username')) {
-        return SanaeiConfig.fromJson(response.data);
-      }
-      HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
-      return hiddifyConfig;
+Future<dynamic> fetchBoughtProductStatus({
+  required int productID,
+  String userRole = "user",
+}) {
+  if (userRole == "agent") {
+    return getBoughtProductsStatusFromServerById(productID: productID);
+  }
+  return getProductBoughtedByProductIdUserMode(productID: productID);
+}
+
+dynamic parseBoughtProductStatusJson(Map<String, dynamic> json) {
+  final panelType = json['panel_type']?.toString() ?? '';
+  if (panelType == 'hiddify' ||
+      json.containsKey('uuid') && json.containsKey('current_usage_GB')) {
+    return HiddifyConfig.fromJson(json);
+  }
+  if (panelType == 'sanaei' ||
+      json.containsKey('client') ||
+      json.containsKey('inbound')) {
+    return SanaeiConfig.fromJson(json);
+  }
+  if (json.containsKey('used_traffic') && json.containsKey('username')) {
+    return SanaeiConfig.fromJson(json);
+  }
+  return HiddifyConfig.fromJson(json);
+}
+
+Future _fetchBoughtProductStatus({required String endpoint}) async {
+  try {
+    Response response = await GenaralApi.dio.get(endpoint,
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data is Map) {
+      return parseBoughtProductStatusJson(
+          Map<String, dynamic>.from(response.data));
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {

@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/models/sanaei_config_model.dart';
 import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -32,6 +33,14 @@ class _AgentBoughtProductInfoWidgetState
     extends State<AgentBoughtProductInfoWidget> {
   late dynamic _config;
   bool _showdata = false;
+
+  String? get _panelType =>
+      widget.boughtProductDetailsModel.productCategory?.pannel?.type;
+
+  bool get _isHiddifyPanel => _panelType == 'hiddify';
+
+  bool get _canRecharge =>
+      widget.boughtProductDetailsModel.productCategory?.rechargable ?? true;
   @override
   void initState() {
     _config = null;
@@ -51,43 +60,22 @@ class _AgentBoughtProductInfoWidgetState
     return GestureDetector(
       onTap: () async {
         EasyLoading.show();
-        if (widget.userRole == "agent") {
-          await getBoughtProductsStatusFromServerById(
-                  productID: widget.boughtProductDetailsModel.id.toInt())
-              .then((value) {
-            if (!context.mounted) return;
-            if (value != false) {
-              EasyLoading.dismiss();
-
-              _showDialog(context, value);
-            } else {
-              EasyLoading.dismiss();
-
-              showMsg(
-                  msg: "خطا در دریافت اطلاعات",
-                  context: context,
-                  type: "error");
-            }
-          });
-        } else {
-          await getProductBoughtedByProductIdUserMode(
-                  productID: widget.boughtProductDetailsModel.id.toInt())
-              .then((value) {
-            if (!context.mounted) return;
-            if (value != false) {
-              EasyLoading.dismiss();
-
-              _showDialog(context, value);
-            } else {
-              EasyLoading.dismiss();
-
-              showMsg(
-                  msg: "خطا در دریافت اطلاعات",
-                  context: context,
-                  type: "error");
-            }
-          });
-        }
+        await fetchBoughtProductStatus(
+          productID: widget.boughtProductDetailsModel.id.toInt(),
+          userRole: widget.userRole,
+        ).then((value) {
+          if (!context.mounted) return;
+          if (value != false && value != null) {
+            EasyLoading.dismiss();
+            _showDialog(context, value);
+          } else {
+            EasyLoading.dismiss();
+            showMsg(
+                msg: "خطا در دریافت اطلاعات بسته از پنل",
+                context: context,
+                type: "error");
+          }
+        });
       },
       child: Container(
         margin: EdgeInsets.only(top: AppStyle.defaultPadding),
@@ -188,29 +176,38 @@ class _AgentBoughtProductInfoWidgetState
             textDirection: TextDirection.rtl,
             child: AlertDialog(
               title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(widget.boughtProductDetailsModel.remark!),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
-                      if (config is HiddifyConfig)
-                        config.lastOnline.toString() != "0001-01-01 00:00:00"
-                            ? Text(
-                                "آخرین زمان اتصال: ${_getLastOnlineDiffrence(config)}",
-                                style: AppStyle.thirdTitleStyle,
-                              )
-                            : Container(),
-                      SizedBox(width: AppStyle.defaultPadding),
+                      if (config is HiddifyConfig &&
+                          config.lastOnline.toString() != "0001-01-01 00:00:00")
+                        Text(
+                          "آخرین اتصال: ${_getLastOnlineDiffrence(config)}",
+                          style: AppStyle.thirdTitleStyle,
+                        ),
+                      if (config is SanaeiConfig &&
+                          config.client?['email'] != null)
+                        Text(
+                          "ایمیل: ${config.client!['email']}",
+                          style: AppStyle.thirdTitleStyle,
+                        ),
                       Text(
-                          "حجم مصرفی: ${config.currentUsageGB.toStringAsFixed(2)}GB",
-                          style: AppStyle.thirdTitleStyle),
-                      SizedBox(width: AppStyle.defaultPadding),
-                      Text("زمان باقیمانده: ${_getRemindDate(config)}",
-                          style: AppStyle.thirdTitleStyle),
-                      SizedBox(width: AppStyle.defaultPadding),
+                        "حجم مصرفی: ${config.currentUsageGB.toStringAsFixed(2)} / ${config.usageLimitGB.toStringAsFixed(2)} GB",
+                        style: AppStyle.thirdTitleStyle,
+                      ),
                       Text(
-                          "وضعیت: ${config.isActive == true ? "فعال" : "غیر فعال"}",
-                          style: AppStyle.thirdTitleStyle)
+                        "زمان باقیمانده: ${_getRemindDate(config)}",
+                        style: AppStyle.thirdTitleStyle,
+                      ),
+                      Text(
+                        "وضعیت: ${config.isActive == true ? "فعال" : "غیر فعال"}",
+                        style: AppStyle.thirdTitleStyle,
+                      ),
                     ],
                   ),
                 ],
@@ -228,7 +225,8 @@ class _AgentBoughtProductInfoWidgetState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        ElevatedButton(
+                        if (_canRecharge)
+                          ElevatedButton(
                             onPressed: () async {
                               EasyLoading.show();
                               if (widget.userRole == "agent") {
@@ -372,15 +370,17 @@ class _AgentBoughtProductInfoWidgetState
                             child: widget.boughtProductDetailsModel
                                         .productCategory?.pannel?.type ==
                                     "sanaei"
-                                ? const Text('مشاهده در پنل')
+                                ? const Text('مشاهده کانفیگ')
                                 : widget.boughtProductDetailsModel
-                                            .productCategory?.pannel?.type ==
-                                        "marzban" ||
-                                    widget.boughtProductDetailsModel
-                                            .productCategory?.pannel?.type ==
-                                        "pasarguard"
+                                                .productCategory?.pannel
+                                                ?.type ==
+                                            "marzban" ||
+                                        widget.boughtProductDetailsModel
+                                                .productCategory?.pannel
+                                                ?.type ==
+                                            "pasarguard"
                                     ? const Text('مشاهده لینک اشتراک')
-                                    : const Text('مشاهده کانفیگ')),
+                                    : const Text('مشاهده در پنل')),
 
                         // ElevatedButton(
                         //     onPressed: () {
@@ -395,7 +395,8 @@ class _AgentBoughtProductInfoWidgetState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        ElevatedButton(
+                        if (_isHiddifyPanel)
+                          ElevatedButton(
                             onPressed: () async {
                               EasyLoading.show();
 
@@ -539,9 +540,10 @@ class _AgentBoughtProductInfoWidgetState
       _showdata = false;
       _config = null;
     });
-    await getBoughtProductsStatusFromServerById(
-            productID: widget.boughtProductDetailsModel.id.toInt())
-        .then((value) {
+    await fetchBoughtProductStatus(
+      productID: widget.boughtProductDetailsModel.id.toInt(),
+      userRole: widget.userRole,
+    ).then((value) {
       if (value != null && value != false) {
         setState(() {
           _config = value;
