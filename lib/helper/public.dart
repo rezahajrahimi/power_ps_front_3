@@ -113,6 +113,10 @@ String getPannelName({required String name, String type = "main"}) {
   return str;
 }
 
+bool isMarzbanCompatiblePanel(String type) {
+  return type == 'marzban' || type == 'pasarguard';
+}
+
 String getPanelTypeFromDropdownLabel(String panelDropdownValue) {
   if (panelDropdownValue.isEmpty) {
     return '';
