@@ -284,9 +284,9 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
 
   _productInfoTabCard(BuildContext context) {
     _productDetailsWidgetLIst.clear();
-    bool isSanaei = _selectedPannelName.contains("Sanaei");
+    bool isSanaei = getPanelTypeFromDropdownLabel(_selectedPannelName) == 'sanaei';
     bool isHiddify = _selectedPannelName.contains("Hiddify");
-    bool isMarzban = _selectedPannelName.contains("Marzban");
+    bool supportsConfigToggle = panelDropdownSupportsConfigToggle(_selectedPannelName);
 
     _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
       controller: _nameEditText,
@@ -408,7 +408,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       ));
     }
 
-    if (isMarzban || isSanaei) {
+    if (supportsConfigToggle) {
       _productDetailsWidgetLIst.add(_buildSwitchTile(
         title: "ارسال کانفیگ به کاربر",
         value: _sendConfigToUser,
@@ -594,8 +594,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       }
 
       final isHiddify = _selectedPannelName.contains("Hiddify");
-      final isMarzban = _selectedPannelName.contains("Marzban");
-      final isSanaei = _selectedPannelName.contains("Sanaei");
+      final supportsConfigToggle =
+          panelDropdownSupportsConfigToggle(_selectedPannelName);
 
       var res = await editProductCategory(
           name: _nameEditText.text,
@@ -607,7 +607,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           rechargable: _rechargable,
           showPannelLink: isHiddify ? _showPannelLink : false,
           showSubscriptionLink: _showSubscriptionLink,
-          sendConfigToUser: (isMarzban || isSanaei) ? _sendConfigToUser : false,
+          sendConfigToUser: supportsConfigToggle ? _sendConfigToUser : false,
           isActive: _isActive,
           allowedUserGroupIds:
               _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),

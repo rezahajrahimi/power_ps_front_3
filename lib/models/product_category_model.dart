@@ -163,7 +163,7 @@ class ProductCategory {
         showPannelLink: map['show_pannel_link'] == 1 ? true : false,
         sendConfigToUser: map['send_config_to_user'] == null
             ? true
-            : map['send_config_to_user'] == 1,
+            : map['send_config_to_user'] == true || map['send_config_to_user'] == 1,
         isActive: map['is_active'] == 1 ? true : false,
         allowedUserGroupIds: _parseAllowedGroupIds(map['allowed_user_group_ids']),
         inboundId: map['inbound_id']?.toInt(),

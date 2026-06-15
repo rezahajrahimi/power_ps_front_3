@@ -663,8 +663,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                         _showPannelLink,
                                         (v) => setState(() => _showPannelLink = v),
                                       ),
-                                    if (_selectedPannelName.contains("Marzban") ||
-                                        _selectedPannelName.contains("Sanaei"))
+                                    if (panelDropdownSupportsConfigToggle(
+                                        _selectedPannelName))
                                       _buildSwitchTile(
                                         'ارسال کانفیگ به کاربر',
                                         _sendConfigToUser,
@@ -878,8 +878,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             ? _showPannelLink
             : false,
         showSubscriptionLink: _showSubscriptionLink,
-        sendConfigToUser: _selectedPannelName.contains("Marzban") ||
-                _selectedPannelName.contains("Sanaei")
+        sendConfigToUser: panelDropdownSupportsConfigToggle(_selectedPannelName)
             ? _sendConfigToUser
             : false,
         allowedUserGroupIds:

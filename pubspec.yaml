@@ -1,7 +1,7 @@
 name: powerps
 description: "Best soloution for selling v2ray vpn by telegram with advanced tools."
 publish_to: 'none'
-version: 7.8.5
+version: 8.0.0
 
 environment:
   sdk: ^3.6.1

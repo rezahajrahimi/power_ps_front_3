@@ -113,8 +113,23 @@ String getPannelName({required String name, String type = "main"}) {
   return str;
 }
 
-bool isMarzbanCompatiblePanel(String type) {
-  return type == 'marzban' || type == 'pasarguard';
+String getPanelTypeFromDropdownLabel(String panelDropdownValue) {
+  if (panelDropdownValue.isEmpty) {
+    return '';
+  }
+
+  final parts = panelDropdownValue.split(':');
+  if (parts.length < 2) {
+    return '';
+  }
+
+  final label = parts[1].trim().split(' - ').first.trim();
+  return getPannelName(name: label, type: 'reverse');
+}
+
+bool panelDropdownSupportsConfigToggle(String panelDropdownValue) {
+  final panelType = getPanelTypeFromDropdownLabel(panelDropdownValue);
+  return panelType == 'sanaei' || isMarzbanCompatiblePanel(panelType);
 }
 
 String getMarzbanCompatiblePanelLabel(String type) {
