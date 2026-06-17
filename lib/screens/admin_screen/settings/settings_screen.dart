@@ -400,8 +400,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            (color ?? AppStyle.primaryColor).withValues(alpha: locked ? 0.05 : 0.1),
+        backgroundColor: (color ?? AppStyle.primaryColor)
+            .withValues(alpha: locked ? 0.05 : 0.1),
         foregroundColor: color ?? Colors.white,
         side: BorderSide(
             color: (color ?? AppStyle.primaryColor).withValues(alpha: 0.5)),
@@ -579,10 +579,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context: context,
         label: "عملیات گروهی",
         icon: Icons.layers_outlined,
-        onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const GroupOperationsScreen())),
+        tierBadge: 'نقره‌ای',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'عملیات گروهی',
+          message:
+              'مقدار زمان و حجم کانفیگ های موجود را بصورت گروهی تغییر بدهید.',
+          requiredTier: 'نقره‌ای',
+          screen: const GroupOperationsScreen(),
+        ),
       ),
     ];
 
