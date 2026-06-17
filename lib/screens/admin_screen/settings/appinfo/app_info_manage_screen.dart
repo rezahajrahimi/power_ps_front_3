@@ -466,11 +466,10 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
 
   Widget _content(BuildContext context) {
     final twoColumn = !Responsive.isMobile(context);
-    final maxWidth = Responsive.isDesktop(context) ? 1100.0 : 720.0;
 
     if (Responsive.isMobile(context)) {
       return ListView(
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
+        padding: Responsive.adminPagePadding(context),
         children: [
           Container(
             padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -491,37 +490,35 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
       );
     }
 
-    return Center(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Container(
-            padding: EdgeInsets.all(AppStyle.defaultPadding * 1.5),
-            decoration: _cardDecoration,
-            child: Form(
-              key: _formKey,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: _formFields(twoColumn: twoColumn),
-                  ),
-                  SizedBox(width: AppStyle.defaultPadding * 1.5),
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      padding: EdgeInsets.all(AppStyle.defaultPadding),
-                      decoration: BoxDecoration(
-                        color: AppStyle.bgColor.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: _imageSection(),
+    return SingleChildScrollView(
+      padding: Responsive.adminPagePadding(context),
+      child: SizedBox(
+        width: double.infinity,
+        child: Container(
+          padding: EdgeInsets.all(AppStyle.defaultPadding),
+          decoration: _cardDecoration,
+          child: Form(
+            key: _formKey,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _formFields(twoColumn: twoColumn),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: EdgeInsets.all(AppStyle.defaultPadding),
+                    decoration: BoxDecoration(
+                      color: AppStyle.bgColor.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: _imageSection(),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -556,23 +553,24 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          appBar: appBarWithBackButton(
-            context: context,
-            title: 'مدیریت اطلاعات اپلیکیشن',
-          ),
-          body: !_licenseChecked
-              ? const Center(child: CircularProgressIndicator())
-              : !_isGoldLicense
-                  ? _lockedView()
-                  : _loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _content(context),
-        ),
+    final scaffold = Scaffold(
+      backgroundColor: AppStyle.bgColor,
+      appBar: appBarWithBackButton(
+        context: context,
+        title: 'مدیریت اطلاعات اپلیکیشن',
       ),
+      body: !_licenseChecked
+          ? const Center(child: CircularProgressIndicator())
+          : !_isGoldLicense
+              ? _lockedView()
+              : _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _content(context),
+    );
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Responsive.isMobile(context) ? SafeArea(child: scaffold) : scaffold,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:powerps/styles/app_theme.dart';
 
 class Responsive extends StatelessWidget {
   final Widget mobile;
@@ -24,6 +25,14 @@ class Responsive extends StatelessWidget {
 
   static bool isDesktop(BuildContext context) =>
       MediaQuery.of(context).size.width >= 1100;
+
+  /// Full-width admin form pages: tight padding on tablet/desktop.
+  static EdgeInsets adminPagePadding(BuildContext context) {
+    if (isMobile(context)) {
+      return EdgeInsets.all(AppStyle.defaultPadding);
+    }
+    return const EdgeInsets.fromLTRB(12, 8, 12, 12);
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,3 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 
 class PromoCodeRepository {
@@ -17,7 +15,8 @@ class PromoCodeRepository {
   }
 
   static Future<bool> update(int id, Map<String, dynamic> data) async {
-    final response = await GenaralApi.dio.put('/api/promo-codes/$id', data: data);
+    final response =
+        await GenaralApi.dio.put('/api/promo-codes/$id', data: data);
     return response.statusCode == 200;
   }
 
