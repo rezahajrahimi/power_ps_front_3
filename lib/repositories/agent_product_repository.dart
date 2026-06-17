@@ -98,7 +98,7 @@ Future obtainBatchOfExistProductsToUser({
   var formData = FormData.fromMap({
     'accountID': accountID,
     'pannelID': pannelID,
-    'configs': json.encode(hiddifyConfig),
+    'configs': json.encode(hiddifyConfig.map((config) => config.toMap()).toList()),
   });
 
   try {
@@ -183,7 +183,7 @@ Future batchExistSubscriptionJobDayOpr(
     'panel_id': panelId,
     'days': day,
     'vol': vol,
-    'configs': json.encode(hiddifyConfig),
+    'configs': json.encode(hiddifyConfig.map((config) => config.toMap()).toList()),
   });
 
   try {

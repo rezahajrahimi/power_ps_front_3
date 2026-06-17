@@ -335,9 +335,19 @@ Future<dynamic> getHiddifyPanelUsersByPannelID({required int pannelID}) async {
 
     if (response.statusCode == 200 && response.data != null) {
       try {
-        List<HiddifyConfig> list = [];
-        for (var element in response.data) {
-          list.add(HiddifyConfig.fromJson(element));
+        final raw = response.data;
+        if (raw is! List) {
+          return <HiddifyConfig>[];
+        }
+
+        final List<HiddifyConfig> list = [];
+        for (final element in raw) {
+          if (element is! Map) {
+            continue;
+          }
+          list.add(HiddifyConfig.fromJson(
+            Map<String, dynamic>.from(element),
+          ));
         }
         return list;
       } catch (e) {

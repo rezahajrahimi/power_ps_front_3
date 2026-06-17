@@ -28,21 +28,26 @@ class HiddifyConfig {
   });
 
   factory HiddifyConfig.fromJson(Map<String, dynamic> json) {
+    final isActiveRaw = json['is_active'] ?? json['isActive'];
+    final isActive = isActiveRaw == true ||
+        isActiveRaw.toString() == '1' ||
+        isActiveRaw.toString() == 'true';
+
     return HiddifyConfig(
-      uuid: json['uuid'].toString(),
-      addedByUuid: json['added_by_uuid'].toString(),
-      comment: json['comment'].toString(),
-      currentUsageGB: double.parse(json['current_usage_GB'].toString()),
-      lastOnline: json['last_online'].toString(),
-      mode: json['mode'].toString(),
-      name: json['name'].toString(),
-      packageDays: json['package_days'],
-      startDate: json['start_date'].toString(),
-      usageLimitGB: double.parse(json['usage_limit_GB'].toString()),
-      isActive: json['is_active'].toString() == "1" ||
-              json['is_active'].toString() == "true"
-          ? true
-          : false,
+      uuid: json['uuid']?.toString() ?? '',
+      addedByUuid: json['added_by_uuid']?.toString(),
+      comment: json['comment']?.toString(),
+      currentUsageGB:
+          double.tryParse(json['current_usage_GB']?.toString() ?? '0') ?? 0,
+      lastOnline: json['last_online']?.toString(),
+      mode: json['mode']?.toString(),
+      name: json['name']?.toString() ?? json['uuid']?.toString() ?? '',
+      packageDays:
+          int.tryParse(json['package_days']?.toString() ?? '0') ?? 0,
+      startDate: json['start_date']?.toString(),
+      usageLimitGB:
+          double.tryParse(json['usage_limit_GB']?.toString() ?? '0') ?? 0,
+      isActive: isActive,
     );
   }
 
