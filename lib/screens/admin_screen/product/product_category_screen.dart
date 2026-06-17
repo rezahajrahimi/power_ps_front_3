@@ -9,6 +9,7 @@ import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/repositories/user_group_repository.dart';
 import 'package:powerps/screens/admin_screen/product/fast_edit_product_categories_screen.dart';
+import 'package:powerps/screens/admin_screen/product/inventory_import_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/product_category/product_category_info_item_card_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -395,6 +396,25 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         },
         icon: const Icon(Icons.edit),
         label: const Text("ویرایش سریع"),
+      ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const InventoryImportScreen(),
+            ),
+          ).whenComplete(_fillData);
+        },
+        icon: const Icon(Icons.table_view),
+        label: const Text("import اکسل"),
       ));
     });
     return Container(

@@ -5,6 +5,7 @@ import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/provider/category_type_provider.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_hiddify_panel_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/add_new_inventory_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_marzban_panel.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/add_new_sanaei_panel.dart';
@@ -264,6 +265,24 @@ class _PannelScreenState extends State<PannelScreen> {
       },
       icon: const Icon(Icons.add),
       label: const Text("افزودن پنل پاسارگارد"),
+    ));
+    actionsWidgetList.add(ElevatedButton.icon(
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppStyle.defaultPadding * 1.5,
+          vertical:
+              AppStyle.defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
+        ),
+      ),
+      onPressed: () async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddNewInventoryPanelScreen(),
+            )).then((value) => {_fillData()});
+      },
+      icon: const Icon(Icons.inventory_2_outlined),
+      label: const Text("افزودن پنل دیگر (موجودی)"),
     ));
     if (_pannelList.isNotEmpty) {
       actionsWidgetList.add(ElevatedButton.icon(
