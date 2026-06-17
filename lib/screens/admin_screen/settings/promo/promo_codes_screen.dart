@@ -1,0 +1,608 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helper/public.dart';
+import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/models/product_category_model.dart';
+import 'package:powerps/models/user_group_model.dart';
+import 'package:powerps/repositories/product_categoy_repository.dart';
+import 'package:powerps/repositories/promo_code_repository.dart';
+import 'package:powerps/repositories/user_group_repository.dart';
+import 'package:powerps/styles/app_theme.dart';
+import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+
+class PromoCodesScreen extends StatefulWidget {
+  const PromoCodesScreen({super.key});
+
+  @override
+  State<PromoCodesScreen> createState() => _PromoCodesScreenState();
+}
+
+class _PromoCodesScreenState extends State<PromoCodesScreen> {
+  List<dynamic> _items = [];
+  List<ProductCategory> _categories = [];
+  List<UserGroup> _userGroups = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    _loadFormData();
+  }
+
+  List<int> _parseIdList(dynamic raw) {
+    if (raw is! List) return [];
+    return raw
+        .map((e) => int.tryParse(e.toString()))
+        .whereType<int>()
+        .toList();
+  }
+
+  Future<void> _loadFormData() async {
+    final cats = await getAllProdctCategory();
+    final groupsData = await getUserGroups(roleType: 'user');
+    if (!mounted) return;
+    setState(() {
+      _categories = cats is List<ProductCategory> ? cats : [];
+      _userGroups = (groupsData?['groups'] as List<UserGroup>?) ?? [];
+    });
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      _items = await PromoCodeRepository.getAll();
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  BoxDecoration get _cardDecoration => BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      );
+
+  Widget _sectionHeader(BuildContext context, String title, {Widget? trailing}) {
+    return Row(
+      children: [
+        Icon(Icons.local_offer, color: AppStyle.primaryColor),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    );
+  }
+
+  Future<void> _showUsages(int id, String code) async {
+    EasyLoading.show();
+    final usages = await PromoCodeRepository.getUsages(id);
+    EasyLoading.dismiss();
+    if (!mounted) return;
+    final isWide = !Responsive.isMobile(context);
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('استفاده‌های $code'),
+        content: SizedBox(
+          width: isWide ? 520 : double.maxFinite,
+          height: isWide ? 360 : null,
+          child: usages.isEmpty
+              ? const Center(child: Text('هنوز استفاده‌ای ثبت نشده.'))
+              : ListView.separated(
+                  itemCount: usages.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final u = usages[i];
+                    return ListTile(
+                      dense: !isWide,
+                      title: Text(u['account_id']?.toString() ?? ''),
+                      subtitle: Text(
+                        'تخفیف: ${u['discount_amount'] ?? 0} | ${u['applied_at'] ?? ''}',
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('بستن')),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteItem(Map<String, dynamic> item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('حذف کد تخفیف'),
+        content: Text('کد ${item['code']} حذف شود؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حذف')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    EasyLoading.show();
+    final success = await PromoCodeRepository.delete(item['id'] as int);
+    EasyLoading.dismiss();
+    if (!mounted) return;
+    showMsg(
+      msg: success ? 'حذف شد' : 'خطا در حذف',
+      context: context,
+      type: success ? 'success' : 'error',
+    );
+    if (success) _load();
+  }
+
+  Widget _buildFormFields({
+    required bool isWide,
+    required TextEditingController codeCtrl,
+    required TextEditingController valueCtrl,
+    required TextEditingController maxUsesCtrl,
+    required TextEditingController maxPerUserCtrl,
+    required TextEditingController minOrderCtrl,
+    required TextEditingController startsCtrl,
+    required TextEditingController expiresCtrl,
+    required String type,
+    required ValueChanged<String?> onTypeChanged,
+    required bool isActive,
+    required ValueChanged<bool> onActiveChanged,
+    required Set<int> selectedCategories,
+    required Set<int> selectedGroups,
+    required void Function(void Function()) setDialogState,
+  }) {
+    final basicFields = <Widget>[
+      TextField(
+        controller: codeCtrl,
+        decoration: const InputDecoration(labelText: 'کد'),
+      ),
+      DropdownButtonFormField<String>(
+        value: type,
+        items: const [
+          DropdownMenuItem(value: 'percent', child: Text('درصدی')),
+          DropdownMenuItem(value: 'fixed_toman', child: Text('مبلغ ثابت (تومان)')),
+          DropdownMenuItem(value: 'fixed_dollar', child: Text('مبلغ ثابت (دلار)')),
+        ],
+        onChanged: onTypeChanged,
+        decoration: const InputDecoration(labelText: 'نوع'),
+      ),
+      TextField(
+        controller: valueCtrl,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'مقدار'),
+      ),
+      TextField(
+        controller: maxUsesCtrl,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(
+          labelText: 'حداکثر استفاده کل (خالی = نامحدود)',
+        ),
+      ),
+      TextField(
+        controller: maxPerUserCtrl,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'حداکثر استفاده هر کاربر'),
+      ),
+      TextField(
+        controller: minOrderCtrl,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'حداقل مبلغ سفارش (تومان)'),
+      ),
+      TextField(
+        controller: startsCtrl,
+        decoration: const InputDecoration(
+          labelText: 'شروع (YYYY-MM-DD HH:MM، اختیاری)',
+        ),
+      ),
+      TextField(
+        controller: expiresCtrl,
+        decoration: const InputDecoration(
+          labelText: 'انقضا (YYYY-MM-DD HH:MM، اختیاری)',
+        ),
+      ),
+    ];
+
+    Widget basicSection;
+    if (isWide) {
+      basicSection = GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 3.2,
+        children: basicFields,
+      );
+    } else {
+      basicSection = Column(
+        children: basicFields
+            .map((w) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: w,
+                ))
+            .toList(),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        basicSection,
+        const SizedBox(height: 8),
+        const Text('محدودیت بسته (خالی = همه)'),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: _categories.where((c) => c.isActive).map((c) {
+            final selected = selectedCategories.contains(c.id);
+            return FilterChip(
+              label: Text(c.categoryName, style: const TextStyle(fontSize: 12)),
+              selected: selected,
+              onSelected: (v) => setDialogState(() {
+                if (v) {
+                  selectedCategories.add(c.id);
+                } else {
+                  selectedCategories.remove(c.id);
+                }
+              }),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
+        const Text('محدودیت گروه کاربری (خالی = همه)'),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            FilterChip(
+              label: const Text('بدون گروه', style: TextStyle(fontSize: 12)),
+              selected: selectedGroups.contains(0),
+              onSelected: (v) => setDialogState(() {
+                if (v) {
+                  selectedGroups.add(0);
+                } else {
+                  selectedGroups.remove(0);
+                }
+              }),
+            ),
+            ..._userGroups.where((g) => !g.isDefault).map((g) {
+              final selected = selectedGroups.contains(g.id);
+              return FilterChip(
+                label: Text(g.name, style: const TextStyle(fontSize: 12)),
+                selected: selected,
+                onSelected: (v) => setDialogState(() {
+                  if (v) {
+                    selectedGroups.add(g.id);
+                  } else {
+                    selectedGroups.remove(g.id);
+                  }
+                }),
+              );
+            }),
+          ],
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('فعال'),
+          value: isActive,
+          onChanged: onActiveChanged,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showForm({Map<String, dynamic>? item}) async {
+    final codeCtrl = TextEditingController(text: item?['code']?.toString() ?? '');
+    final valueCtrl = TextEditingController(text: item?['value']?.toString() ?? '10');
+    final maxUsesCtrl = TextEditingController(text: item?['max_uses']?.toString() ?? '');
+    final maxPerUserCtrl =
+        TextEditingController(text: item?['max_uses_per_user']?.toString() ?? '1');
+    final minOrderCtrl =
+        TextEditingController(text: item?['min_order_amount']?.toString() ?? '');
+    final startsCtrl = TextEditingController(text: item?['starts_at']?.toString() ?? '');
+    final expiresCtrl = TextEditingController(text: item?['expires_at']?.toString() ?? '');
+    String type = item?['type']?.toString() ?? 'percent';
+    bool isActive = item?['is_active'] == true || item == null;
+    final selectedCategories = _parseIdList(item?['allowed_category_ids']).toSet();
+    final selectedGroups = _parseIdList(item?['allowed_user_group_ids']).toSet();
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final isWide = !Responsive.isMobile(ctx);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            title: Text(item == null ? 'کد تخفیف جدید' : 'ویرایش کد تخفیف'),
+            content: SizedBox(
+              width: isWide ? 720 : null,
+              child: SingleChildScrollView(
+                child: _buildFormFields(
+                  isWide: isWide,
+                  codeCtrl: codeCtrl,
+                  valueCtrl: valueCtrl,
+                  maxUsesCtrl: maxUsesCtrl,
+                  maxPerUserCtrl: maxPerUserCtrl,
+                  minOrderCtrl: minOrderCtrl,
+                  startsCtrl: startsCtrl,
+                  expiresCtrl: expiresCtrl,
+                  type: type,
+                  onTypeChanged: (v) => setDialogState(() => type = v ?? 'percent'),
+                  isActive: isActive,
+                  onActiveChanged: (v) => setDialogState(() => isActive = v),
+                  selectedCategories: selectedCategories,
+                  selectedGroups: selectedGroups,
+                  setDialogState: setDialogState,
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('انصراف')),
+              ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('ذخیره')),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (ok != true || !mounted) return;
+
+    EasyLoading.show();
+    final payload = <String, dynamic>{
+      'code': codeCtrl.text.trim().toUpperCase(),
+      'type': type,
+      'value': double.tryParse(valueCtrl.text) ?? 0,
+      'is_active': isActive,
+      'max_uses_per_user': int.tryParse(maxPerUserCtrl.text) ?? 1,
+      'allowed_category_ids': selectedCategories.toList(),
+      'allowed_user_group_ids': selectedGroups.toList(),
+    };
+    if (maxUsesCtrl.text.trim().isNotEmpty) {
+      payload['max_uses'] = int.tryParse(maxUsesCtrl.text);
+    }
+    if (minOrderCtrl.text.trim().isNotEmpty) {
+      payload['min_order_amount'] = double.tryParse(minOrderCtrl.text);
+    }
+    if (startsCtrl.text.trim().isNotEmpty) {
+      payload['starts_at'] = startsCtrl.text.trim();
+    }
+    if (expiresCtrl.text.trim().isNotEmpty) {
+      payload['expires_at'] = expiresCtrl.text.trim();
+    }
+
+    final success = item == null
+        ? await PromoCodeRepository.create(payload)
+        : await PromoCodeRepository.update(item['id'] as int, payload);
+    EasyLoading.dismiss();
+    if (!mounted) return;
+    showMsg(
+      msg: success ? 'ذخیره شد' : 'خطا در ذخیره',
+      context: context,
+      type: success ? 'success' : 'error',
+    );
+    if (success) _load();
+  }
+
+  Widget _promoCard(Map<String, dynamic> item) {
+    final catCount = _parseIdList(item['allowed_category_ids']).length;
+    final grpCount = _parseIdList(item['allowed_user_group_ids']).length;
+    final active = item['is_active'] == true;
+
+    return Container(
+      decoration: _cardDecoration,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: () => _showForm(item: item),
+          onLongPress: () => _deleteItem(item),
+          child: Padding(
+            padding: EdgeInsets.all(AppStyle.defaultPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item['code']?.toString() ?? '',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      active ? Icons.check_circle : Icons.cancel,
+                      color: active ? Colors.green : Colors.red,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${item['type']} — ${item['value']}',
+                  style: TextStyle(color: AppStyle.deactiveStatus),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'استفاده: ${item['used_count'] ?? 0}'
+                  '${item['max_uses'] != null ? ' / ${item['max_uses']}' : ''}',
+                  style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
+                ),
+                if (catCount > 0 || grpCount > 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${catCount > 0 ? '$catCount بسته' : ''}'
+                    '${catCount > 0 && grpCount > 0 ? ' · ' : ''}'
+                    '${grpCount > 0 ? '$grpCount گروه' : ''}',
+                    style: TextStyle(color: AppStyle.primaryColor, fontSize: 12),
+                  ),
+                ],
+                const Spacer(),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => _showUsages(
+                      item['id'] as int,
+                      item['code']?.toString() ?? '',
+                    ),
+                    icon: const Icon(Icons.history, size: 18),
+                    label: const Text('تاریخچه'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _operationCard(BuildContext context) {
+    final activeCount = _items.where((e) => e['is_active'] == true).length;
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: _cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _sectionHeader(context, 'عملیات'),
+          const Divider(height: 24),
+          Text('کل کدها: ${_items.length}', style: TextStyle(color: AppStyle.deactiveStatus)),
+          Text('فعال: $activeCount', style: TextStyle(color: AppStyle.deactiveStatus)),
+          SizedBox(height: AppStyle.defaultPadding),
+          ElevatedButton.icon(
+            onPressed: () => _showForm(),
+            icon: const Icon(Icons.add),
+            label: const Text('کد تخفیف جدید'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppStyle.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _listSection(BuildContext context) {
+    if (_items.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(AppStyle.defaultPadding * 2),
+        decoration: _cardDecoration,
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.local_offer_outlined,
+                  size: 48, color: AppStyle.deactiveStatus),
+              const SizedBox(height: 12),
+              const Text('هنوز کد تخفیفی ثبت نشده است.'),
+              const SizedBox(height: 16),
+              if (Responsive.isMobile(context))
+                ElevatedButton(
+                  onPressed: () => _showForm(),
+                  child: const Text('ایجاد اولین کد'),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final cards = _items.map((item) => _promoCard(item)).toList();
+    final crossCount = Responsive.isDesktop(context)
+        ? 3
+        : Responsive.isTablet(context)
+            ? 2
+            : 1;
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: _cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            context,
+            'لیست کدهای تخفیف',
+            trailing: Text('${_items.length} مورد',
+                style: TextStyle(color: AppStyle.deactiveStatus)),
+          ),
+          const Divider(height: 24),
+          widgetsGridview(
+            context: context,
+            crossAxisCount: crossCount,
+            childAspectRatio: Responsive.isMobile(context) ? 2.4 : 1.35,
+            importedList: cards,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (Responsive.isMobile(context)) {
+      return ListView(
+        padding: EdgeInsets.all(AppStyle.defaultPadding),
+        children: [_listSection(context)],
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 5, child: _listSection(context)),
+          SizedBox(width: AppStyle.defaultPadding),
+          Expanded(flex: 2, child: _operationCard(context)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: appBarWithBackButton(context: context, title: 'کدهای تخفیف'),
+          floatingActionButton: Responsive.isMobile(context)
+              ? FloatingActionButton(
+                  onPressed: () => _showForm(),
+                  child: const Icon(Icons.add),
+                )
+              : null,
+          body: _body(context),
+        ),
+      ),
+    );
+  }
+}

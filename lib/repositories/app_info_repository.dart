@@ -30,7 +30,7 @@ Future<AppInfoModel> fetchAppInfo() async {
 
 Future<bool> updateAppInfo({required AppInfoModel appInfo}) async {
   Response response = await GenaralApi.dio.post("/api/update-application-info",
-      data: appInfo.toJson(),
+      data: appInfo.toMap(),
       options: Options(headers: {
         'Accept': 'application/json',
         'Connection': 'keep-alive',

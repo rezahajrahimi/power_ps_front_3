@@ -58,18 +58,15 @@ class MyApp extends StatelessWidget {
               create: (context) => ProductCategoryProvider()),
           ChangeNotifierProvider(create: (context) => UserAdminProvider()),
           ChangeNotifierProvider(create: (context) => PaymentProvider()),
-          ChangeNotifierProvider(create: (context) => AppInfoProvider()),
-          ChangeNotifierProvider(create: (context) => AuthChangeController()),
           ChangeNotifierProvider(create: (context) => CategoryTypeProvider()),
         ],
-        child: Consumer<AuthChangeController>(
-          builder: (context, authController, child) {
-            // فراخوانی متد checkAuthStatus
+        child: Consumer2<AuthChangeController, AppInfoProvider>(
+          builder: (context, authController, appInfoProvider, child) {
             authController.checkAuthStatus();
 
             return MaterialApp(
               builder: EasyLoading.init(),
-              title: "PowerPS",
+              title: appInfoProvider.displayTitle,
               onGenerateRoute: (setting) {
                 if (setting.name!.contains("/login/")) {
                   String url =

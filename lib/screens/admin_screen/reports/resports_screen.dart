@@ -3,6 +3,7 @@ import 'package:powerps/screens/admin_screen/reports/report_tabs/configs_report_
 import 'package:powerps/screens/admin_screen/reports/report_tabs/users_report_tab_screen.dart';
 import 'package:powerps/screens/admin_screen/reports/report_tabs/financial_report_tab_screen.dart';
 import 'package:powerps/screens/admin_screen/reports/report_tabs/summary_report_tab_screen.dart';
+import 'package:powerps/screens/admin_screen/reports/report_tabs/retention_report_tab_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 
 class ReportScreen extends StatefulWidget {
@@ -30,7 +31,7 @@ class _ReportScreenState extends State<ReportScreen>
                     borderRadius: const BorderRadius.all(Radius.circular(15)),
                   ),
                   child: DefaultTabController(
-                    length: 4,
+                    length: 5,
                     child: Scaffold(
                       backgroundColor: Colors.transparent,
                       appBar: AppBar(
@@ -61,6 +62,9 @@ class _ReportScreenState extends State<ReportScreen>
                                 icon: Icon(
                                     Icons.account_balance_wallet_outlined)),
                             Tab(
+                                text: 'نگهداشت فروش',
+                                icon: Icon(Icons.trending_up_outlined)),
+                            Tab(
                                 text: 'جستجوی کانفیگ',
                                 icon: Icon(Icons.search_outlined)),
                           ],
@@ -71,6 +75,7 @@ class _ReportScreenState extends State<ReportScreen>
                           SummaryReportTab(),
                           UsersReportTab(),
                           FinancialReportTab(),
+                          RetentionReportTab(),
                           ConfigsReportTab(),
                         ],
                       ),

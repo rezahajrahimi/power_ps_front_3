@@ -48,6 +48,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   bool _isActive = true;
   List<UserGroup> _userGroups = [];
   final Set<int> _allowedGroupIds = {};
+  List<ProductCategory> _allCategories = [];
+  int? _upsellCategoryId;
 
   @override
   void initState() {
@@ -147,6 +149,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     try {
       List<Pannel>? resPannel = await getPannels();
       final groupsData = await getUserGroups(roleType: 'user');
+      final categories = await getAllProdctCategory();
 
       setStateIfMounted(() {
         _nameEditText.text = widget.selectedProductCategory.categoryName;
@@ -172,6 +175,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         _allowedGroupIds
           ..clear()
           ..addAll(widget.selectedProductCategory.allowedUserGroupIds ?? const []);
+        _upsellCategoryId = widget.selectedProductCategory.upsellCategoryId;
+        _allCategories = categories is List<ProductCategory> ? categories : [];
 
         if (resPannel != null && resPannel.isNotEmpty) {
           _pannelNameList.clear();
@@ -431,6 +436,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     ));
 
     _productDetailsWidgetLIst.add(_allowedGroupsWidget(context));
+    _productDetailsWidgetLIst.add(_upsellCategoryWidget(context));
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -583,6 +589,59 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     );
   }
 
+  Widget _upsellCategoryWidget(BuildContext context) {
+    final currentPannelId = widget.selectedProductCategory.pannelId;
+    final options = _allCategories
+        .where((c) =>
+            c.id != widget.selectedProductCategory.id &&
+            c.pannelId == currentPannelId &&
+            c.isActive)
+        .toList();
+
+    return Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppStyle.primaryColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('پیشنهاد ارتقا (Upsell)',
+              style: Theme.of(context).textTheme.bodyLarge),
+          const SizedBox(height: 4),
+          Text(
+            'بسته پیشنهادی هنگام خرید این بسته در ربات نمایش داده می‌شود',
+            style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<int?>(
+            value: _upsellCategoryId,
+            decoration: const InputDecoration(
+              labelText: 'بسته پیشنهادی',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('بدون پیشنهاد ارتقا'),
+              ),
+              ...options.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.id,
+                  child: Text('${c.categoryName} (${c.price} تومان)'),
+                ),
+              ),
+            ],
+            onChanged: (v) => setStateIfMounted(() => _upsellCategoryId = v),
+          ),
+        ],
+      ),
+    );
+  }
+
   _submitData(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -618,7 +677,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           ipLimit: _ipLimitEditText.text.isNotEmpty
               ? int.tryParse(_ipLimitEditText.text)
               : 0,
-          sampleInbound: _sampleInboundEditText.text);
+          sampleInbound: _sampleInboundEditText.text,
+          upsellCategoryId: _upsellCategoryId);
 
       if (res) {
         if (context.mounted) {

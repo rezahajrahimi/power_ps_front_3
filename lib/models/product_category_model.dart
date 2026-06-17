@@ -23,6 +23,7 @@ class ProductCategory {
   int? inboundId;
   int? ipLimit;
   String? sampleInbound;
+  int? upsellCategoryId;
   Pannel? pannel;
   AgentAddCategoriyModel? agentAddCategoriyModel;
 
@@ -44,6 +45,7 @@ class ProductCategory {
     this.inboundId,
     this.ipLimit,
     this.sampleInbound,
+    this.upsellCategoryId,
     this.pannel,
     this.agentAddCategoriyModel,
   });
@@ -73,6 +75,7 @@ class ProductCategory {
     int? inboundId,
     int? ipLimit,
     String? sampleInbound,
+    int? upsellCategoryId,
     AgentAddCategoriyModel? agentAddCategoriyModel,
     Pannel? pannel,
   }) {
@@ -94,6 +97,7 @@ class ProductCategory {
       inboundId: inboundId ?? this.inboundId,
       ipLimit: ipLimit ?? this.ipLimit,
       sampleInbound: sampleInbound ?? this.sampleInbound,
+      upsellCategoryId: upsellCategoryId ?? this.upsellCategoryId,
       agentAddCategoriyModel:
           agentAddCategoriyModel ?? this.agentAddCategoriyModel,
       pannel: pannel ?? this.pannel,
@@ -119,6 +123,7 @@ class ProductCategory {
       'inbound_id': inboundId,
       'ip_limit': ipLimit,
       'sample_inbound': sampleInbound,
+      'upsell_category_id': upsellCategoryId,
       // 'agentAddCategoriyModel': agentAddCategoriyModel?.toMap(),
       // 'pannel': pannel?,
     };
@@ -169,6 +174,7 @@ class ProductCategory {
         inboundId: map['inbound_id']?.toInt(),
         ipLimit: map['ip_limit']?.toInt(),
         sampleInbound: map['sample_inbound']?.toString(),
+        upsellCategoryId: map['upsell_category_id']?.toInt(),
         pannel: map['pannel'] != null ? Pannel.fromJson(map['pannel']) : null,
         agentAddCategoriyModel: map['agentAddCategoriyModel'] != null
             ? AgentAddCategoriyModel.fromMap(map['agentAddCategoriyModel'])

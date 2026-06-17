@@ -48,6 +48,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   bool _showPannelLink = true;
   bool _sendConfigToUser = true;
   final Set<int> _allowedGroupIds = {};
+  int? _upsellCategoryId;
   // create a form key
   final _formKey = GlobalKey<FormState>();
 
@@ -463,6 +464,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     final dialogWidth =
         screenSize.width > 600 ? 550.0 : screenSize.width * 0.95;
     _allowedGroupIds.clear();
+    _upsellCategoryId = null;
 
     return showDialog(
       context: context,
@@ -704,6 +706,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
+                              _upsellCategoryWidget(context, setState),
                               _allowedGroupsWidget(context, setState),
                             ],
                           ),
@@ -800,6 +803,52 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       onChanged: onChanged,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       dense: true,
+    );
+  }
+
+  Widget _upsellCategoryWidget(
+      BuildContext context, void Function(void Function()) setDialogState) {
+    final pannelId = _selectedPannelName.isNotEmpty
+        ? int.tryParse(_selectedPannelName.split(':')[0])
+        : null;
+    final options = _productCategoryList
+        .where((c) => c.pannelId == pannelId && c.isActive)
+        .toList();
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('پیشنهاد ارتقا (Upsell)'),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<int?>(
+            value: _upsellCategoryId,
+            decoration: const InputDecoration(
+              labelText: 'بسته پیشنهادی هنگام خرید',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('بدون پیشنهاد ارتقا'),
+              ),
+              ...options.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.id,
+                  child: Text('${c.categoryName} (${c.price} تومان)'),
+                ),
+              ),
+            ],
+            onChanged: (v) => setDialogState(() => _upsellCategoryId = v),
+          ),
+        ],
+      ),
     );
   }
 
@@ -910,6 +959,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             ? int.tryParse(_ipLimitEditText.text)
             : 0,
         sampleInbound: _sampleInboundEditText.text,
+        upsellCategoryId: _upsellCategoryId,
       );
 
       if (val) {

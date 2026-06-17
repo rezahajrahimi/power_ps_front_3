@@ -4,9 +4,11 @@ import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
+import 'package:powerps/provider/app_info_provider.dart';
 import 'package:powerps/repositories/authenticatiom_repository.dart';
 import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'drawer_list_tile_v4_widget.dart';
@@ -52,30 +54,33 @@ class _SideMenuState extends State<SideMenu> {
     return Drawer(
       child: Column(
         children: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    projectVersion,
-                    style: TextStyle(color: AppStyle.deactiveStatus),
+          Consumer<AppInfoProvider>(
+            builder: (context, appInfoProvider, _) {
+              final info = appInfoProvider.appInfo;
+              final title = appInfoProvider.displayTitle;
+              final version = info?.version ?? projectVersion;
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: AppStyle.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        version,
+                        style: TextStyle(color: AppStyle.deactiveStatus),
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    height: AppStyle.defaultPadding,
-                  ),
-                  Text(
-                    projectName,
-                    style: TextStyle(color: AppStyle.deactiveStatus),
-                  ),
-                  SizedBox(
-                    height: AppStyle.defaultPadding,
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
           const Spacer(),
           const Divider(),
@@ -154,37 +159,59 @@ class _SideMenuState extends State<SideMenu> {
               isSelected: widget.currentPage == "Sign Up" ? true : false),
           const Spacer(),
           const Divider(),
-          Expanded(
-            // flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+          Consumer<AppInfoProvider>(
+            builder: (context, appInfoProvider, _) {
+              final info = appInfoProvider.appInfo;
+              final showCredit = info?.showPowerpsCredit ?? true;
+              final footer = info?.footerText?.trim();
+              return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton.filled(
-                      color: AppStyle.webBackgroundColor,
-                      onPressed: () {
-                        launchUrl(
-                            Uri.parse("https://t.me/powerproxysellerchat"));
-                      },
-                      icon: const Icon(FontAwesomeIcons.telegram)),
-                  IconButton.filled(
-                      color: AppStyle.webBackgroundColor,
-                      onPressed: () {
-                        launchUrl(
-                            Uri.parse("https://t.me/powerproxysellersupport"));
-                      },
-                      icon: const Icon(Icons.support_agent)),
-                  IconButton.filled(
-                      color: AppStyle.webBackgroundColor,
-                      onPressed: () {
-                        launchUrl(Uri.parse(
-                            "https://www.youtube.com/@powerproxyseller"));
-                      },
-                      icon: const Icon(FontAwesomeIcons.youtube)),
+                  if (showCredit)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          IconButton.filled(
+                              color: AppStyle.webBackgroundColor,
+                              onPressed: () {
+                                launchUrl(Uri.parse(
+                                    "https://t.me/powerproxysellerchat"));
+                              },
+                              icon: const Icon(FontAwesomeIcons.telegram)),
+                          IconButton.filled(
+                              color: AppStyle.webBackgroundColor,
+                              onPressed: () {
+                                launchUrl(Uri.parse(
+                                    "https://t.me/powerproxysellersupport"));
+                              },
+                              icon: const Icon(Icons.support_agent)),
+                          IconButton.filled(
+                              color: AppStyle.webBackgroundColor,
+                              onPressed: () {
+                                launchUrl(Uri.parse(
+                                    "https://www.youtube.com/@powerproxyseller"));
+                              },
+                              icon: const Icon(FontAwesomeIcons.youtube)),
+                        ],
+                      ),
+                    ),
+                  if (footer != null && footer.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        footer,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppStyle.deactiveStatus,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                 ],
-              ),
-            ),
+              );
+            },
           ),
           _showLicenseData
               ? Center(
@@ -206,30 +233,33 @@ class _SideMenuState extends State<SideMenu> {
     return Drawer(
       child: Column(
         children: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    projectVersion,
-                    style: TextStyle(color: AppStyle.deactiveStatus),
+          Consumer<AppInfoProvider>(
+            builder: (context, appInfoProvider, _) {
+              final info = appInfoProvider.appInfo;
+              final title = appInfoProvider.displayTitle;
+              final version = info?.version ?? projectVersion;
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: AppStyle.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        version,
+                        style: TextStyle(color: AppStyle.deactiveStatus),
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    height: AppStyle.defaultPadding,
-                  ),
-                  Text(
-                    projectName,
-                    style: TextStyle(color: AppStyle.deactiveStatus),
-                  ),
-                  SizedBox(
-                    height: AppStyle.defaultPadding,
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
           const Divider(),
 
@@ -276,38 +306,59 @@ class _SideMenuState extends State<SideMenu> {
               isSelected: widget.currentPage == "Sign Up" ? true : false),
           const Spacer(),
           const Divider(),
-
-          Expanded(
-            // flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+          Consumer<AppInfoProvider>(
+            builder: (context, appInfoProvider, _) {
+              final info = appInfoProvider.appInfo;
+              final showCredit = info?.showPowerpsCredit ?? true;
+              final footer = info?.footerText?.trim();
+              return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton.filled(
-                      color: AppStyle.webBackgroundColor,
-                      onPressed: () {
-                        launchUrl(
-                            Uri.parse("https://t.me/powerproxysellerchat"));
-                      },
-                      icon: const Icon(FontAwesomeIcons.telegram)),
-                  IconButton.filled(
-                      color: AppStyle.webBackgroundColor,
-                      onPressed: () {
-                        launchUrl(
-                            Uri.parse("https://t.me/powerproxysellersupport"));
-                      },
-                      icon: const Icon(Icons.support_agent)),
-                  IconButton.filled(
-                      color: AppStyle.webBackgroundColor,
-                      onPressed: () {
-                        launchUrl(Uri.parse(
-                            "https://www.youtube.com/@powerproxyseller"));
-                      },
-                      icon: const Icon(FontAwesomeIcons.youtube)),
+                  if (showCredit)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          IconButton.filled(
+                              color: AppStyle.webBackgroundColor,
+                              onPressed: () {
+                                launchUrl(Uri.parse(
+                                    "https://t.me/powerproxysellerchat"));
+                              },
+                              icon: const Icon(FontAwesomeIcons.telegram)),
+                          IconButton.filled(
+                              color: AppStyle.webBackgroundColor,
+                              onPressed: () {
+                                launchUrl(Uri.parse(
+                                    "https://t.me/powerproxysellersupport"));
+                              },
+                              icon: const Icon(Icons.support_agent)),
+                          IconButton.filled(
+                              color: AppStyle.webBackgroundColor,
+                              onPressed: () {
+                                launchUrl(Uri.parse(
+                                    "https://www.youtube.com/@powerproxyseller"));
+                              },
+                              icon: const Icon(FontAwesomeIcons.youtube)),
+                        ],
+                      ),
+                    ),
+                  if (footer != null && footer.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        footer,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppStyle.deactiveStatus,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                 ],
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),

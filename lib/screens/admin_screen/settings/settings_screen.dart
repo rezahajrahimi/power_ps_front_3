@@ -17,11 +17,15 @@ import 'package:powerps/screens/admin_screen/settings/pannel/pannel_screen.dart'
 import 'package:powerps/screens/admin_screen/settings/payment_type/payment_type_details_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/user_groups/user_groups_manage_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/promo/promo_codes_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/marketing/marketing_campaign_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/reports/group_operations_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/test_accounts/test_account_management_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/appinfo/app_info_manage_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -39,12 +43,23 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _showData = false;
   bool _showAdvancedSetting = false;
+  String _licenseType = '';
   late Setting _setting;
   final List<Widget> _advancedSettingWidgetList = [];
   @override
   void initState() {
     _fillData();
+    _loadLicenseType();
     super.initState();
+  }
+
+  bool get _isGoldLicense => _licenseType.toLowerCase() == 'gold';
+
+  Future<void> _loadLicenseType() async {
+    final type = await getLicenseType();
+    if (mounted) {
+      setState(() => _licenseType = type);
+    }
   }
 
   @override
@@ -436,6 +451,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: Icons.text_fields_outlined,
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (context) => const TextScreenScreen())),
+      ),
+      if (_isGoldLicense)
+        _buildSettingButton(
+          context: context,
+          label: "برندینگ پنل (طلایی)",
+          icon: Icons.palette_outlined,
+          onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const AppInfoManageScreen())),
+        ),
+      _buildSettingButton(
+        context: context,
+        label: "کدهای تخفیف",
+        icon: Icons.discount_outlined,
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const PromoCodesScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "کمپین بازاریابی",
+        icon: Icons.campaign_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const MarketingCampaignScreen())),
       ),
       _buildSettingButton(
         context: context,

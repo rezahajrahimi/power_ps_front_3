@@ -50,6 +50,7 @@ Future addNewProductCategory({
   int? inboundId,
   int? ipLimit,
   String? sampleInbound,
+  int? upsellCategoryId,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/addNewProductCategory",
@@ -69,6 +70,7 @@ Future addNewProductCategory({
           "inbound_id": inboundId,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
+          "upsell_category_id": upsellCategoryId,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -118,6 +120,7 @@ Future<bool> editProductCategory({
   int? inboundId,
   int? ipLimit,
   String? sampleInbound,
+  int? upsellCategoryId,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/editProductCategory",
@@ -138,6 +141,7 @@ Future<bool> editProductCategory({
           "inbound_id": inboundId,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
+          "upsell_category_id": upsellCategoryId,
         },
         options: Options(headers: {
           'Accept': 'application/json',
