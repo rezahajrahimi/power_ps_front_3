@@ -9,6 +9,8 @@ import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/agent/agent_ballance_widget_info_card_widget.dart';
 import 'package:powerps/widgets/agent/agent_bougth_products_list_info_card_widget.dart';
+import 'package:powerps/widgets/dashboard/dashboard_action_handler.dart';
+import 'package:powerps/widgets/dashboard/dashboard_section_card.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/users/user_product_category_info_item_widget.dart';
@@ -23,45 +25,109 @@ class USerDasboardScreen extends StatefulWidget {
 
 class _USerDasboardScreenState extends State<USerDasboardScreen> {
   bool _showdata = false;
+  bool _loadError = false;
+  bool _isRefreshing = false;
   Timer? _retriveDataTimer;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _productsSectionKey = GlobalKey();
+  final GlobalKey _historySectionKey = GlobalKey();
+  final GlobalKey _walletSectionKey = GlobalKey();
+
   int _lastPageBougthProduct = 1;
   int selectedPageBougthProduct = 1;
   bool _showBougthProductData = false;
+
   @override
   void initState() {
-    _bindUSerDashboardScreenData();
-
-    _retriveDataTimer = Timer.periodic(const Duration(seconds: 20), ((timer) {
-      _bindUSerDashboardScreenData();
-    }));
     super.initState();
+    _bindUSerDashboardScreenData();
+    _retriveDataTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) _bindUSerDashboardScreenData(silent: true);
+    });
   }
 
   @override
   void dispose() {
-    _retriveDataTimer!.cancel();
-
+    _retriveDataTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  DashboardActionHandler _actionHandler(BuildContext context) {
+    return DashboardActionHandler(
+      context: context,
+      scrollController: _scrollController,
+      productsSectionKey: _productsSectionKey,
+      historySectionKey: _historySectionKey,
+      walletSectionKey: _walletSectionKey,
+      onBalanceChanged: () => _bindUSerDashboardScreenData(silent: true),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        primary: false,
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        child: _showdata == false ? Container() : _content(context),
+      child: _showdata == false && !_loadError
+          ? const Center(child: CircularProgressIndicator())
+          : _loadError
+              ? _buildErrorState()
+              : RefreshIndicator(
+                  onRefresh: () => _bindUSerDashboardScreenData(),
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    primary: false,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.all(AppStyle.defaultPadding),
+                    child: _content(context),
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.cloud_off, size: 48, color: Colors.white38),
+          const SizedBox(height: 12),
+          const Text('خطا در بارگذاری داشبورد'),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _bindUSerDashboardScreenData(),
+            child: const Text('تلاش مجدد'),
+          ),
+        ],
       ),
     );
   }
 
   Widget _content(BuildContext context) {
-    bool changed = context.watch<UserProvider>().changed;
+    final changed = context.watch<UserProvider>().changed;
     if (changed) {
-      _bindUSerDashboardScreenData();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _bindUSerDashboardScreenData(silent: true);
+      });
     }
+
+    final logs = Provider.of<UserProvider>(context, listen: false)
+            .userDashboard
+            .logs ??
+        [];
+
     return Column(
       children: [
+        if (_isRefreshing)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+        const DashboardWelcomeHeader(),
+        SizedBox(height: AppStyle.defaultPadding),
+        DashboardQuickActionsSection(
+          onAction: (key) => _actionHandler(context).handle(key),
+        ),
+        SizedBox(height: AppStyle.defaultPadding),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -69,241 +135,180 @@ class _USerDasboardScreenState extends State<USerDasboardScreen> {
               flex: 5,
               child: Column(
                 children: [
-                  _userProductsInfoTabCard(context),
+                  _userProductsSection(context),
                   SizedBox(height: AppStyle.defaultPadding),
-                  _userBoughtProductsInfoTabCard(context),
-                  SizedBox(height: AppStyle.defaultPadding),
-                  // _confirmedInfoTabCard(context),
-                  SizedBox(height: AppStyle.defaultPadding),
-                  if (Responsive.isMobile(context)) // side bar mobile
-                    const AgentBallanceInfoItemCardWidget(),
-                  if (Responsive.isMobile(context)) // side bar mobile
+                  _userBoughtProductsSection(context),
+                  if (Responsive.isMobile(context)) ...[
                     SizedBox(height: AppStyle.defaultPadding),
-                  RecentEvents(
-                      type: "dashboard",
-                      events: Provider.of<UserProvider>(context, listen: false)
-                          .userDashboard
-                          .logs!),
-                  if (Responsive.isMobile(context))
-                    SizedBox(height: AppStyle.defaultPadding),
-                  if (Responsive.isMobile(context)) // side bar mobile
-                    Column(
-                      children: [
-                        const AgentBallanceInfoItemCardWidget(),
-                        SizedBox(height: AppStyle.defaultPadding),
-                      ],
-                    ),
+                    _walletSection(),
+                  ],
+                  SizedBox(height: AppStyle.defaultPadding),
+                  DashboardSectionCard(
+                    title: 'آخرین فعالیت‌ها',
+                    icon: Icons.history_toggle_off,
+                    child: RecentEvents(type: 'dashboard', events: logs),
+                  ),
                 ],
               ),
             ),
-            if (!Responsive.isMobile(context))
+            if (!Responsive.isMobile(context)) ...[
               SizedBox(width: AppStyle.defaultPadding),
-            // On Mobile means if the screen is less than 850 we dont want to show it
-            if (!Responsive.isMobile(context)) // side windows
               Expanded(
                 flex: 2,
-                child: Column(
-                  children: [
-                    const AgentBallanceInfoItemCardWidget(),
-                    SizedBox(height: AppStyle.defaultPadding),
-                  ],
-                ),
+                child: _walletSection(),
               ),
+            ],
           ],
-        )
+        ),
       ],
     );
   }
 
-  void _bindUSerDashboardScreenData() async {
-    await getUserDashboardAnalytics().then((value) {
-      if (null != value) {
-        setState(() {
-          _showdata = false;
-        });
-
-        setState(() {
-          Provider.of<UserProvider>(listen: false, context)
-              .setUserDashboard(value);
-
-          Provider.of<AgentBallanceProvider>(context, listen: false)
-              .setAgentBallenceInDollar(
-                  Provider.of<UserProvider>(context, listen: false)
-                      .userDashboard
-                      .ballance!
-                      .accountBallanceIndollar);
-          Provider.of<AgentBallanceProvider>(context, listen: false)
-              .setAgentBallenceInToman(
-                  Provider.of<UserProvider>(context, listen: false)
-                      .userDashboard
-                      .ballance!
-                      .ballance
-                      .toInt());
-
-          Provider.of<UserProvider>(context, listen: false).setChanged(false);
-        });
-      }
-    }).whenComplete(() {
-      setState(() {
-        _showdata = true;
-      });
-    }).onError((error, stackTrace) {
-      setState(() {
-        _showdata = true;
-      });
-      debugPrint(error.toString());
-    });
-
-    await getUserSelledProductsByPagination().then((value) {
-      if (value.isNotEmpty) {
-        setState(() {
-          _showBougthProductData = false;
-
-          _lastPageBougthProduct = lastPageBougthProduct;
-        });
-      }
-    }).whenComplete(() {
-      setState(() {
-        _showBougthProductData = true;
-      });
-    }).onError((error, stackTrace) {
-      setState(() {
-        _showBougthProductData = true;
-      });
-      debugPrint(error.toString());
-    });
+  Widget _walletSection() {
+    return KeyedSubtree(
+      key: _walletSectionKey,
+      child: const AgentBallanceInfoItemCardWidget(),
+    );
   }
 
-  _userProductsInfoTabCard(BuildContext context) {
-    List<Widget> botUserWidgetLIst = [];
-    // todo
-    // create a specefic widget
-    for (var i in Provider.of<UserProvider>(context, listen: false)
-        .userDashboard
-        .prdoducts!) {
-      botUserWidgetLIst.add(UserProductCategoryInfoItemWidget(item: i));
-    }
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "خرید اشتراک",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          Row(
-            children: [
-              Text(
-                "موقعیت",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const Spacer(),
-              // create a drop down menu wich can be changed and show the data on the screen
-              // DropdownButton(
-              //   value: _selectedValue,
-              //   items: _dropdownItems,
-              //   onChanged: (value) {
-              //     setState(() {
-              //       _selectedValue = value!;
-              //     });
-              //   },
-              // ),
-            ],
-          ),
-          SizedBox(
+  Widget _userProductsSection(BuildContext context) {
+    final products = Provider.of<UserProvider>(context, listen: false)
+            .userDashboard
+            .prdoducts ??
+        [];
+    final productWidgets = products
+        .map((item) => UserProductCategoryInfoItemWidget(item: item))
+        .toList();
+
+    return DashboardSectionCard(
+      sectionKey: _productsSectionKey,
+      title: 'خرید اشتراک',
+      icon: Icons.shopping_bag_outlined,
+      child: productWidgets.isEmpty
+          ? const Text('بسته‌ای برای خرید موجود نیست', style: TextStyle(color: Colors.white54))
+          : SizedBox(
               width: double.infinity,
               child: Responsive(
                 mobile: widgetsGridview(
-                    childAspectRatio: 2.9,
-                    context: context,
-                    importedList: botUserWidgetLIst),
+                  childAspectRatio: 2.9,
+                  context: context,
+                  importedList: productWidgets,
+                ),
                 tablet: widgetsGridview(
-                    context: context,
-                    childAspectRatio: 4.5,
-                    importedList: botUserWidgetLIst),
+                  context: context,
+                  childAspectRatio: 4.5,
+                  importedList: productWidgets,
+                ),
                 desktop: widgetsGridview(
-                    importedList: botUserWidgetLIst,
-                    context: context,
-                    childAspectRatio: 4,
-                    crossAxisCount: 2),
-              )),
+                  importedList: productWidgets,
+                  context: context,
+                  childAspectRatio: 4,
+                  crossAxisCount: 2,
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _userBoughtProductsSection(BuildContext context) {
+    return KeyedSubtree(
+      key: _historySectionKey,
+      child: Column(
+        children: [
+          _showBougthProductData
+              ? AgentBougthProductsListInfoCardWidget(
+                  title: 'خریدهای شما',
+                  products: boughtProducts,
+                  lggedUSerRole: 'user',
+                )
+              : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          if (_lastPageBougthProduct > 1) ...[
+            SizedBox(height: AppStyle.defaultPadding),
+            Pagination(
+              numOfPages: _lastPageBougthProduct,
+              selectedPage: selectedPageBougthProduct,
+              pagesVisible: 4,
+              onPageChanged: (page) async {
+                setState(() {
+                  selectedPageBougthProduct = page;
+                  _showBougthProductData = false;
+                });
+                await getUserSelledProductsByPagination(page: page);
+                if (!mounted) return;
+                setState(() {
+                  _lastPageBougthProduct = lastPageBougthProduct;
+                  _showBougthProductData = true;
+                });
+              },
+              nextIcon: const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 14),
+              previousIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 14),
+              activeTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+              activeBtnStyle: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(Colors.blue),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                ),
+              ),
+              inactiveBtnStyle: ButtonStyle(
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                ),
+              ),
+              inactiveTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  _userBoughtProductsInfoTabCard(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-            flex: 5,
-            child: Column(children: [
-              _showBougthProductData
-                  ? AgentBougthProductsListInfoCardWidget(
-                      title: "خریدهای شما",
-                      products: boughtProducts,
-                      lggedUSerRole: "user",
-                    )
-                  : const SizedBox(),
-              SizedBox(height: AppStyle.defaultPadding),
-              Pagination(
-                numOfPages: _lastPageBougthProduct,
-                selectedPage: selectedPageBougthProduct,
-                pagesVisible: 4,
-                onPageChanged: (page) async {
-                  setState(() {
-                    selectedPageBougthProduct = page;
-                    _showBougthProductData = false;
-                  });
-                  await getAgentSelledProductsByPagination(page: page);
-                  setState(() {
-                    _lastPageBougthProduct = lastPageBougthProduct;
+  Future<void> _bindUSerDashboardScreenData({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _showdata = false;
+        _loadError = false;
+      });
+    } else {
+      setState(() => _isRefreshing = true);
+    }
 
-                    _showBougthProductData = true;
-                  });
-                },
-                nextIcon: const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.blue,
-                  size: 14,
-                ),
-                previousIcon: const Icon(
-                  Icons.arrow_back_ios,
-                  color: Colors.blue,
-                  size: 14,
-                ),
-                activeTextStyle: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-                activeBtnStyle: ButtonStyle(
-                  backgroundColor: WidgetStateProperty.all(Colors.blue),
-                  shape: WidgetStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(38),
-                    ),
-                  ),
-                ),
-                inactiveBtnStyle: ButtonStyle(
-                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(38),
-                  )),
-                ),
-                inactiveTextStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              )
-            ])),
-      ],
-    );
+    try {
+      final value = await getUserDashboardAnalytics();
+      if (!mounted) return;
+
+      if (value != null) {
+        Provider.of<UserProvider>(context, listen: false).setUserDashboard(value);
+        Provider.of<AgentBallanceProvider>(context, listen: false)
+            .setAgentBallenceInDollar(value.ballance!.accountBallanceIndollar);
+        Provider.of<AgentBallanceProvider>(context, listen: false)
+            .setAgentBallenceInToman(value.ballance!.ballance.toInt());
+        Provider.of<UserProvider>(context, listen: false).setChanged(false);
+      } else if (!silent) {
+        setState(() => _loadError = true);
+      }
+
+      final paginationResult = await getUserSelledProductsByPagination();
+      if (!mounted) return;
+      if (paginationResult.isNotEmpty) {
+        setState(() => _lastPageBougthProduct = lastPageBougthProduct);
+      }
+
+      setState(() {
+        _showBougthProductData = true;
+        _showdata = true;
+        _isRefreshing = false;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+      if (!silent && mounted) {
+        setState(() {
+          _loadError = true;
+          _showdata = true;
+          _isRefreshing = false;
+        });
+      } else if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
   }
 }
