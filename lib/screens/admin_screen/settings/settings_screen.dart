@@ -251,6 +251,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       )),
       DetailsInfoItemWidget(
           item: DetailsInfoItem(
+        itemName: "نام مستعار در کانفیگ",
+        itemValue: _setting.useAdminAliasInConfigName ? "فعال" : "غیرفعال",
+        icon: const Icon(Icons.person_outline, color: Colors.indigo),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
         itemName: "نمونه نام کانفیگ",
         itemValue: _setting.configNamePreview(),
         icon: const Icon(Icons.preview_outlined, color: Colors.amber),

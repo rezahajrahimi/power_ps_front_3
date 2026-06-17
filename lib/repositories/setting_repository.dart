@@ -91,6 +91,7 @@ Future<bool> updateBotSetting({required Setting setting}) async {
           "panel_address": setting.panelAddress,
           "config_name_prefix": setting.configNamePrefix,
           "config_name_format": setting.configNameFormat,
+          "use_admin_alias_in_config_name": setting.useAdminAliasInConfigName,
         },
         options: Options(headers: {
           'Accept': 'application/json',

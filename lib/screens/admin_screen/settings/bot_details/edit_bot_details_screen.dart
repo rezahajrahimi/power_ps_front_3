@@ -23,6 +23,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
   final _panelAddressTxtEdit = TextEditingController();
   final _configNamePrefixTxtEdit = TextEditingController();
   final _configNameFormatTxtEdit = TextEditingController();
+  bool _useAdminAliasInConfigName = true;
 
   @override
   void initState() {
@@ -94,6 +95,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           _panelAddressTxtEdit.text = _setting.panelAddress;
           _configNamePrefixTxtEdit.text = _setting.configNamePrefix;
           _configNameFormatTxtEdit.text = _setting.configNameFormat;
+          _useAdminAliasInConfigName = _setting.useAdminAliasInConfigName;
           _showData = true;
         });
       } else {
@@ -105,7 +107,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
               id: "تعریف نشده",
               panelAddress: "تعریف نشده",
               configNamePrefix: "bot",
-              configNameFormat: "{prefix}{account_label}");
+              configNameFormat: "{prefix}{account_label}",
+              useAdminAliasInConfigName: true);
           _showData = true;
         });
       }
@@ -250,6 +253,25 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
             icon: Icons.text_fields_outlined,
           ),
           SizedBox(height: AppStyle.defaultPadding),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'استفاده از نام مستعار در نام کانفیگ',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text(
+              'اگر کاربر نام مستعار داشته باشد، به‌جای آیدی تلگرام در ساخت اکانت استفاده شود',
+              style: TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            value: _useAdminAliasInConfigName,
+            activeThumbColor: AppStyle.primaryColor,
+            onChanged: (value) {
+              setState(() {
+                _useAdminAliasInConfigName = value;
+              });
+            },
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
           _configNamePreviewCard(),
         ],
       ),
@@ -265,7 +287,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
       panelAddress: '',
       configNamePrefix: _configNamePrefixTxtEdit.text,
       configNameFormat: _configNameFormatTxtEdit.text,
-    ).configNamePreview();
+      useAdminAliasInConfigName: _useAdminAliasInConfigName,
+    ).configNamePreview(useAdminAlias: _useAdminAliasInConfigName);
 
     return Container(
       width: double.infinity,
@@ -349,7 +372,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           botToken: _botTokenTxtEdit.text,
           panelAddress: _panelAddressTxtEdit.text,
           configNamePrefix: _configNamePrefixTxtEdit.text.trim(),
-          configNameFormat: _configNameFormatTxtEdit.text.trim());
+          configNameFormat: _configNameFormatTxtEdit.text.trim(),
+          useAdminAliasInConfigName: _useAdminAliasInConfigName);
 
       res = await updateBotSetting(setting: set);
 
