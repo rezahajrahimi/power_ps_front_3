@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
@@ -5,8 +8,9 @@ import 'package:provider/provider.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/provider/panel_controller.dart';
-import 'package:powerps/repositories/agent_product_repository.dart';
+import 'package:powerps/repositories/group_operation_repository.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -39,9 +43,15 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   bool _showData = false;
   bool _showPannelData = false;
   bool _loadingUsers = false;
+  bool _loadFailed = false;
+  bool _noSupportedPanels = false;
+  String? _loadErrorMessage;
   final List<String> _pannelNameList = [];
   String _selectedPannelName = "";
   List<HiddifyConfig> _usersList = [];
+  Map<String, dynamic>? _trackingJob;
+  List<dynamic> _recentJobs = [];
+  Timer? _pollTimer;
 
   BoxDecoration get _cardDecoration => BoxDecoration(
         color: AppStyle.secondaryColor,
@@ -57,6 +67,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _usersList.clear();
     _pannelNameList.clear();
     _selectedPannelName = "";
@@ -67,6 +78,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   void initState() {
     super.initState();
     _fillData();
+    _loadRecentJobs();
   }
 
   @override
@@ -79,13 +91,38 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppStyle.bgColor,
-        appBar: appBarWithBackButton(context: context, title: "عملیات گروهی"),
+        appBar: appBarWithBackButton(
+          context: context,
+          title: "عملیات گروهی",
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'بروزرسانی وضعیت',
+              onPressed: () {
+                _loadRecentJobs();
+                if (_trackingJob != null) {
+                  final id = int.tryParse(_trackingJob!['id']?.toString() ?? '');
+                  if (id != null) _pollJobStatus(id);
+                }
+              },
+            ),
+          ],
+        ),
         body: SafeArea(
           child: !_showData
               ? const Center(child: CircularProgressIndicator())
-              : isMobile
-                  ? _buildMobileBody(context, selectedCount)
-                  : _buildDesktopBody(context, selectedCount),
+              : _loadFailed || _noSupportedPanels
+                  ? _buildLoadErrorState()
+                  : Column(
+                      children: [
+                        if (_trackingJob != null) _buildProgressBanner(),
+                        Expanded(
+                          child: isMobile
+                              ? _buildMobileBody(context, selectedCount)
+                              : _buildDesktopBody(context, selectedCount),
+                        ),
+                      ],
+                    ),
         ),
         bottomNavigationBar: isMobile && _showData
             ? _buildMobileBottomBar(context, selectedCount)
@@ -100,7 +137,15 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       children: [
         Padding(
           padding: Responsive.adminPagePadding(context),
-          child: _buildPanelSelector(context, compact: true),
+          child: Column(
+            children: [
+              _buildPanelSelector(context, compact: true),
+              if (_recentJobs.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _buildRecentJobsCard(compact: true),
+              ],
+            ],
+          ),
         ),
         if (_showPannelData) ...[
           Padding(
@@ -153,6 +198,10 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                 _buildSelectedConfigsCard(context, selectedCount),
                 const SizedBox(height: 12),
                 Expanded(child: _buildOperationsCard(context)),
+                if (_recentJobs.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildRecentJobsCard(compact: false),
+                ],
               ],
             ),
           ),
@@ -757,6 +806,51 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     ];
   }
 
+  Widget _buildLoadErrorState() {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
+        decoration: _cardDecoration,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _noSupportedPanels
+                  ? Icons.dns_outlined
+                  : Icons.cloud_off_outlined,
+              size: 48,
+              color: Colors.orangeAccent.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _loadErrorMessage ?? 'خطا در بارگذاری',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () {
+                setState(() {
+                  _showData = false;
+                  _loadFailed = false;
+                  _noSupportedPanels = false;
+                  _loadErrorMessage = null;
+                });
+                _fillData();
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('تلاش مجدد'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppStyle.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Container(
@@ -973,44 +1067,79 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   }
 
   void _fillData() async {
-    if (!context.mounted) return;
+    if (!mounted) return;
     try {
       final onValue = await getPannels();
       if (!mounted) return;
-      if (onValue.isEmpty) return;
 
-      final supportedPanels = onValue
+      if (onValue == null) {
+        setState(() {
+          _showData = true;
+          _loadFailed = true;
+          _noSupportedPanels = false;
+          _loadErrorMessage = 'خطا در دریافت لیست پنل‌ها از سرور.';
+        });
+        return;
+      }
+
+      if (onValue.isEmpty) {
+        setState(() {
+          _showData = true;
+          _loadFailed = false;
+          _noSupportedPanels = true;
+          _loadErrorMessage = 'هیچ پنلی ثبت نشده است.';
+        });
+        return;
+      }
+
+      final panels = List<Pannel>.from(onValue as Iterable);
+      final supportedPanels = panels
           .where((panel) => panelSupportsGroupOperations(panel.type))
           .toList();
 
       if (supportedPanels.isEmpty) {
-        showMsg(
-            msg: 'هیچ پنل قابل پشتیبانی برای عملیات گروهی یافت نشد.',
-            context: context,
-            type: 'error');
-        Navigator.of(context).pop();
+        setState(() {
+          _showData = true;
+          _loadFailed = false;
+          _noSupportedPanels = true;
+          _loadErrorMessage =
+              'پنل قابل پشتیبانی (Hiddify، Sanaei، Marzban یا PasarGuard) یافت نشد.';
+        });
         return;
       }
 
       setState(() {
         _pannelNameList
           ..clear()
-          ..addAll(supportedPanels.map((i) =>
-              '${i.id}: ${getPannelName(name: i.type)} - ${i.location}'));
-        _selectedPannelName =
-            '${supportedPanels[0].id}: ${getPannelName(name: supportedPanels[0].type)} - ${supportedPanels[0].location}';
+          ..addAll(supportedPanels.map(_panelDropdownLabel));
+        _selectedPannelName = _panelDropdownLabel(supportedPanels.first);
         _showData = true;
+        _loadFailed = false;
+        _noSupportedPanels = false;
+        _loadErrorMessage = null;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('_fillData error: $e');
       if (!mounted) return;
-      showMsg(msg: 'خطا', context: context, type: 'error');
-      Navigator.of(context).pop();
+      setState(() {
+        _showData = true;
+        _loadFailed = true;
+        _noSupportedPanels = false;
+        _loadErrorMessage = 'خطا در بارگذاری اطلاعات پنل.';
+      });
     }
   }
 
   int _selectedPanelId() {
     if (_selectedPannelName.isEmpty) return 0;
     return int.parse(_selectedPannelName.split(':')[0]);
+  }
+
+  String _panelDropdownLabel(Pannel panel) {
+    final location = panel.location?.trim();
+    final locationSuffix =
+        location != null && location.isNotEmpty ? ' - $location' : '';
+    return '${panel.id}: ${getPannelName(name: panel.type)}$locationSuffix';
   }
 
   bool _ensureConfigsSelected(BuildContext context) {
@@ -1307,6 +1436,304 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     _executeBatch(action: action, day: day, vol: vol);
   }
 
+  Future<void> _loadRecentJobs() async {
+    final jobs = await GroupOperationRepository.getRecentJobs();
+    if (!mounted) return;
+    setState(() => _recentJobs = jobs.take(5).toList());
+  }
+
+  void _startPolling(int jobId) {
+    _pollTimer?.cancel();
+    _pollJobStatus(jobId);
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _pollJobStatus(jobId);
+    });
+  }
+
+  Future<void> _pollJobStatus(int jobId) async {
+    final job = await GroupOperationRepository.getJob(jobId);
+    if (!mounted || job == null) return;
+
+    final status = job['status']?.toString() ?? '';
+    setState(() => _trackingJob = job);
+
+    if (status == 'completed' || status == 'failed') {
+      _pollTimer?.cancel();
+      _pollTimer = null;
+      await _loadRecentJobs();
+      if (!mounted) return;
+
+      final actionLabel = job['action_label']?.toString() ?? 'عملیات';
+      final processed = job['processed_configs'] ?? 0;
+      final total = job['total_configs'] ?? 0;
+      final failed = (job['failed_items'] as List?)?.length ?? 0;
+
+      if (status == 'completed' && failed == 0) {
+        showMsg(
+          msg: '$actionLabel روی $processed کانفیگ با موفقیت انجام شد.',
+          context: context,
+        );
+      } else if (status == 'completed' && failed > 0) {
+        showMsg(
+          msg: '$actionLabel: $processed از $total انجام شد، $failed مورد ناموفق.',
+          context: context,
+          type: 'error',
+        );
+      } else {
+        showMsg(
+          msg: job['error_message']?.toString() ?? 'عملیات با خطا متوقف شد.',
+          context: context,
+          type: 'error',
+        );
+      }
+
+      Future.delayed(const Duration(seconds: 8), () {
+        if (mounted) setState(() => _trackingJob = null);
+      });
+    }
+  }
+
+  Widget _buildProgressBanner() {
+    final job = _trackingJob!;
+    final status = job['status']?.toString() ?? 'pending';
+    final total = (job['total_configs'] as num?)?.toInt() ?? 0;
+    final processed = (job['processed_configs'] as num?)?.toInt() ?? 0;
+    final progress = total > 0 ? processed / total : 0.0;
+    final actionLabel = job['action_label']?.toString() ?? 'عملیات';
+
+    Color statusColor;
+    String statusText;
+    switch (status) {
+      case 'processing':
+        statusColor = Colors.blueAccent;
+        statusText = 'در حال اجرا';
+        break;
+      case 'completed':
+        statusColor = Colors.greenAccent;
+        statusText = 'انجام شد';
+        break;
+      case 'failed':
+        statusColor = Colors.redAccent;
+        statusText = 'خطا';
+        break;
+      default:
+        statusColor = Colors.orangeAccent;
+        statusText = 'در صف';
+    }
+
+    return Material(
+      elevation: 4,
+      color: AppStyle.secondaryColor,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: status == 'processing' || status == 'pending'
+                      ? CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: statusColor,
+                        )
+                      : Icon(
+                          status == 'completed'
+                              ? Icons.check_circle
+                              : Icons.error_outline,
+                          size: 18,
+                          color: statusColor,
+                        ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '$actionLabel — $statusText',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                Text(
+                  '$processed / $total',
+                  style: TextStyle(color: statusColor, fontSize: 13),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: status == 'pending' ? null : progress.clamp(0.0, 1.0),
+                minHeight: 6,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentJobsCard({required bool compact}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: _cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.history, size: 18, color: AppStyle.primaryColor),
+              const SizedBox(width: 8),
+              const Text(
+                'عملیات‌های اخیر',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ..._recentJobs.take(compact ? 3 : 5).map(_buildRecentJobTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentJobTile(dynamic job) {
+    final status = job['status']?.toString() ?? 'pending';
+    final total = (job['total_configs'] as num?)?.toInt() ?? 0;
+    final processed = (job['processed_configs'] as num?)?.toInt() ?? 0;
+    final actionLabel = job['action_label']?.toString() ?? '';
+
+    Color dotColor;
+    switch (status) {
+      case 'completed':
+        dotColor = Colors.greenAccent;
+        break;
+      case 'failed':
+        dotColor = Colors.redAccent;
+        break;
+      case 'processing':
+        dotColor = Colors.blueAccent;
+        break;
+      default:
+        dotColor = Colors.orangeAccent;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: InkWell(
+        onTap: () {
+          final id = int.tryParse(job['id']?.toString() ?? '');
+          if (id == null) return;
+          if (status == 'pending' || status == 'processing') {
+            setState(() => _trackingJob = Map<String, dynamic>.from(job));
+            _startPolling(id);
+          } else {
+            _showJobDetails(job);
+          }
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppStyle.bgColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.circle, size: 10, color: dotColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  actionLabel,
+                  style: const TextStyle(fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '$processed/$total',
+                style: const TextStyle(fontSize: 11, color: Colors.white54),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showJobDetails(Map<String, dynamic> job) {
+    final success = (job['success_items'] as List?) ?? [];
+    final failed = (job['failed_items'] as List?) ?? [];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppStyle.secondaryColor,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.85,
+        builder: (_, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              job['action_label']?.toString() ?? 'جزئیات عملیات',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'وضعیت: ${_statusLabel(job['status']?.toString())}',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            if (job['error_message'] != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                job['error_message'].toString(),
+                style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+              ),
+            ],
+            const Divider(color: Colors.white10),
+            Text('موفق (${success.length})',
+                style: TextStyle(color: Colors.greenAccent.shade100)),
+            ...success.map((e) => ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.check, color: Colors.greenAccent, size: 18),
+                  title: Text((e is Map ? e['name'] : e)?.toString() ?? ''),
+                )),
+            const SizedBox(height: 8),
+            Text('ناموفق (${failed.length})',
+                style: TextStyle(color: Colors.redAccent.shade100)),
+            ...failed.map((e) => ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.close, color: Colors.redAccent, size: 18),
+                  title: Text((e is Map ? e['name'] : e)?.toString() ?? ''),
+                  subtitle: e is Map && e['error'] != null
+                      ? Text(e['error'].toString(),
+                          style: const TextStyle(fontSize: 11))
+                      : null,
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _statusLabel(String? status) {
+    return switch (status) {
+      'completed' => 'انجام شد',
+      'failed' => 'خطا',
+      'processing' => 'در حال اجرا',
+      _ => 'در صف',
+    };
+  }
+
   Future<void> _executeBatch({
     required String action,
     int day = 0,
@@ -1323,23 +1750,37 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
 
     EasyLoading.show(status: 'در حال ارسال درخواست...');
     try {
-      final value = await batchExistSubscriptionJobDayOpr(
+      final configs =
+          Provider.of<PannelChangeController>(context, listen: false)
+              .obtinedConfigList;
+      final result = await GroupOperationRepository.submitBatchJob(
         action: action,
         day: day,
         vol: vol,
         panelId: pannelID,
-        hiddifyConfig:
-            Provider.of<PannelChangeController>(context, listen: false)
-                .obtinedConfigList,
+        configsJson: json.encode(configs.map((c) => c.toMap()).toList()),
       );
       EasyLoading.dismiss();
       if (!mounted) return;
-      if (value == true) {
-        showMsg(
-            msg: 'درخواست ثبت شد و در صف اجرا قرار گرفت.',
-            context: context);
+
+      if (result != null && result['status'] == 'success') {
+        final jobId = int.tryParse(result['job_id']?.toString() ?? '');
+        if (jobId != null) {
+          _startPolling(jobId);
+          showMsg(
+            msg: 'درخواست ثبت شد. پیشرفت عملیات در بالای صفحه نمایش داده می‌شود.',
+            context: context,
+          );
+        } else {
+          showMsg(msg: 'درخواست در صف اجرا قرار گرفت.', context: context);
+        }
+        await _loadRecentJobs();
       } else {
-        showMsg(msg: 'خطا در ثبت درخواست', context: context, type: 'error');
+        showMsg(
+          msg: result?['message']?.toString() ?? 'خطا در ثبت درخواست',
+          context: context,
+          type: 'error',
+        );
       }
     } catch (e) {
       EasyLoading.dismiss();
