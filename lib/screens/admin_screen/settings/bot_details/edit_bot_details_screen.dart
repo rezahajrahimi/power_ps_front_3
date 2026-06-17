@@ -22,11 +22,33 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
   final _adminIdTxtEdit = TextEditingController();
   final _panelAddressTxtEdit = TextEditingController();
   final _configNamePrefixTxtEdit = TextEditingController();
+  final _configNameFormatTxtEdit = TextEditingController();
 
   @override
   void initState() {
+    _configNamePrefixTxtEdit.addListener(_refreshPreview);
+    _configNameFormatTxtEdit.addListener(_refreshPreview);
     _fillData();
     super.initState();
+  }
+
+  void _refreshPreview() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _configNamePrefixTxtEdit.removeListener(_refreshPreview);
+    _configNameFormatTxtEdit.removeListener(_refreshPreview);
+    _botNameTxtEdit.dispose();
+    _botTokenTxtEdit.dispose();
+    _adminIdTxtEdit.dispose();
+    _panelAddressTxtEdit.dispose();
+    _configNamePrefixTxtEdit.dispose();
+    _configNameFormatTxtEdit.dispose();
+    super.dispose();
   }
 
   @override
@@ -71,6 +93,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           _botTokenTxtEdit.text = _setting.botToken;
           _panelAddressTxtEdit.text = _setting.panelAddress;
           _configNamePrefixTxtEdit.text = _setting.configNamePrefix;
+          _configNameFormatTxtEdit.text = _setting.configNameFormat;
           _showData = true;
         });
       } else {
@@ -81,7 +104,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
               botToken: "تعریف نشده",
               id: "تعریف نشده",
               panelAddress: "تعریف نشده",
-              configNamePrefix: "bot");
+              configNamePrefix: "bot",
+              configNameFormat: "{prefix}{account_label}");
           _showData = true;
         });
       }
@@ -131,7 +155,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
             _botTokenTxtEdit.text.isNotEmpty &&
             _adminIdTxtEdit.text.isNotEmpty &&
             _panelAddressTxtEdit.text.isNotEmpty &&
-            _configNamePrefixTxtEdit.text.isNotEmpty) {
+            _configNamePrefixTxtEdit.text.isNotEmpty &&
+            _configNameFormatTxtEdit.text.isNotEmpty) {
           _submitData(context);
         }
       },
@@ -212,9 +237,69 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
             controller: _configNamePrefixTxtEdit,
             label: "پیشوند نام کانفیگ",
             hint: "bot",
-            helper:
-                "پیشوند نام کاربر در پنل VPN (مثال: bot123456789-42). فقط حروف و عدد انگلیسی",
+            helper: "مقدار {prefix} در قالب نام. فقط حروف و عدد انگلیسی",
             icon: Icons.badge_outlined,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          _buildInputField(
+            controller: _configNameFormatTxtEdit,
+            label: "قالب نام کانفیگ",
+            hint: "{prefix}{account_label}",
+            helper:
+                "متغیرها: {prefix} {account_id} {account_label} {chat_id} {product_id} {random}",
+            icon: Icons.text_fields_outlined,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          _configNamePreviewCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _configNamePreviewCard() {
+    final preview = Setting(
+      id: '',
+      botName: '',
+      adminId: '',
+      botToken: '',
+      panelAddress: '',
+      configNamePrefix: _configNamePrefixTxtEdit.text,
+      configNameFormat: _configNameFormatTxtEdit.text,
+    ).configNamePreview();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'پیش‌نمایش نام کانفیگ',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            preview,
+            textDirection: TextDirection.ltr,
+            style: const TextStyle(
+              color: Colors.white,
+              fontFamily: 'monospace',
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'سانائی: اگر {random} در قالب نباشد، -abcd به انتها اضافه می‌شود',
+            style: TextStyle(color: Colors.white38, fontSize: 10),
           ),
         ],
       ),
@@ -263,7 +348,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           adminId: _adminIdTxtEdit.text,
           botToken: _botTokenTxtEdit.text,
           panelAddress: _panelAddressTxtEdit.text,
-          configNamePrefix: _configNamePrefixTxtEdit.text.trim());
+          configNamePrefix: _configNamePrefixTxtEdit.text.trim(),
+          configNameFormat: _configNameFormatTxtEdit.text.trim());
 
       res = await updateBotSetting(setting: set);
 

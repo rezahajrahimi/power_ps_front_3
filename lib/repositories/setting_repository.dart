@@ -90,6 +90,7 @@ Future<bool> updateBotSetting({required Setting setting}) async {
           "bot_token": setting.botToken,
           "panel_address": setting.panelAddress,
           "config_name_prefix": setting.configNamePrefix,
+          "config_name_format": setting.configNameFormat,
         },
         options: Options(headers: {
           'Accept': 'application/json',
