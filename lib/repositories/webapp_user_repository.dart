@@ -114,3 +114,28 @@ Future<Map<String, dynamic>> claimWebAppTestAccount() async {
     return {'success': false, 'message': 'خطا در برقراری ارتباط با سرور'};
   }
 }
+
+Future<Map<String, dynamic>> validateWebAppPromoCode({
+  required String code,
+  required int categoryId,
+}) async {
+  try {
+    final response = await GenaralApi.dio.post(
+      '/api/webapp/validate-promo-code',
+      data: {
+        'code': code,
+        'category_id': categoryId,
+      },
+    );
+    if (response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+    return {'valid': false, 'message': 'پاسخ نامعتبر از سرور'};
+  } on DioException catch (e) {
+    final data = e.response?.data;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    return {'valid': false, 'message': 'خطا در برقراری ارتباط با سرور'};
+  }
+}

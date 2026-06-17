@@ -9,13 +9,12 @@ import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/agent/agent_ballance_widget_info_card_widget.dart';
-import 'package:powerps/widgets/agent/agent_bougth_products_list_info_card_widget.dart';
 import 'package:powerps/widgets/agent/agent_limits_info_card_widget.dart';
-import 'package:powerps/widgets/agent/agent_product_category_item_widget.dart';
 import 'package:powerps/widgets/dashboard/dashboard_action_handler.dart';
+import 'package:powerps/widgets/dashboard/dashboard_product_catalog_section.dart';
+import 'package:powerps/widgets/dashboard/dashboard_purchase_history_section.dart';
 import 'package:powerps/widgets/dashboard/dashboard_section_card.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:provider/provider.dart';
 
 class AgentDashboardScreen extends StatefulWidget {
@@ -145,7 +144,12 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               flex: 5,
               child: Column(
                 children: [
-                  _agentProductsSection(context),
+                  DashboardProductCatalogSection(
+                    sectionKey: _productsSectionKey,
+                    products: _agentProductCategories(context),
+                    userRole: 'agent',
+                    onPurchased: () => _bindAgentDashboardScreenData(silent: true),
+                  ),
                   SizedBox(height: AppStyle.defaultPadding),
                   _agentBoughtProductsSection(context),
                   if (Responsive.isMobile(context)) ...[
@@ -192,108 +196,79 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     );
   }
 
-  Widget _agentProductsSection(BuildContext context) {
+  List<ProductCategory> _agentProductCategories(BuildContext context) {
     final products =
         Provider.of<AgentProvider>(context, listen: false).agentDashboard.agentProducts ?? [];
 
-    final productWidgets = products.map((i) {
-      return AgentProductCategoryItemWidget(
-        item: ProductCategory(
-          isActive: i.productCategories!.isActive,
-          volume: i.productCategories!.volume,
-          rechargable: i.productCategories!.rechargable,
-          showPannelLink: i.productCategories!.showPannelLink,
-          showSubscriptionLink: i.productCategories!.showSubscriptionLink,
-          sendConfigToUser: i.productCategories!.sendConfigToUser,
-          pannelId: i.productCategories!.pannelId,
-          id: i.productCategories!.id,
-          categoryName: i.productCategories!.categoryName,
-          expireDay: i.productCategories!.expireDay,
-          price: i.price,
-          priceInDollar: i.priceInDollar,
-        ),
+    return products.map((i) {
+      final cat = i.productCategories!;
+      return ProductCategory(
+        isActive: cat.isActive,
+        volume: cat.volume,
+        rechargable: cat.rechargable,
+        showPannelLink: cat.showPannelLink,
+        showSubscriptionLink: cat.showSubscriptionLink,
+        sendConfigToUser: cat.sendConfigToUser,
+        pannelId: cat.pannelId,
+        id: cat.id,
+        categoryName: cat.categoryName,
+        expireDay: cat.expireDay,
+        price: i.price,
+        priceInDollar: i.priceInDollar,
+        pannel: cat.pannel,
       );
     }).toList();
-
-    return DashboardSectionCard(
-      sectionKey: _productsSectionKey,
-      title: 'بسته‌های کانفیگ (${products.length})',
-      icon: Icons.inventory_2_outlined,
-      child: productWidgets.isEmpty
-          ? const Text('بسته‌ای برای فروش تعریف نشده', style: TextStyle(color: Colors.white54))
-          : SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: productWidgets,
-                ),
-                tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  importedList: productWidgets,
-                ),
-                desktop: widgetsGridview(
-                  importedList: productWidgets,
-                  context: context,
-                  childAspectRatio: 4,
-                  crossAxisCount: 2,
-                ),
-              ),
-            ),
-    );
   }
 
   Widget _agentBoughtProductsSection(BuildContext context) {
-    return KeyedSubtree(
-      key: _historySectionKey,
-      child: Column(
-        children: [
-          _showBougthProductData
-              ? AgentBougthProductsListInfoCardWidget(
-                  title: 'خریدهای شما',
-                  products: boughtProducts,
-                  lggedUSerRole: 'agent',
-                )
-              : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          if (_lastPageBougthProduct > 1) ...[
-            SizedBox(height: AppStyle.defaultPadding),
-            Pagination(
-              numOfPages: _lastPageBougthProduct,
-              selectedPage: selectedPageBougthProduct,
-              pagesVisible: 4,
-              onPageChanged: (page) async {
-                setState(() {
-                  selectedPageBougthProduct = page;
-                  _showBougthProductData = false;
-                });
-                await getAgentSelledProductsByPagination(page: page);
-                if (!mounted) return;
-                setState(() {
-                  _lastPageBougthProduct = lastPageBougthProduct;
-                  _showBougthProductData = true;
-                });
-              },
-              nextIcon: const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 14),
-              previousIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 14),
-              activeTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
-              activeBtnStyle: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all(Colors.blue),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+    if (!_showBougthProductData) {
+      return KeyedSubtree(
+        key: _historySectionKey,
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    return DashboardPurchaseHistorySection(
+      sectionKey: _historySectionKey,
+      products: boughtProducts,
+      userRole: 'agent',
+      childAfterList: _lastPageBougthProduct > 1
+          ? Padding(
+              padding: EdgeInsets.only(top: AppStyle.defaultPadding),
+              child: Pagination(
+                numOfPages: _lastPageBougthProduct,
+                selectedPage: selectedPageBougthProduct,
+                pagesVisible: 4,
+                onPageChanged: (page) async {
+                  setState(() {
+                    selectedPageBougthProduct = page;
+                    _showBougthProductData = false;
+                  });
+                  await getAgentSelledProductsByPagination(page: page);
+                  if (!mounted) return;
+                  setState(() {
+                    _lastPageBougthProduct = lastPageBougthProduct;
+                    _showBougthProductData = true;
+                  });
+                },
+                nextIcon: const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 14),
+                previousIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 14),
+                activeTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                activeBtnStyle: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(Colors.blue),
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                  ),
                 ),
-              ),
-              inactiveBtnStyle: ButtonStyle(
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                inactiveBtnStyle: ButtonStyle(
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                  ),
                 ),
+                inactiveTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
-              inactiveTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ],
-      ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 

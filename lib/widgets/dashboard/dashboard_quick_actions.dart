@@ -72,6 +72,7 @@ class DashboardQuickActions extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final isDesktop = Responsive.isDesktop(context);
     final tiles = menuItems
         .map(
           (item) => _QuickActionTile(
@@ -79,10 +80,27 @@ class DashboardQuickActions extends StatelessWidget {
             subtitle: item.subtitle,
             icon: iconForKey(item.key),
             color: colorForKey(item.key),
+            compact: isDesktop,
             onTap: () => onAction(item.key),
           ),
         )
         .toList();
+
+    if (isDesktop) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: tiles
+            .map(
+              (tile) => SizedBox(
+                width: 190,
+                height: 64,
+                child: tile,
+              ),
+            )
+            .toList(),
+      );
+    }
 
     return Responsive(
       mobile: widgetsGridview(
@@ -100,8 +118,8 @@ class DashboardQuickActions extends StatelessWidget {
       desktop: widgetsGridview(
         context: context,
         importedList: tiles,
-        childAspectRatio: 1.55,
-        crossAxisCount: 3,
+        childAspectRatio: 2.8,
+        crossAxisCount: 5,
       ),
     );
   }
@@ -114,6 +132,7 @@ class _QuickActionTile extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.compact = false,
   });
 
   final String title;
@@ -121,53 +140,97 @@ class _QuickActionTile extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = compact ? 16.0 : 20.0;
+    final iconPadding = compact ? 6.0 : 8.0;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 12 : 16),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(compact ? 10 : 14),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(compact ? 12 : 16),
             border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+          child: compact
+              ? Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(iconPadding),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, color: color, size: iconSize),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.white60, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(iconPadding),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icon, color: color, size: iconSize),
+                    ),
+                    const Spacer(),
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.white60,
+                            height: 1.3,
+                          ),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: color, size: 22),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60,
-                      height: 1.3,
-                    ),
-              ),
-            ],
-          ),
         ),
       ),
     );

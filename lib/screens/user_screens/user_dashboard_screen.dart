@@ -8,12 +8,11 @@ import 'package:powerps/provider/user_provider.dart';
 import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/agent/agent_ballance_widget_info_card_widget.dart';
-import 'package:powerps/widgets/agent/agent_bougth_products_list_info_card_widget.dart';
 import 'package:powerps/widgets/dashboard/dashboard_action_handler.dart';
+import 'package:powerps/widgets/dashboard/dashboard_product_catalog_section.dart';
+import 'package:powerps/widgets/dashboard/dashboard_purchase_history_section.dart';
 import 'package:powerps/widgets/dashboard/dashboard_section_card.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
-import 'package:powerps/widgets/users/user_product_category_info_item_widget.dart';
 import 'package:provider/provider.dart';
 
 class USerDasboardScreen extends StatefulWidget {
@@ -135,7 +134,15 @@ class _USerDasboardScreenState extends State<USerDasboardScreen> {
               flex: 5,
               child: Column(
                 children: [
-                  _userProductsSection(context),
+                  DashboardProductCatalogSection(
+                    sectionKey: _productsSectionKey,
+                    products: Provider.of<UserProvider>(context, listen: false)
+                            .userDashboard
+                            .prdoducts ??
+                        [],
+                    userRole: 'user',
+                    onPurchased: () => _bindUSerDashboardScreenData(silent: true),
+                  ),
                   SizedBox(height: AppStyle.defaultPadding),
                   _userBoughtProductsSection(context),
                   if (Responsive.isMobile(context)) ...[
@@ -171,94 +178,55 @@ class _USerDasboardScreenState extends State<USerDasboardScreen> {
     );
   }
 
-  Widget _userProductsSection(BuildContext context) {
-    final products = Provider.of<UserProvider>(context, listen: false)
-            .userDashboard
-            .prdoducts ??
-        [];
-    final productWidgets = products
-        .map((item) => UserProductCategoryInfoItemWidget(item: item))
-        .toList();
-
-    return DashboardSectionCard(
-      sectionKey: _productsSectionKey,
-      title: 'خرید اشتراک',
-      icon: Icons.shopping_bag_outlined,
-      child: productWidgets.isEmpty
-          ? const Text('بسته‌ای برای خرید موجود نیست', style: TextStyle(color: Colors.white54))
-          : SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: productWidgets,
-                ),
-                tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  importedList: productWidgets,
-                ),
-                desktop: widgetsGridview(
-                  importedList: productWidgets,
-                  context: context,
-                  childAspectRatio: 4,
-                  crossAxisCount: 2,
-                ),
-              ),
-            ),
-    );
-  }
-
   Widget _userBoughtProductsSection(BuildContext context) {
-    return KeyedSubtree(
-      key: _historySectionKey,
-      child: Column(
-        children: [
-          _showBougthProductData
-              ? AgentBougthProductsListInfoCardWidget(
-                  title: 'خریدهای شما',
-                  products: boughtProducts,
-                  lggedUSerRole: 'user',
-                )
-              : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          if (_lastPageBougthProduct > 1) ...[
-            SizedBox(height: AppStyle.defaultPadding),
-            Pagination(
-              numOfPages: _lastPageBougthProduct,
-              selectedPage: selectedPageBougthProduct,
-              pagesVisible: 4,
-              onPageChanged: (page) async {
-                setState(() {
-                  selectedPageBougthProduct = page;
-                  _showBougthProductData = false;
-                });
-                await getUserSelledProductsByPagination(page: page);
-                if (!mounted) return;
-                setState(() {
-                  _lastPageBougthProduct = lastPageBougthProduct;
-                  _showBougthProductData = true;
-                });
-              },
-              nextIcon: const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 14),
-              previousIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 14),
-              activeTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
-              activeBtnStyle: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all(Colors.blue),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+    if (!_showBougthProductData) {
+      return KeyedSubtree(
+        key: _historySectionKey,
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    return DashboardPurchaseHistorySection(
+      sectionKey: _historySectionKey,
+      products: boughtProducts,
+      userRole: 'user',
+      childAfterList: _lastPageBougthProduct > 1
+          ? Padding(
+              padding: EdgeInsets.only(top: AppStyle.defaultPadding),
+              child: Pagination(
+                numOfPages: _lastPageBougthProduct,
+                selectedPage: selectedPageBougthProduct,
+                pagesVisible: 4,
+                onPageChanged: (page) async {
+                  setState(() {
+                    selectedPageBougthProduct = page;
+                    _showBougthProductData = false;
+                  });
+                  await getUserSelledProductsByPagination(page: page);
+                  if (!mounted) return;
+                  setState(() {
+                    _lastPageBougthProduct = lastPageBougthProduct;
+                    _showBougthProductData = true;
+                  });
+                },
+                nextIcon: const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 14),
+                previousIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 14),
+                activeTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                activeBtnStyle: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(Colors.blue),
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                  ),
                 ),
-              ),
-              inactiveBtnStyle: ButtonStyle(
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                inactiveBtnStyle: ButtonStyle(
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                  ),
                 ),
+                inactiveTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
-              inactiveTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ],
-      ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 

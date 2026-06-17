@@ -310,12 +310,20 @@ Future getAgentSelledProducts() async {
   }
 }
 
-Future buyProductByAgentWithPrID(
-    {required int productID, required String remark}) async {
+Future buyProductByAgentWithPrID({
+  required int productID,
+  required String remark,
+  String? promoCode,
+}) async {
   try {
     Response response =
         await GenaralApi.dio.put("/api/buyProductByAgentWithPrID",
-            data: {"id": productID, "remark": remark},
+            data: {
+              "id": productID,
+              "remark": remark,
+              if (promoCode != null && promoCode.isNotEmpty)
+                "promo_code": promoCode,
+            },
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -340,12 +348,20 @@ Future buyProductByAgentWithPrID(
   }
 }
 
-Future buyProductByUserWithPrID(
-    {required int productID, required String remark}) async {
+Future buyProductByUserWithPrID({
+  required int productID,
+  required String remark,
+  String? promoCode,
+}) async {
   try {
     Response response =
         await GenaralApi.dio.put("/api/buyProductByUserWithPrID",
-            data: {"id": productID, "remark": remark},
+            data: {
+              "id": productID,
+              "remark": remark,
+              if (promoCode != null && promoCode.isNotEmpty)
+                "promo_code": promoCode,
+            },
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
