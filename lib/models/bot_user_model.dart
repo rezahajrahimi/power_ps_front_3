@@ -43,9 +43,11 @@ class BotUser {
   // List<Log> itemsList = List<Log>.from(json['logs'].map<Log>((dynamic i) => Log.fromJson(i)));
 
   factory BotUser.fromJson(Map<dynamic, dynamic> json) {
+    final accountId = json['account_id'] ?? json['id'] ?? 0;
+
     return BotUser(
-      id: BigInt.from(json['id']),
-      accountId: BigInt.from(json['account_id'] ?? 0),
+      id: BigInt.from(json['id'] ?? accountId),
+      accountId: BigInt.from(accountId),
       username: json['username'] != null ? json['username'].toString() : "",
       firstName:
           json['first_name'] != null ? json['first_name'].toString() : "",
@@ -53,8 +55,8 @@ class BotUser {
       adminAlias: json['admin_alias']?.toString().trim().isEmpty == true
           ? null
           : json['admin_alias']?.toString(),
-      createdAt: json['created_at'].toString(),
-      updatedAt: json['updated_at'].toString(),
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
       ballance:
           json['ballance'] != null ? Ballance.fromJson(json['ballance']) : null,
       referralWallet:

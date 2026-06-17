@@ -40,18 +40,20 @@ class ProductDetails {
       id: BigInt.from(json['id']),
       productCategoriesId: BigInt.from(json['product_categories_id']),
       remark: json['remark'].toString(),
-      accountId: BigInt.from(json['account_id'] ?? 0),
+      accountId: json['account_id'] == null
+          ? null
+          : BigInt.from(json['account_id']),
       configs: json['configs'].toString(),
       subscriptionLink: json['subscription_link'].toString(),
       panelLink: json['panel_link'].toString(),
-      isActive: int.parse(json['isActive'].toString()) == 1 ||
-              json['isActive'].toString() == "true"
-          ? true
-          : false,
-      deactiveByAdmin: int.parse(json['deactive_by_admin'].toString()) == 1 ||
-              json['deactive_by_admin'].toString() == "true"
-          ? true
-          : false,
+      isActive: json['isActive'] == null
+          ? null
+          : int.parse(json['isActive'].toString()) == 1 ||
+              json['isActive'].toString() == 'true',
+      deactiveByAdmin: json['deactive_by_admin'] == null
+          ? false
+          : int.parse(json['deactive_by_admin'].toString()) == 1 ||
+              json['deactive_by_admin'].toString() == 'true',
       createdAt: json['created_at'].toString(),
       updatedAt: json['updated_at'].toString(),
       botUser: json['user'] != null ? BotUser.fromJson(json['user']) : null,
