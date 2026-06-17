@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/models/user_group_model.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
@@ -49,13 +51,22 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   bool _sendConfigToUser = true;
   final Set<int> _allowedGroupIds = {};
   int? _upsellCategoryId;
+  bool _isGoldLicense = false;
   // create a form key
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
+    _loadLicense();
     _fillData();
     super.initState();
+  }
+
+  Future<void> _loadLicense() async {
+    final license = await getLicenseType();
+    if (mounted) {
+      setState(() => _isGoldLicense = LicenseHelper.isGold(license));
+    }
   }
 
   @override
@@ -808,6 +819,29 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
 
   Widget _upsellCategoryWidget(
       BuildContext context, void Function(void Function()) setDialogState) {
+    if (!_isGoldLicense) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppStyle.bgColor.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Colors.amber.shade400, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'پیشنهاد ارتقا (Upsell) در لایسنس طلایی فعال می‌شود.',
+                style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final pannelId = _selectedPannelName.isNotEmpty
         ? int.tryParse(_selectedPannelName.split(':')[0])
         : null;

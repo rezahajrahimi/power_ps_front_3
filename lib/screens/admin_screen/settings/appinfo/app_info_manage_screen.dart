@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
+import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/app_info_model.dart';
 import 'package:powerps/provider/app_info_provider.dart';
@@ -52,7 +53,7 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _versionController = TextEditingController();
+    _versionController = TextEditingController(text: projectVersion);
     _panelTitleController = TextEditingController();
     _primaryColorController = TextEditingController(text: '#2697FF');
     _secondaryColorController = TextEditingController(text: '#2A2D3E');
@@ -84,7 +85,7 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
     try {
       final info = await fetchAppInfo();
       _nameController.text = info.name;
-      _versionController.text = info.version;
+      _versionController.text = resolveAppVersion(info.version);
       _panelTitleController.text = info.panelTitle ?? '';
       _primaryColorController.text = info.primaryColor ?? '#2697FF';
       _secondaryColorController.text = info.secondaryColor ?? '#2A2D3E';
@@ -95,7 +96,7 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
     } catch (e) {
       if (!mounted) return;
       _nameController.text = '';
-      _versionController.text = '';
+      _versionController.text = projectVersion;
       _imageUrl = null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('خطا در دریافت اطلاعات اپلیکیشن')),

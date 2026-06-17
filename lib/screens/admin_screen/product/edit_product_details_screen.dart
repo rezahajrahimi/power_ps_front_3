@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/models/user_group_model.dart';
@@ -50,11 +52,20 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   final Set<int> _allowedGroupIds = {};
   List<ProductCategory> _allCategories = [];
   int? _upsellCategoryId;
+  bool _isGoldLicense = false;
 
   @override
   void initState() {
+    _loadLicense();
     _fillData();
     super.initState();
+  }
+
+  Future<void> _loadLicense() async {
+    final license = await getLicenseType();
+    if (mounted) {
+      setState(() => _isGoldLicense = LicenseHelper.isGold(license));
+    }
   }
 
   @override
@@ -590,6 +601,30 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   }
 
   Widget _upsellCategoryWidget(BuildContext context) {
+    if (!_isGoldLicense) {
+      return Container(
+        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+        padding: EdgeInsets.all(AppStyle.defaultPadding),
+        decoration: BoxDecoration(
+          color: AppStyle.bgColor.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Colors.amber.shade400, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'پیشنهاد ارتقا (Upsell) در لایسنس طلایی فعال می‌شود.',
+                style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final currentPannelId = widget.selectedProductCategory.pannelId;
     final options = _allCategories
         .where((c) =>

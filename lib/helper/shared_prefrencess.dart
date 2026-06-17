@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:powerps/helper/constes.dart';
 import 'package:powerps/models/app_info_model.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -85,7 +86,7 @@ class AppInfoPreference {
 
   Future<String> getAppVersion() async {
     final info = await getAppInfo();
-    return info?.version ?? "";
+    return resolveAppVersion(info?.version);
   }
 }
 

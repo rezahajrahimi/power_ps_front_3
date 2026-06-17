@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/app_info_model.dart';
 import 'package:powerps/repositories/app_info_repository.dart';
@@ -19,6 +20,8 @@ class AppInfoProvider extends ChangeNotifier {
     return info.name.isNotEmpty ? info.name : 'PowerPS';
   }
 
+  String get displayVersion => resolveAppVersion(_appInfo?.version);
+
   AppInfoProvider() {
     _loadAppInfo();
   }
@@ -36,8 +39,20 @@ class AppInfoProvider extends ChangeNotifier {
 
     info ??= AppInfoModel(
       name: 'Power Proxy Seller',
-      version: '6.7.0',
+      version: projectVersion,
       image: '',
+    );
+
+    info = AppInfoModel(
+      name: info.name,
+      version: resolveAppVersion(info.version),
+      image: info.image,
+      panelTitle: info.panelTitle,
+      primaryColor: info.primaryColor,
+      secondaryColor: info.secondaryColor,
+      backgroundColor: info.backgroundColor,
+      footerText: info.footerText,
+      showPowerpsCredit: info.showPowerpsCredit,
     );
 
     _appInfo = info;

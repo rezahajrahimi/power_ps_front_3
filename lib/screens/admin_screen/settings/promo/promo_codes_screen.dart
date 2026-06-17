@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/models/user_group_model.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
@@ -23,12 +25,31 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
   List<ProductCategory> _categories = [];
   List<UserGroup> _userGroups = [];
   bool _loading = true;
+  String _licenseType = '';
+  bool _licenseChecked = false;
+
+  bool get _isGold => LicenseHelper.isGold(_licenseType);
+  bool get _isSilverOrAbove => LicenseHelper.isSilverOrAbove(_licenseType);
 
   @override
   void initState() {
     super.initState();
-    _load();
-    _loadFormData();
+    _initScreen();
+  }
+
+  Future<void> _initScreen() async {
+    final license = await getLicenseType();
+    if (!mounted) return;
+    setState(() {
+      _licenseType = license;
+      _licenseChecked = true;
+    });
+    if (_isSilverOrAbove) {
+      _load();
+      _loadFormData();
+    } else {
+      setState(() => _loading = false);
+    }
   }
 
   List<int> _parseIdList(dynamic raw) {
@@ -152,6 +173,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
 
   Widget _buildFormFields({
     required bool isWide,
+    required bool isGold,
     required TextEditingController codeCtrl,
     required TextEditingController valueCtrl,
     required TextEditingController maxUsesCtrl,
@@ -174,10 +196,11 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
       ),
       DropdownButtonFormField<String>(
         value: type,
-        items: const [
-          DropdownMenuItem(value: 'percent', child: Text('درصدی')),
-          DropdownMenuItem(value: 'fixed_toman', child: Text('مبلغ ثابت (تومان)')),
-          DropdownMenuItem(value: 'fixed_dollar', child: Text('مبلغ ثابت (دلار)')),
+        items: [
+          const DropdownMenuItem(value: 'percent', child: Text('درصدی')),
+          const DropdownMenuItem(value: 'fixed_toman', child: Text('مبلغ ثابت (تومان)')),
+          if (isGold)
+            const DropdownMenuItem(value: 'fixed_dollar', child: Text('مبلغ ثابت (دلار)')),
         ],
         onChanged: onTypeChanged,
         decoration: const InputDecoration(labelText: 'نوع'),
@@ -244,61 +267,69 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         basicSection,
-        const SizedBox(height: 8),
-        const Text('محدودیت بسته (خالی = همه)'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: _categories.where((c) => c.isActive).map((c) {
-            final selected = selectedCategories.contains(c.id);
-            return FilterChip(
-              label: Text(c.categoryName, style: const TextStyle(fontSize: 12)),
-              selected: selected,
-              onSelected: (v) => setDialogState(() {
-                if (v) {
-                  selectedCategories.add(c.id);
-                } else {
-                  selectedCategories.remove(c.id);
-                }
-              }),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 12),
-        const Text('محدودیت گروه کاربری (خالی = همه)'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            FilterChip(
-              label: const Text('بدون گروه', style: TextStyle(fontSize: 12)),
-              selected: selectedGroups.contains(0),
-              onSelected: (v) => setDialogState(() {
-                if (v) {
-                  selectedGroups.add(0);
-                } else {
-                  selectedGroups.remove(0);
-                }
-              }),
-            ),
-            ..._userGroups.where((g) => !g.isDefault).map((g) {
-              final selected = selectedGroups.contains(g.id);
+        if (isGold) ...[
+          const SizedBox(height: 8),
+          const Text('محدودیت بسته (خالی = همه)'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _categories.where((c) => c.isActive).map((c) {
+              final selected = selectedCategories.contains(c.id);
               return FilterChip(
-                label: Text(g.name, style: const TextStyle(fontSize: 12)),
+                label: Text(c.categoryName, style: const TextStyle(fontSize: 12)),
                 selected: selected,
                 onSelected: (v) => setDialogState(() {
                   if (v) {
-                    selectedGroups.add(g.id);
+                    selectedCategories.add(c.id);
                   } else {
-                    selectedGroups.remove(g.id);
+                    selectedCategories.remove(c.id);
                   }
                 }),
               );
-            }),
-          ],
-        ),
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          const Text('محدودیت گروه کاربری (خالی = همه)'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              FilterChip(
+                label: const Text('بدون گروه', style: TextStyle(fontSize: 12)),
+                selected: selectedGroups.contains(0),
+                onSelected: (v) => setDialogState(() {
+                  if (v) {
+                    selectedGroups.add(0);
+                  } else {
+                    selectedGroups.remove(0);
+                  }
+                }),
+              ),
+              ..._userGroups.where((g) => !g.isDefault).map((g) {
+                final selected = selectedGroups.contains(g.id);
+                return FilterChip(
+                  label: Text(g.name, style: const TextStyle(fontSize: 12)),
+                  selected: selected,
+                  onSelected: (v) => setDialogState(() {
+                    if (v) {
+                      selectedGroups.add(g.id);
+                    } else {
+                      selectedGroups.remove(g.id);
+                    }
+                  }),
+                );
+              }),
+            ],
+          ),
+        ] else ...[
+          const SizedBox(height: 8),
+          Text(
+            'محدودیت بسته/گروه و نوع دلاری در لایسنس طلایی فعال می‌شود.',
+            style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+          ),
+        ],
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('فعال'),
@@ -310,6 +341,16 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
   }
 
   Future<void> _showForm({Map<String, dynamic>? item}) async {
+    if (!_isSilverOrAbove) return;
+    if (item == null && !_isGold && _items.length >= LicenseHelper.silverPromoMax) {
+      showMsg(
+        msg: 'در لایسنس نقره‌ای حداکثر ${LicenseHelper.silverPromoMax} کد تخفیف مجاز است.',
+        context: context,
+        type: 'error',
+      );
+      return;
+    }
+
     final codeCtrl = TextEditingController(text: item?['code']?.toString() ?? '');
     final valueCtrl = TextEditingController(text: item?['value']?.toString() ?? '10');
     final maxUsesCtrl = TextEditingController(text: item?['max_uses']?.toString() ?? '');
@@ -336,6 +377,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
               child: SingleChildScrollView(
                 child: _buildFormFields(
                   isWide: isWide,
+                  isGold: _isGold,
                   codeCtrl: codeCtrl,
                   valueCtrl: valueCtrl,
                   maxUsesCtrl: maxUsesCtrl,
@@ -375,9 +417,15 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
       'value': double.tryParse(valueCtrl.text) ?? 0,
       'is_active': isActive,
       'max_uses_per_user': int.tryParse(maxPerUserCtrl.text) ?? 1,
-      'allowed_category_ids': selectedCategories.toList(),
-      'allowed_user_group_ids': selectedGroups.toList(),
     };
+    if (_isGold) {
+      if (selectedCategories.isNotEmpty) {
+        payload['allowed_category_ids'] = selectedCategories.toList();
+      }
+      if (selectedGroups.isNotEmpty) {
+        payload['allowed_user_group_ids'] = selectedGroups.toList();
+      }
+    }
     if (maxUsesCtrl.text.trim().isNotEmpty) {
       payload['max_uses'] = int.tryParse(maxUsesCtrl.text);
     }
@@ -460,17 +508,18 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
                   ),
                 ],
                 const Spacer(),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () => _showUsages(
-                      item['id'] as int,
-                      item['code']?.toString() ?? '',
+                if (_isGold)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => _showUsages(
+                        item['id'] as int,
+                        item['code']?.toString() ?? '',
+                      ),
+                      icon: const Icon(Icons.history, size: 18),
+                      label: const Text('تاریخچه'),
                     ),
-                    icon: const Icon(Icons.history, size: 18),
-                    label: const Text('تاریخچه'),
                   ),
-                ),
               ],
             ),
           ),
@@ -491,6 +540,11 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
           const Divider(height: 24),
           Text('کل کدها: ${_items.length}', style: TextStyle(color: AppStyle.deactiveStatus)),
           Text('فعال: $activeCount', style: TextStyle(color: AppStyle.deactiveStatus)),
+          if (!_isGold)
+            Text(
+              'حداکثر ${LicenseHelper.silverPromoMax} کد در نقره‌ای',
+              style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+            ),
           SizedBox(height: AppStyle.defaultPadding),
           ElevatedButton.icon(
             onPressed: () => _showForm(),
@@ -562,6 +616,51 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
     );
   }
 
+  Widget _silverBanner() {
+    if (_isGold) return const SizedBox.shrink();
+    return Container(
+      margin: EdgeInsets.fromLTRB(
+        AppStyle.defaultPadding,
+        AppStyle.defaultPadding,
+        AppStyle.defaultPadding,
+        0,
+      ),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        'نسخه نقره‌ای: حداکثر ${LicenseHelper.silverPromoMax} کد ساده. '
+        'برای محدودیت بسته/گروه، تاریخچه و نوع دلاری به طلایی ارتقا دهید.',
+        style: TextStyle(color: AppStyle.deactiveStatus, height: 1.5, fontSize: 13),
+      ),
+    );
+  }
+
+  Widget _lockedView() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppStyle.defaultPadding * 2),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline, size: 64, color: AppStyle.deactiveStatus),
+            const SizedBox(height: 16),
+            const Text('کدهای تخفیف', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(
+              'این بخش از لایسنس نقره‌ای به بالا فعال است.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppStyle.deactiveStatus),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _body(BuildContext context) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -569,19 +668,30 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
 
     if (Responsive.isMobile(context)) {
       return ListView(
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        children: [_listSection(context)],
+        padding: EdgeInsets.zero,
+        children: [
+          _silverBanner(),
+          Padding(
+            padding: EdgeInsets.all(AppStyle.defaultPadding),
+            child: _listSection(context),
+          ),
+        ],
       );
     }
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          Expanded(flex: 5, child: _listSection(context)),
-          SizedBox(width: AppStyle.defaultPadding),
-          Expanded(flex: 2, child: _operationCard(context)),
+          _silverBanner(),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: _listSection(context)),
+              SizedBox(width: AppStyle.defaultPadding),
+              Expanded(flex: 2, child: _operationCard(context)),
+            ],
+          ),
         ],
       ),
     );
@@ -594,13 +704,17 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           appBar: appBarWithBackButton(context: context, title: 'کدهای تخفیف'),
-          floatingActionButton: Responsive.isMobile(context)
+          floatingActionButton: Responsive.isMobile(context) && _isSilverOrAbove
               ? FloatingActionButton(
                   onPressed: () => _showForm(),
                   child: const Icon(Icons.add),
                 )
               : null,
-          body: _body(context),
+          body: !_licenseChecked
+              ? const Center(child: CircularProgressIndicator())
+              : !_isSilverOrAbove
+                  ? _lockedView()
+                  : _body(context),
         ),
       ),
     );

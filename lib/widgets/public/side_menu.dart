@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:powerps/helper/constes.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
@@ -56,9 +55,8 @@ class _SideMenuState extends State<SideMenu> {
         children: [
           Consumer<AppInfoProvider>(
             builder: (context, appInfoProvider, _) {
-              final info = appInfoProvider.appInfo;
               final title = appInfoProvider.displayTitle;
-              final version = info?.version ?? projectVersion;
+              final version = appInfoProvider.displayVersion;
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -235,9 +233,8 @@ class _SideMenuState extends State<SideMenu> {
         children: [
           Consumer<AppInfoProvider>(
             builder: (context, appInfoProvider, _) {
-              final info = appInfoProvider.appInfo;
               final title = appInfoProvider.displayTitle;
-              final version = info?.version ?? projectVersion;
+              final version = appInfoProvider.displayVersion;
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),

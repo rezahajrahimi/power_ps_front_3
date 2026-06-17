@@ -24,6 +24,8 @@ import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/suppor
 import 'package:powerps/screens/admin_screen/settings/test_accounts/test_account_management_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
 import 'package:powerps/repositories/general_repository.dart';
+import 'package:powerps/helper/license_helper.dart';
+import 'package:powerps/widgets/public/license_gate_dialog.dart';
 import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/appinfo/app_info_manage_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -53,7 +55,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
   }
 
-  bool get _isGoldLicense => _licenseType.toLowerCase() == 'gold';
+  bool get _isGoldLicense => LicenseHelper.isGold(_licenseType);
+  bool get _isSilverOrAbove => LicenseHelper.isSilverOrAbove(_licenseType);
+
+  void _navigateGated({
+    required bool allowed,
+    required String title,
+    required String message,
+    required String requiredTier,
+    required Widget screen,
+  }) {
+    if (allowed) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+      return;
+    }
+    showLicenseGateDialog(
+      context: context,
+      title: title,
+      message: message,
+      requiredTier: requiredTier,
+    );
+  }
 
   Future<void> _loadLicenseType() async {
     final type = await getLicenseType();
@@ -313,17 +335,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required VoidCallback onPressed,
     Color? color,
+    String? tierBadge,
+    bool locked = false,
   }) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, size: 18, color: color ?? Colors.white),
-      label: Text(
-        label,
-        style: TextStyle(color: color ?? Colors.white, fontSize: 12),
+      icon: Icon(
+        locked ? Icons.lock_outline : icon,
+        size: 18,
+        color: color ?? Colors.white,
+      ),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(color: color ?? Colors.white, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (tierBadge != null) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                tierBadge,
+                style: TextStyle(
+                  color: Colors.amber.shade300,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor:
-            (color ?? AppStyle.primaryColor).withValues(alpha: 0.1),
+            (color ?? AppStyle.primaryColor).withValues(alpha: locked ? 0.05 : 0.1),
         foregroundColor: color ?? Colors.white,
         side: BorderSide(
             color: (color ?? AppStyle.primaryColor).withValues(alpha: 0.5)),
@@ -452,31 +506,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (context) => const TextScreenScreen())),
       ),
-      if (_isGoldLicense)
-        _buildSettingButton(
-          context: context,
-          label: "برندینگ پنل (طلایی)",
-          icon: Icons.palette_outlined,
-          onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const AppInfoManageScreen())),
+      _buildSettingButton(
+        context: context,
+        label: "برندینگ پنل",
+        icon: Icons.palette_outlined,
+        tierBadge: 'طلایی',
+        locked: !_isGoldLicense,
+        onPressed: () => _navigateGated(
+          allowed: _isGoldLicense,
+          title: 'برندینگ پنل (White-label)',
+          message:
+              'با لایسنس طلایی نام، رنگ، لوگو و فوتر پنل را شخصی‌سازی کنید و برند PowerPS را مخفی کنید.',
+          requiredTier: 'طلایی',
+          screen: const AppInfoManageScreen(),
         ),
+      ),
       _buildSettingButton(
         context: context,
         label: "کدهای تخفیف",
         icon: Icons.discount_outlined,
-        onPressed: () => Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const PromoCodesScreen())),
+        tierBadge: 'نقره',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'کدهای تخفیف',
+          message:
+              'در لایسنس نقره‌ای تا ۵ کد تخفیف ساده بسازید. نسخه طلایی محدودیت پیشرفته و تاریخچه استفاده دارد.',
+          requiredTier: 'نقره‌ای',
+          screen: const PromoCodesScreen(),
+        ),
       ),
       _buildSettingButton(
         context: context,
         label: "کمپین بازاریابی",
         icon: Icons.campaign_outlined,
-        onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const MarketingCampaignScreen())),
+        tierBadge: 'طلایی',
+        locked: !_isGoldLicense,
+        onPressed: () => _navigateGated(
+          allowed: _isGoldLicense,
+          title: 'کمپین بازاریابی',
+          message:
+              'پیام هدفمند به سگمنت‌های مختلف کاربران بفرستید؛ با تصویر، زمان‌بندی و دکمه اقدام.',
+          requiredTier: 'طلایی',
+          screen: const MarketingCampaignScreen(),
+        ),
       ),
       _buildSettingButton(
         context: context,

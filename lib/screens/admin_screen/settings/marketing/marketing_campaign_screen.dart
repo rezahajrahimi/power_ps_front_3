@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/repositories/marketing_campaign_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -32,6 +33,8 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
   String? _imageName;
   int? _previewCount;
   List<dynamic> _campaigns = [];
+  bool _licenseChecked = false;
+  bool _isGoldLicense = false;
 
   final _segments = const {
     'all': 'همه کاربران',
@@ -64,6 +67,23 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
   @override
   void initState() {
     super.initState();
+    _checkLicenseAndLoad();
+  }
+
+  Future<void> _checkLicenseAndLoad() async {
+    final license = (await getLicenseType()).toLowerCase();
+    if (!mounted) return;
+    if (license != 'gold') {
+      setState(() {
+        _licenseChecked = true;
+        _isGoldLicense = false;
+      });
+      return;
+    }
+    setState(() {
+      _licenseChecked = true;
+      _isGoldLicense = true;
+    });
     _loadCampaigns();
   }
 
@@ -499,6 +519,28 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
     );
   }
 
+  Widget _lockedView() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppStyle.defaultPadding * 2),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.workspace_premium, size: 64, color: AppStyle.deactiveStatus),
+            const SizedBox(height: 16),
+            const Text('کمپین بازاریابی', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(
+              'ارسال پیام هدفمند با سگمنت، تصویر و زمان‌بندی فقط در لایسنس طلایی فعال است.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppStyle.deactiveStatus, height: 1.6),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -506,7 +548,11 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           appBar: appBarWithBackButton(context: context, title: 'کمپین بازاریابی'),
-          body: _body(context),
+          body: !_licenseChecked
+              ? const Center(child: CircularProgressIndicator())
+              : !_isGoldLicense
+                  ? _lockedView()
+                  : _body(context),
         ),
       ),
     );
