@@ -117,6 +117,16 @@ bool isMarzbanCompatiblePanel(String type) {
   return type == 'marzban' || type == 'pasarguard';
 }
 
+bool isInventoryPanelType(String type) {
+  return type == 'custome';
+}
+
+bool panelSupportsGroupOperations(String type) {
+  return type == 'hiddify' ||
+      type == 'sanaei' ||
+      isMarzbanCompatiblePanel(type);
+}
+
 String getPanelTypeFromDropdownLabel(String panelDropdownValue) {
   if (panelDropdownValue.isEmpty) {
     return '';

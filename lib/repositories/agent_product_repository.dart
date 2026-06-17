@@ -187,7 +187,7 @@ Future batchExistSubscriptionJobDayOpr(
   });
 
   try {
-    await GenaralApi.dio.post("/api/batchExistSubscriptionJob",
+    final response = await GenaralApi.dio.post("/api/batchExistSubscriptionJob",
         data: formData,
         options: Options(headers: {
           'Accept': 'application/json',
@@ -196,19 +196,13 @@ Future batchExistSubscriptionJobDayOpr(
           "Charset": "utf-8",
           'Access-Control-Allow-Origin': '*'
         }));
-    // debugPrint("response ${response.statusCode}");
-    // debugPrint("status code:=>${response.statusMessage}");
-    // if (response.statusCode == 200 && response.data != null) {
-    return true;
-    // } else if (response.statusCode == 201) {
-    //   return false;
-    // } else if (response.statusCode == 401) {
-    //   return false;
-    // } else if (response.statusCode == 500) {
-    //   return false;
-    // } else {
-    //   return false;
-    // }
+    if (response.statusCode == 200 && response.data != null) {
+      final status = response.data is Map
+          ? response.data['status']?.toString()
+          : null;
+      return status == null || status == 'success';
+    }
+    return false;
   } on DioException catch (e) {
     debugPrint(e.message.toString());
     return null;
