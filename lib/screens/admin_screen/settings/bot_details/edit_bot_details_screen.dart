@@ -21,6 +21,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
   final _botTokenTxtEdit = TextEditingController();
   final _adminIdTxtEdit = TextEditingController();
   final _panelAddressTxtEdit = TextEditingController();
+  final _configNamePrefixTxtEdit = TextEditingController();
 
   @override
   void initState() {
@@ -69,6 +70,7 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           _adminIdTxtEdit.text = _setting.adminId;
           _botTokenTxtEdit.text = _setting.botToken;
           _panelAddressTxtEdit.text = _setting.panelAddress;
+          _configNamePrefixTxtEdit.text = _setting.configNamePrefix;
           _showData = true;
         });
       } else {
@@ -78,7 +80,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
               botName: "تعریف نشده",
               botToken: "تعریف نشده",
               id: "تعریف نشده",
-              panelAddress: "تعریف نشده");
+              panelAddress: "تعریف نشده",
+              configNamePrefix: "bot");
           _showData = true;
         });
       }
@@ -127,7 +130,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
         if (_botNameTxtEdit.text.isNotEmpty &&
             _botTokenTxtEdit.text.isNotEmpty &&
             _adminIdTxtEdit.text.isNotEmpty &&
-            _panelAddressTxtEdit.text.isNotEmpty) {
+            _panelAddressTxtEdit.text.isNotEmpty &&
+            _configNamePrefixTxtEdit.text.isNotEmpty) {
           _submitData(context);
         }
       },
@@ -203,6 +207,15 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
             helper: "آدرس دامنه متصل به هاست (تغییر ندهید مگر با اطمینان)",
             icon: Icons.link_outlined,
           ),
+          SizedBox(height: AppStyle.defaultPadding),
+          _buildInputField(
+            controller: _configNamePrefixTxtEdit,
+            label: "پیشوند نام کانفیگ",
+            hint: "bot",
+            helper:
+                "پیشوند نام کاربر در پنل VPN (مثال: bot123456789-42). فقط حروف و عدد انگلیسی",
+            icon: Icons.badge_outlined,
+          ),
         ],
       ),
     );
@@ -249,7 +262,8 @@ class _EditBotDetailsScreenState extends State<EditBotDetailsScreen> {
           botName: _botNameTxtEdit.text,
           adminId: _adminIdTxtEdit.text,
           botToken: _botTokenTxtEdit.text,
-          panelAddress: _panelAddressTxtEdit.text);
+          panelAddress: _panelAddressTxtEdit.text,
+          configNamePrefix: _configNamePrefixTxtEdit.text.trim());
 
       res = await updateBotSetting(setting: set);
 

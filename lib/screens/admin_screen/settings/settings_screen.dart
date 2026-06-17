@@ -237,6 +237,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             : _setting.panelAddress,
         icon: const Icon(Icons.link_outlined, color: Colors.purple),
       )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "پیشوند نام کانفیگ",
+        itemValue: _setting.configNamePrefix,
+        icon: const Icon(Icons.badge_outlined, color: Colors.teal),
+      )),
     ];
 
     List<Widget> actionsWidgetList = [
