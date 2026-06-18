@@ -34,6 +34,19 @@ class PurchaseCartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeIndices(Iterable<int> indices) {
+    final sorted = indices.toSet().toList()..sort((a, b) => b.compareTo(a));
+    var changed = false;
+    for (final index in sorted) {
+      if (index < 0 || index >= _items.length) continue;
+      _items.removeAt(index);
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
   void updateRemark(int index, String remark) {
     if (index < 0 || index >= _items.length) return;
     _items[index].remark = remark;

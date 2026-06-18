@@ -139,3 +139,21 @@ Future<Map<String, dynamic>> validateWebAppPromoCode({
     return {'valid': false, 'message': 'خطا در برقراری ارتباط با سرور'};
   }
 }
+
+Future<Map<String, dynamic>> getWebAppPackageNameHint() async {
+  const fallback = {
+    'preview': 'bot123456789-42',
+    'hint': 'اگر نام بسته را وارد نکنید، مطابق تنظیمات ربات نام‌گذاری می‌شود.',
+  };
+
+  try {
+    final response = await GenaralApi.dio.get('/api/webapp/package-name-hint');
+    if (response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+  } on DioException catch (e) {
+    debugPrint('getWebAppPackageNameHint: ${e.message}');
+  }
+
+  return fallback;
+}

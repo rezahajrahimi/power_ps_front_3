@@ -8,7 +8,35 @@ import 'package:powerps/repositories/webapp_user_repository.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+class PurchaseDeliveryResult {
+  const PurchaseDeliveryResult({
+    required this.title,
+    required this.value,
+    required this.isConfig,
+  });
+
+  final String title;
+  final String value;
+  final bool isConfig;
+}
+
 class PurchaseFlowHelper {
+  static const _defaultPackageNameHint =
+      'اختیاری — در صورت خالی بودن، مطابق تنظیمات ربات نام‌گذاری می‌شود.';
+
+  static String packageNameHintText(Map<String, dynamic>? hint) {
+    final preview = hint?['preview']?.toString().trim();
+    if (preview != null && preview.isNotEmpty) {
+      return 'اختیاری — در صورت خالی بودن، مثل ربات: $preview';
+    }
+    return hint?['hint']?.toString() ?? _defaultPackageNameHint;
+  }
+
+  static String displayPackageRemark(String remark) {
+    final trimmed = remark.trim();
+    return trimmed.isEmpty ? 'نام خودکار (طبق تنظیمات ربات)' : trimmed;
+  }
+
   static Future<void> showPurchaseDialog({
     required BuildContext context,
     required ProductCategory product,
@@ -21,6 +49,8 @@ class PurchaseFlowHelper {
     final promoController = TextEditingController();
     Map<String, dynamic>? promoPreview;
     bool validatingPromo = false;
+    final packageNameHint = await getWebAppPackageNameHint();
+    if (!context.mounted) return;
 
     await showDialog(
       context: context,
@@ -69,10 +99,10 @@ class PurchaseFlowHelper {
                         const SizedBox(height: 12),
                         TextField(
                           controller: remarkController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'نام بسته',
-                            hintText: 'یک نام برای این بسته بنویسید',
-                            border: OutlineInputBorder(),
+                            hintText: packageNameHintText(packageNameHint),
+                            border: const OutlineInputBorder(),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -130,14 +160,6 @@ class PurchaseFlowHelper {
                     TextButton(
                       onPressed: () {
                         final remark = remarkController.text.trim();
-                        if (remark.isEmpty) {
-                          showMsg(
-                            msg: 'نام را وارد کنید.',
-                            context: dialogContext,
-                            type: 'error',
-                          );
-                          return;
-                        }
                         onAddToCart(product, remark);
                         Navigator.pop(dialogContext);
                         showMsg(
@@ -155,14 +177,6 @@ class PurchaseFlowHelper {
                   ElevatedButton(
                     onPressed: () async {
                       final remark = remarkController.text.trim();
-                      if (remark.isEmpty) {
-                        showMsg(
-                          msg: 'نام را وارد کنید.',
-                          context: dialogContext,
-                          type: 'error',
-                        );
-                        return;
-                      }
 
                       final promoCode = promoController.text.trim();
                       if (promoCode.isNotEmpty &&
@@ -176,7 +190,7 @@ class PurchaseFlowHelper {
                       }
 
                       EasyLoading.show();
-                      final result = await _buyProduct(
+                      final result = await buyProduct(
                         userRole: userRole,
                         product: product,
                         remark: remark,
@@ -197,8 +211,15 @@ class PurchaseFlowHelper {
 
                       Navigator.pop(dialogContext);
                       onSuccess();
-                      if (result.config != null && result.config!.isNotEmpty) {
-                        await showConfigDialog(context, result.config!);
+                      if (result.result != null &&
+                          result.result!.value.isNotEmpty) {
+                        if (result.result!.isConfig) {
+                          await showConfigDialog(context, result.result!.value);
+                        } else {
+                          await showCheckoutResultsDialog(context, [
+                            result.result!,
+                          ]);
+                        }
                       }
                     },
                     child: const Text('خرید'),
@@ -215,7 +236,7 @@ class PurchaseFlowHelper {
     promoController.dispose();
   }
 
-  static Future<({String? config, String? error})> _buyProduct({
+  static Future<({PurchaseDeliveryResult? result, String? error})> buyProduct({
     required String userRole,
     required ProductCategory product,
     required String remark,
@@ -237,27 +258,40 @@ class PurchaseFlowHelper {
     }
 
     if (val == false || val == null) {
-      return (config: null, error: 'خطا در برقراری ارتباط با سرور');
+      return (result: null, error: 'خطا در برقراری ارتباط با سرور');
     }
 
     final text = val.toString();
     if (text == 'low ballance' || text.contains('موجودی')) {
-      return (config: null, error: 'موجودی کافی نیست');
+      return (result: null, error: 'موجودی کافی نیست');
     }
 
     if (product.pannel?.type == 'sanaei' ||
         text.startsWith('vless://') ||
         text.startsWith('vmess://') ||
         text.startsWith('trojan://')) {
-      return (config: text, error: null);
+      return (
+        result: PurchaseDeliveryResult(
+          title: displayPackageRemark(remark),
+          value: text,
+          isConfig: true,
+        ),
+        error: null,
+      );
     }
 
     if (text.contains('https://') || text.contains('http://')) {
-      await launchUrl(Uri.parse(text), mode: LaunchMode.externalApplication);
-      return (config: null, error: null);
+      return (
+        result: PurchaseDeliveryResult(
+          title: displayPackageRemark(remark),
+          value: text,
+          isConfig: false,
+        ),
+        error: null,
+      );
     }
 
-    return (config: null, error: text);
+    return (result: null, error: text);
   }
 
   static Future<void> showConfigDialog(BuildContext context, String config) {
@@ -293,6 +327,106 @@ class PurchaseFlowHelper {
               },
               child: const Text('کپی'),
             ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('بستن'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Future<void> showCheckoutResultsDialog(
+    BuildContext context,
+    List<PurchaseDeliveryResult> results,
+  ) {
+    return showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('خروجی خریدهای انجام‌شده'),
+          content: SizedBox(
+            width: 640,
+            child: results.isEmpty
+                ? const Text('برای این خریدها خروجی مستقیمی وجود ندارد.')
+                : ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: results.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, index) {
+                      final result = results[index];
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white24),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              result.title,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            if (result.isConfig &&
+                                (result.value.startsWith('vless://') ||
+                                    result.value.startsWith('vmess://') ||
+                                    result.value.startsWith('trojan://'))) ...[
+                              Center(
+                                child: QrImageView(
+                                  data: result.value,
+                                  version: QrVersions.auto,
+                                  size: 160,
+                                  backgroundColor: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            SelectableText(
+                              result.value,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    Clipboard.setData(
+                                      ClipboardData(text: result.value),
+                                    );
+                                    showMsg(
+                                      msg: 'کپی شد',
+                                      context: ctx,
+                                      type: 'info',
+                                    );
+                                  },
+                                  child: const Text('کپی'),
+                                ),
+                                if (!result.isConfig)
+                                  TextButton(
+                                    onPressed: () async {
+                                      await launchUrl(
+                                        Uri.parse(result.value),
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    },
+                                    child: const Text('باز کردن لینک'),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('بستن'),
