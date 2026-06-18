@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen>
   Scaffold _agentItems(BuildContext context) {
     return Scaffold(
       key: context.read<MenuAppController>().scaffoldKey,
-      appBar: Header(title: _currentPageName),
+      appBar: Header(title: _currentPageName, showSearch: false),
       drawer: SideMenu(
         logedUser: loggedUSer,
         currentPage: _currentPageName,

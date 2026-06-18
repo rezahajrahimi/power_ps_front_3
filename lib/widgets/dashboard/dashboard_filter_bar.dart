@@ -10,6 +10,15 @@ class DashboardFilterBar extends StatelessWidget {
     this.locationOptions = const [],
     this.selectedLocation,
     this.onLocationChanged,
+    this.panelOptions = const [],
+    this.selectedPanel,
+    this.onPanelChanged,
+    this.dayOptions = const [],
+    this.selectedDay,
+    this.onDayChanged,
+    this.volumeOptions = const [],
+    this.selectedVolume,
+    this.onVolumeChanged,
     this.sortOptions = const [],
     this.selectedSort,
     this.onSortChanged,
@@ -24,12 +33,29 @@ class DashboardFilterBar extends StatelessWidget {
   final List<String> locationOptions;
   final String? selectedLocation;
   final ValueChanged<String?>? onLocationChanged;
+  final List<MapEntry<String, String>> panelOptions;
+  final String? selectedPanel;
+  final ValueChanged<String?>? onPanelChanged;
+  final List<MapEntry<String, String>> dayOptions;
+  final String? selectedDay;
+  final ValueChanged<String?>? onDayChanged;
+  final List<MapEntry<String, String>> volumeOptions;
+  final String? selectedVolume;
+  final ValueChanged<String?>? onVolumeChanged;
   final List<MapEntry<String, String>> sortOptions;
   final String? selectedSort;
   final ValueChanged<String?>? onSortChanged;
   final List<MapEntry<String, String>> statusOptions;
   final String? selectedStatus;
   final ValueChanged<String?>? onStatusChanged;
+
+  bool get _hasDropdowns =>
+      locationOptions.isNotEmpty ||
+      panelOptions.isNotEmpty ||
+      dayOptions.isNotEmpty ||
+      volumeOptions.isNotEmpty ||
+      sortOptions.isNotEmpty ||
+      statusOptions.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +73,7 @@ class DashboardFilterBar extends StatelessWidget {
             ),
           ),
         ),
-        if (locationOptions.isNotEmpty ||
-            sortOptions.isNotEmpty ||
-            statusOptions.isNotEmpty) ...[
+        if (_hasDropdowns) ...[
           SizedBox(height: AppStyle.defaultPadding / 2),
           Wrap(
             spacing: 8,
@@ -62,6 +86,42 @@ class DashboardFilterBar extends StatelessWidget {
                   items: ['همه', ...locationOptions],
                   onChanged: (value) =>
                       onLocationChanged!(value == 'همه' ? null : value),
+                ),
+              if (panelOptions.isNotEmpty && onPanelChanged != null)
+                _dropdown(
+                  label: 'پنل',
+                  value: selectedPanel,
+                  items: ['همه', ...panelOptions.map((e) => e.key)],
+                  labels: {
+                    'همه': 'همه',
+                    for (final e in panelOptions) e.key: e.value,
+                  },
+                  onChanged: (value) =>
+                      onPanelChanged!(value == 'همه' ? null : value),
+                ),
+              if (dayOptions.isNotEmpty && onDayChanged != null)
+                _dropdown(
+                  label: 'روز',
+                  value: selectedDay,
+                  items: ['همه', ...dayOptions.map((e) => e.key)],
+                  labels: {
+                    'همه': 'همه',
+                    for (final e in dayOptions) e.key: e.value,
+                  },
+                  onChanged: (value) =>
+                      onDayChanged!(value == 'همه' ? null : value),
+                ),
+              if (volumeOptions.isNotEmpty && onVolumeChanged != null)
+                _dropdown(
+                  label: 'حجم',
+                  value: selectedVolume,
+                  items: ['همه', ...volumeOptions.map((e) => e.key)],
+                  labels: {
+                    'همه': 'همه',
+                    for (final e in volumeOptions) e.key: e.value,
+                  },
+                  onChanged: (value) =>
+                      onVolumeChanged!(value == 'همه' ? null : value),
                 ),
               if (sortOptions.isNotEmpty && onSortChanged != null)
                 _dropdown(

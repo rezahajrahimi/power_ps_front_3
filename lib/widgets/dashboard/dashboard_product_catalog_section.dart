@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/provider/purchase_cart_provider.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -34,6 +35,9 @@ class _DashboardProductCatalogSectionState
     extends State<DashboardProductCatalogSection> {
   String _search = '';
   String? _location;
+  String? _panel;
+  String? _day;
+  String? _volume;
   String _sort = 'price_asc';
 
   List<ProductCategory> get _filtered {
@@ -47,6 +51,9 @@ class _DashboardProductCatalogSectionState
       if (_location != null && _location!.isNotEmpty) {
         if (p.pannel?.location != _location) return false;
       }
+      if (_panel != null && p.pannelId.toString() != _panel) return false;
+      if (_day != null && p.expireDay.toString() != _day) return false;
+      if (_volume != null && p.volume.toString() != _volume) return false;
       return true;
     }).toList();
 
@@ -73,6 +80,36 @@ class _DashboardProductCatalogSectionState
       .toSet()
       .toList()
     ..sort();
+
+  List<MapEntry<String, String>> get _panelOptions {
+    final map = <String, String>{};
+    for (final product in widget.products) {
+      final panel = product.pannel;
+      if (panel == null) continue;
+      map[product.pannelId.toString()] = _panelLabel(panel);
+    }
+    return map.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
+  }
+
+  List<MapEntry<String, String>> get _dayOptions {
+    final days = widget.products.map((p) => p.expireDay).toSet().toList()
+      ..sort();
+    return days.map((day) => MapEntry(day.toString(), '$day روز')).toList();
+  }
+
+  List<MapEntry<String, String>> get _volumeOptions {
+    final volumes = widget.products.map((p) => p.volume).toSet().toList()
+      ..sort();
+    return volumes
+        .map((volume) => MapEntry(volume.toString(), '$volume GB'))
+        .toList();
+  }
+
+  String _panelLabel(Pannel panel) {
+    final location = (panel.location ?? '').trim();
+    final name = getPannelName(name: panel.type);
+    return location.isEmpty ? name : '$name - $location';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +153,15 @@ class _DashboardProductCatalogSectionState
             locationOptions: _locations,
             selectedLocation: _location ?? 'همه',
             onLocationChanged: (v) => setState(() => _location = v),
+            panelOptions: _panelOptions,
+            selectedPanel: _panel ?? 'همه',
+            onPanelChanged: (v) => setState(() => _panel = v),
+            dayOptions: _dayOptions,
+            selectedDay: _day ?? 'همه',
+            onDayChanged: (v) => setState(() => _day = v),
+            volumeOptions: _volumeOptions,
+            selectedVolume: _volume ?? 'همه',
+            onVolumeChanged: (v) => setState(() => _volume = v),
             sortOptions: const [
               MapEntry('price_asc', 'ارزان‌ترین'),
               MapEntry('price_desc', 'گران‌ترین'),
