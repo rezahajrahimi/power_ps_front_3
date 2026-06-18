@@ -1,9 +1,10 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:powerps/helper/file_download.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -27,7 +28,8 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
 
   List<Pannel> _inventoryPanels = [];
   Pannel? _selectedPanel;
-  File? _selectedFile;
+  Uint8List? _selectedFileBytes;
+  String? _selectedFileName;
   bool _loadingPanels = true;
 
   bool _loadingStock = false;
@@ -806,9 +808,8 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
   }
 
   Widget _fileCard(BuildContext context, {bool expanded = false}) {
-    final fileName = _selectedFile?.path.split(Platform.pathSeparator).last ??
-        'فایلی انتخاب نشده است';
-    final hasFile = _selectedFile != null;
+    final fileName = _selectedFileName ?? 'فایلی انتخاب نشده است';
+    final hasFile = _selectedFileBytes != null;
 
     return Container(
       padding: EdgeInsets.all(
@@ -877,7 +878,7 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
           if (!Responsive.isMobile(context) && !expanded) ...[
             SizedBox(height: AppStyle.defaultPadding),
             ElevatedButton.icon(
-              onPressed: _selectedFile == null || _selectedPanel == null
+              onPressed: _selectedFileBytes == null || _selectedPanel == null
                   ? null
                   : _importFile,
               icon: const Icon(Icons.cloud_upload),
@@ -920,7 +921,7 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
       ),
       SizedBox(height: AppStyle.defaultPadding / 2),
       ElevatedButton.icon(
-        onPressed: _selectedFile == null || _selectedPanel == null
+        onPressed: _selectedFileBytes == null || _selectedPanel == null
             ? null
             : _importFile,
         icon: const Icon(Icons.cloud_upload),
@@ -960,7 +961,7 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
             Expanded(
               flex: 2,
               child: ElevatedButton.icon(
-                onPressed: _selectedFile == null || _selectedPanel == null
+                onPressed: _selectedFileBytes == null || _selectedPanel == null
                     ? null
                     : _importFile,
                 icon: const Icon(Icons.cloud_upload, size: 18),
@@ -977,30 +978,50 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['xlsx', 'csv'],
+      withData: true,
     );
 
-    if (result == null || result.files.single.path == null) {
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final file = result.files.single;
+    if (file.bytes == null) {
       return;
     }
 
     setState(() {
-      _selectedFile = File(result.files.single.path!);
+      _selectedFileBytes = file.bytes;
+      _selectedFileName = file.name;
     });
   }
 
   Future<void> _downloadTemplate() async {
+    const fileName = 'inventory-import-template.csv';
+
     EasyLoading.show(status: 'در حال دانلود...');
     try {
-      final directory = await getTemporaryDirectory();
-      final savePath =
-          '${directory.path}/inventory-import-template-${DateTime.now().millisecondsSinceEpoch}.csv';
-      final path = await downloadInventoryImportTemplate(savePath: savePath);
+      final bytes = await fetchInventoryImportTemplate();
+      if (bytes == null) {
+        EasyLoading.dismiss();
+        if (!mounted) return;
+        showMsg(
+          msg: 'خطا در دانلود فایل نمونه',
+          context: context,
+          type: 'error',
+        );
+        return;
+      }
+
+      final result = await saveBytesToDevice(bytes: bytes, fileName: fileName);
       EasyLoading.dismiss();
 
       if (!mounted) return;
-      if (path != null) {
+      if (result != null) {
         showMsg(
-          msg: 'فایل نمونه ذخیره شد:\n$path',
+          msg: kIsWeb
+              ? 'فایل نمونه دانلود شد'
+              : 'فایل نمونه ذخیره شد:\n$result',
           context: context,
           type: 'success',
         );
@@ -1023,14 +1044,17 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
   }
 
   Future<void> _importFile() async {
-    if (_selectedFile == null || _selectedPanel == null) {
+    if (_selectedFileBytes == null ||
+        _selectedFileName == null ||
+        _selectedPanel == null) {
       return;
     }
 
     EasyLoading.show(status: 'در حال پردازش فایل...');
     final result = await importInventoryExcel(
       panelId: int.parse(_selectedPanel!.id),
-      filePath: _selectedFile!.path,
+      fileBytes: _selectedFileBytes!,
+      fileName: _selectedFileName!,
     );
     EasyLoading.dismiss();
 
@@ -1053,7 +1077,10 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
         context: context,
         type: 'success',
       );
-      setState(() => _selectedFile = null);
+      setState(() {
+        _selectedFileBytes = null;
+        _selectedFileName = null;
+      });
       if (_tabController.index == 1) {
         _loadStock(resetPage: true);
       }

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -49,14 +49,15 @@ Future<List<Pannel>> getInventoryPanels() async {
 
 Future<Map<String, dynamic>?> importInventoryExcel({
   required int panelId,
-  required String filePath,
+  required Uint8List fileBytes,
+  required String fileName,
 }) async {
   try {
     final formData = FormData.fromMap({
       'pannel_id': panelId,
-      'file': await MultipartFile.fromFile(
-        filePath,
-        filename: filePath.split('/').last,
+      'file': MultipartFile.fromBytes(
+        fileBytes,
+        filename: fileName,
       ),
     });
 
@@ -87,9 +88,7 @@ Future<Map<String, dynamic>?> importInventoryExcel({
   return null;
 }
 
-Future<String?> downloadInventoryImportTemplate({
-  required String savePath,
-}) async {
+Future<Uint8List?> fetchInventoryImportTemplate() async {
   try {
     final response = await GenaralApi.dio.get(
       '/api/downloadInventoryImportTemplate',
@@ -104,9 +103,7 @@ Future<String?> downloadInventoryImportTemplate({
     );
 
     if (response.statusCode == 200 && response.data != null) {
-      final file = File(savePath);
-      await file.writeAsBytes(response.data as List<int>);
-      return savePath;
+      return Uint8List.fromList(response.data as List<int>);
     }
   } on DioException catch (e) {
     debugPrint(e.message);
