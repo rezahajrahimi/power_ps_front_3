@@ -25,6 +25,8 @@ import 'package:powerps/widgets/public/user_verification_toggle_widget.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:powerps/models/referral_wallet_model.dart';
+import 'package:powerps/screens/admin_screen/user/referral/referral_report_screen.dart';
 import 'package:powerps/widgets/transaction/transaction_info_item_widget.dart';
 
 class BotUserDetailsScreen extends StatefulWidget {
@@ -489,6 +491,21 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         label: "ویرایش موجودی",
         icon: Icons.edit_note,
         onPressed: () => _editReferralBallanceDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "گزارش بازاریابی",
+        icon: Icons.history,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReferralReportScreen(
+                accountId: _botUser!.accountId,
+              ),
+            ),
+          );
+        },
       ),
     ];
 
@@ -1083,6 +1100,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   }
 
   _editReferralBallanceDialog(BuildContext context) async {
+    _ballanceController.text =
+        (_botUser!.referralWallet?.amount ?? 0).toString();
     showDialog(
         context: context,
         builder: (context) => Directionality(
@@ -1133,29 +1152,43 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                         horizontal: 20, vertical: 10),
                   ),
                   onPressed: () async {
+                    final amount = int.tryParse(_ballanceController.text.trim());
+                    if (amount == null || amount < 0) {
+                      showMsg(
+                        context: context,
+                        msg: "مبلغ معتبر وارد کنید",
+                        type: "error",
+                      );
+                      return;
+                    }
+
                     EasyLoading.show();
-                    await setNewReferralBallance(
-                            ballance: int.parse(_ballanceController.text),
-                            userID: _botUser!.accountId.toInt())
-                        .then((value) {
-                      if (!context.mounted) return;
-                      if (value) {
-                        setState(() {
-                          _botUser!.ballance!.ballance =
-                              BigInt.from(int.parse(_ballanceController.text));
-                        });
-                        EasyLoading.dismiss();
-                        showMsg(
-                            context: context,
-                            msg: "موجودی با موفقیت ویرایش شد");
-                        Navigator.pop(context);
-                        _ballanceController.clear();
-                        _fillData();
-                      } else {
-                        EasyLoading.dismiss();
-                        showMsg(context: context, msg: "خطا", type: "error");
-                      }
-                    });
+                    final value = await setNewReferralBallance(
+                      ballance: amount,
+                      userID: _botUser!.accountId.toInt(),
+                    );
+                    if (!context.mounted) return;
+
+                    EasyLoading.dismiss();
+                    if (value == true) {
+                      setState(() {
+                        _botUser!.referralWallet =
+                            (_botUser!.referralWallet ?? ReferralWalletModel(
+                              id: 0,
+                              referralUserId: _botUser!.id.toInt(),
+                              amount: 0,
+                            )).copyWith(amount: amount);
+                      });
+                      showMsg(
+                        context: context,
+                        msg: "موجودی همکاری با موفقیت ویرایش شد",
+                      );
+                      Navigator.pop(context);
+                      _ballanceController.clear();
+                      _fillData();
+                    } else {
+                      showMsg(context: context, msg: "خطا", type: "error");
+                    }
                   },
                   child: const Text("تایید"),
                 )

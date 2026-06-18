@@ -29,7 +29,8 @@ Future getReferralSetting() async {
       return null;
     }
   } on DioException catch (e) {
-    return e.error;
+    debugPrint(e.message.toString());
+    return null;
   }
 }
 
@@ -85,8 +86,12 @@ Future setNewReferralBallance(
               'Access-Control-Allow-Origin': '*'
             }));
 
-    if (response.statusCode == 200 && response.data != null) {
-      return true;
+    if (response.statusCode == 200) {
+      if (response.data is Map &&
+          (response.data['success'] == true || response.data['success'] == 1)) {
+        return true;
+      }
+      return response.data != null;
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -116,16 +121,15 @@ Future<List<ReferralLogModel>?> getReferralLogsByAccountId(
             }));
 
     if (response.statusCode == 200 && response.data != null) {
-      List<ReferralLogModel> list = [];
-      for (var i in response.data) {
-        list.add(ReferralLogModel.fromMap(i));
+      if (response.data is List) {
+        List<ReferralLogModel> list = [];
+        for (var i in response.data) {
+          list.add(ReferralLogModel.fromMap(i));
+        }
+        return list;
       }
-      return list;
-    } else if (response.statusCode == 201) {
-      return null;
-    } else if (response.statusCode == 401) {
-      return null;
-    } else if (response.statusCode == 500) {
+      return [];
+    } else if (response.statusCode == 403) {
       return null;
     } else {
       return null;
