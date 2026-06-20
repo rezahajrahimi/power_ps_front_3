@@ -188,10 +188,17 @@ Future<bool> changeAdvancedSetting({
   required String name,
   required bool value,
 }) async {
+  return changeAdvancedSettingValue(name: name, value: value.toString());
+}
+
+Future<bool> changeAdvancedSettingValue({
+  required String name,
+  required String value,
+}) async {
   try {
     Response response =
         await GenaralApi.dio.post("/api/advanceSettingLookupUpdateByName",
-            data: {"name": name, "value": value.toString()},
+            data: {"name": name, "value": value},
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',

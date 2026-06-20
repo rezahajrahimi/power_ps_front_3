@@ -32,6 +32,7 @@ import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/setting/advanced_setting_info_widget.dart';
+import 'package:powerps/widgets/setting/advanced_setting_choice_widget.dart';
 
 import 'backup/backup_screen.dart';
 
@@ -48,6 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _licenseType = '';
   late Setting _setting;
   final List<Widget> _advancedSettingWidgetList = [];
+  final List<Widget> _advancedSettingChoiceWidgetList = [];
   @override
   void initState() {
     _fillData();
@@ -140,7 +142,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!mounted) return;
       if (value.isNotEmpty && value != null) {
         _advancedSettingWidgetList.clear();
+        _advancedSettingChoiceWidgetList.clear();
         for (var item in value) {
+          if (item.name == 'bot_show_one_row_config') {
+            continue;
+          }
+
+          if (AdvancedSettingModel.isChoiceSetting(item.name)) {
+            _advancedSettingChoiceWidgetList.add(AdvancedSettingChoiceWidget(
+              name: item.name,
+              value: item.value,
+              options: AdvancedSettingModel.packageButtonLayoutOptions,
+              description: AdvancedSettingModel.displayDescription(
+                item.name,
+                item.description,
+              ),
+            ));
+            continue;
+          }
+
           _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
             state: item.value == "true" ? true : false,
             description: AdvancedSettingModel.displayDescription(
@@ -684,6 +704,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 tooltip: "بازنشانی تنظیمات پیش فرض",
                 onPressed: () async {
                   _advancedSettingWidgetList.clear();
+                  _advancedSettingChoiceWidgetList.clear();
                   _restoreAdvancedSettings();
                 },
                 icon: const Icon(Icons.refresh, color: Colors.white70),
@@ -691,24 +712,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           const Divider(height: 32, color: Colors.white10),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: _advancedSettingWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  importedList: _advancedSettingWidgetList),
-              desktop: widgetsGridview(
-                  importedList: _advancedSettingWidgetList,
-                  context: context,
-                  childAspectRatio: size.width < 1400 ? 4 : 4.5,
-                  crossAxisCount: 2),
+          if (_advancedSettingChoiceWidgetList.isNotEmpty) ...[
+            ..._advancedSettingChoiceWidgetList,
+            SizedBox(height: AppStyle.defaultPadding),
+          ],
+          if (_advancedSettingWidgetList.isNotEmpty)
+            SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 2.9,
+                    context: context,
+                    importedList: _advancedSettingWidgetList),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4.5,
+                    importedList: _advancedSettingWidgetList),
+                desktop: widgetsGridview(
+                    importedList: _advancedSettingWidgetList,
+                    context: context,
+                    childAspectRatio: size.width < 1400 ? 4 : 4.5,
+                    crossAxisCount: 2),
+              ),
             ),
-          ),
         ],
       ),
     );

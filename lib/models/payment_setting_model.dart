@@ -10,12 +10,29 @@ class PaymentSettingModel {
     required this.status,
   });
 
+  static bool parseStatus(dynamic value) {
+    if (value == null) {
+      return false;
+    }
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
+  }
+
   factory PaymentSettingModel.fromJson(Map<String, dynamic> json) {
     return PaymentSettingModel(
-      key: json['key'],
-      value: json['value'],
-      description: json['description'],
-      status: json['status'] == "true" || json['status'] == 1 ? true : false,
+      key: json['key']?.toString() ?? '',
+      value: json['value']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      status: parseStatus(json['status']),
     );
   }
 
@@ -34,10 +51,10 @@ class PaymentSettingModel {
   // from map
   static PaymentSettingModel fromMap(Map<String, dynamic> map) {
     return PaymentSettingModel(
-      key: map['key'],
-      value: map['value'],
-      description: map['description'],
-      status: map['status'] == "true" || map['status'] == 1 ? true : false,
+      key: map['key']?.toString() ?? '',
+      value: map['value']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
+      status: parseStatus(map['status']),
     );
   }
   // to map 

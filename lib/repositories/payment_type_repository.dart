@@ -64,10 +64,12 @@ Future<bool> getDollorTransactionSetting() async {
             }));
 
     if (response.statusCode == 200 && response.data != null) {
-      if (response.data.toString() == "1" || response.data == true) {
-        return true;
+      if (response.data is Map) {
+        return PaymentSettingModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        ).status;
       }
-      return false;
+      return PaymentSettingModel.parseStatus(response.data);
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -88,7 +90,13 @@ Future<PaymentSettingModel> getShetabVerifySetting() async {
     Response response = await GenaralApi.dio
         .get("/api/get-payment-setting-by-key/shetab_verify");
     if (response.statusCode == 200 && response.data != null) {
-      return PaymentSettingModel.fromJson(response.data);
+      if (response.data is Map) {
+        return PaymentSettingModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        );
+      }
+      return PaymentSettingModel(
+          key: "", value: "", description: "", status: false);
     } else {
       return PaymentSettingModel(
           key: "", value: "", description: "", status: false);
@@ -160,10 +168,13 @@ Future<bool> setDollorTransactionSetting(
         }));
 
     if (response.statusCode == 200 && response.data != null) {
-      if (response.data == 1 || response.data == true) {
-        return true;
+      if (response.data is Map) {
+        final savedStatus = PaymentSettingModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        ).status;
+        return savedStatus == dollarTransaction;
       }
-      return false;
+      return true;
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
