@@ -1501,121 +1501,188 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
 
       showDialog(
           context: context,
-          builder: (context) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                backgroundColor: AppStyle.secondaryColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                scrollable: true,
-                contentPadding: const EdgeInsets.all(20),
-                title: const Row(
-                  children: [
-                    Icon(Icons.shopping_cart_outlined,
-                        color: Colors.greenAccent),
-                    SizedBox(width: 10),
-                    Text("خرید کانفیگ جدید",
-                        style: TextStyle(color: Colors.white, fontSize: 18)),
-                  ],
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("نام کانفیگ را وارد کنید:",
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    const SizedBox(height: 12),
-                    CustomTextFromFieldWidget(
-                      controller: nameEditText,
-                      textHint: "نام کانفیگ جدید",
-                      validationError: "لطفا نام کانفیگ را وارد کنید",
+          builder: (dialogContext) {
+            bool deductFromWallet = true;
+            String dialogSelectedItem = selectedItem;
+
+            return StatefulBuilder(
+              builder: (context, setDialogState) => Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    backgroundColor: AppStyle.secondaryColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    scrollable: true,
+                    contentPadding: const EdgeInsets.all(20),
+                    title: const Row(
+                      children: [
+                        Icon(Icons.shopping_cart_outlined,
+                            color: Colors.greenAccent),
+                        SizedBox(width: 10),
+                        Text("خرید کانفیگ جدید",
+                            style: TextStyle(color: Colors.white, fontSize: 18)),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    const Text("کانفیگ را انتخاب کنید:",
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white10),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          dropdownColor: AppStyle.secondaryColor,
-                          decoration:
-                              const InputDecoration(border: InputBorder.none),
-                          hint: const Text('انتخاب کانفیگ',
-                              style: TextStyle(color: Colors.white54)),
-                          initialValue: selectedItem,
-                          onChanged: (newValue) {
-                            setState(() {
-                              selectedItem = newValue.toString();
-                            });
-                          },
-                          items: productCategoryItemList.map((clType) {
-                            return DropdownMenuItem(
-                              value: clType,
-                              child: Text(clType,
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 13)),
-                            );
-                          }).toList(),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("نام کانفیگ را وارد کنید:",
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14)),
+                        const SizedBox(height: 12),
+                        CustomTextFromFieldWidget(
+                          controller: nameEditText,
+                          textHint: "نام کانفیگ جدید",
+                          validationError: "لطفا نام کانفیگ را وارد کنید",
                         ),
+                        const SizedBox(height: 24),
+                        const Text("کانفیگ را انتخاب کنید:",
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButtonFormField<String>(
+                              isExpanded: true,
+                              dropdownColor: AppStyle.secondaryColor,
+                              decoration: const InputDecoration(
+                                  border: InputBorder.none),
+                              hint: const Text('انتخاب کانفیگ',
+                                  style: TextStyle(color: Colors.white54)),
+                              initialValue: dialogSelectedItem.isEmpty
+                                  ? null
+                                  : dialogSelectedItem,
+                              onChanged: (newValue) {
+                                setDialogState(() {
+                                  dialogSelectedItem = newValue.toString();
+                                });
+                              },
+                              items: productCategoryItemList.map((clType) {
+                                return DropdownMenuItem(
+                                  value: clType,
+                                  child: Text(clType,
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 13)),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: SwitchListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 12),
+                            title: const Text(
+                              'کسر از کیف پول کاربر',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              deductFromWallet
+                                  ? 'هزینه بسته از موجودی کاربر کم می‌شود'
+                                  : 'خرید بدون کسر موجودی انجام می‌شود',
+                              style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 12),
+                            ),
+                            value: deductFromWallet,
+                            activeThumbColor: Colors.greenAccent,
+                            onChanged: (value) {
+                              setDialogState(() {
+                                deductFromWallet = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text("لغو",
+                            style: TextStyle(color: Colors.white70)),
                       ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("لغو",
-                        style: TextStyle(color: Colors.white70)),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                    ),
-                    onPressed: () async {
-                      if (nameEditText.text.isEmpty) return;
-                      EasyLoading.show();
-                      int prcatID = int.parse(selectedItem.split(" - ")[0]);
-                      await buyProductByAdmin(
-                        productID: prcatID,
-                        remark: nameEditText.text,
-                        username: _botUser!.username,
-                        userID: _botUser!.id.toInt(),
-                        accountId: _botUser!.accountId.toInt(),
-                      ).then((val) {
-                        if (!context.mounted) return;
-                        if (val != null) {
-                          EasyLoading.dismiss();
-                          Navigator.pop(context);
-                          showMsg(
-                              context: context, msg: "خرید با موفقیت انجام شد");
-                          _fillData();
-                        } else {
-                          EasyLoading.dismiss();
-                          showMsg(context: context, msg: "خطا", type: "error");
-                        }
-                      }).onError((error, stackTrace) {
-                        if (!context.mounted) return;
-                        EasyLoading.dismiss();
-                        debugPrint(error.toString());
-                        showMsg(context: context, msg: "خطا", type: "error");
-                      });
-                    },
-                    child: const Text("تایید خرید"),
-                  ),
-                ],
-              )));
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                        ),
+                        onPressed: () async {
+                          if (nameEditText.text.isEmpty ||
+                              dialogSelectedItem.isEmpty) {
+                            return;
+                          }
+                          EasyLoading.show();
+                          int prcatID =
+                              int.parse(dialogSelectedItem.split(" - ")[0]);
+                          await buyProductByAdmin(
+                            productID: prcatID,
+                            remark: nameEditText.text,
+                            username: _botUser!.username,
+                            userID: _botUser!.id.toInt(),
+                            accountId: _botUser!.accountId.toInt(),
+                            deductFromWallet: deductFromWallet,
+                          ).then((val) {
+                            if (!dialogContext.mounted) return;
+                            EasyLoading.dismiss();
+                            final isSuccess = val != null &&
+                                val != false &&
+                                !(val is String &&
+                                    (val.contains('خطا') ||
+                                        val.contains('موجودی') ||
+                                        val.contains('Error')));
+                            if (isSuccess) {
+                              Navigator.pop(dialogContext);
+                              showMsg(
+                                  context: context,
+                                  msg: deductFromWallet
+                                      ? "خرید با موفقیت انجام شد و پیام برای کاربر ارسال شد"
+                                      : "خرید با موفقیت انجام شد (بدون کسر موجودی) و پیام برای کاربر ارسال شد");
+                              _fillData();
+                            } else {
+                              final errorMsg = val is String && val.isNotEmpty
+                                  ? val
+                                  : "خطا در خرید کانفیگ";
+                              showMsg(
+                                  context: context,
+                                  msg: errorMsg,
+                                  type: "error");
+                            }
+                          }).onError((error, stackTrace) {
+                            if (!dialogContext.mounted) return;
+                            EasyLoading.dismiss();
+                            debugPrint(error.toString());
+                            showMsg(
+                                context: context,
+                                msg: "خطا در خرید کانفیگ",
+                                type: "error");
+                          });
+                        },
+                        child: const Text("تایید خرید"),
+                      ),
+                    ],
+                  )),
+            );
+          });
     }).onError((error, stackTrace) {
       EasyLoading.dismiss();
       if (!context.mounted) return;

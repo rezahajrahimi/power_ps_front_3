@@ -391,7 +391,8 @@ Future buyProductByAdmin(
     required String remark,
     username,
     required int userID,
-    required int accountId}) async {
+    required int accountId,
+    bool deductFromWallet = true}) async {
   try {
     Response response = await GenaralApi.dio.put("/api/buyProductByAdmin",
         data: {
@@ -399,7 +400,8 @@ Future buyProductByAdmin(
           "remark": remark,
           "account_id": accountId,
           "username": username,
-          "user_id": userID
+          "user_id": userID,
+          "deduct_from_wallet": deductFromWallet,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -411,16 +413,16 @@ Future buyProductByAdmin(
 
     if (response.statusCode == 200) {
       return response.data;
-    } else if (response.statusCode == 201) {
-      return false;
     } else if (response.statusCode == 401) {
-      return false;
+      return response.data ?? 'موجودی کیف پول کاربر کافی نیست';
     } else if (response.statusCode == 500) {
-      return false;
+      return response.data ?? false;
     } else {
       return false;
     }
   } on DioException catch (e) {
+    final data = e.response?.data;
+    if (data is String && data.isNotEmpty) return data;
     return e.error;
   }
 }
