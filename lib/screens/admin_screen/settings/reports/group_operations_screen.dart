@@ -101,7 +101,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               onPressed: () {
                 _loadRecentJobs();
                 if (_trackingJob != null) {
-                  final id = int.tryParse(_trackingJob!['id']?.toString() ?? '');
+                  final id =
+                      int.tryParse(_trackingJob!['id']?.toString() ?? '');
                   if (id != null) _pollJobStatus(id);
                 }
               },
@@ -329,12 +330,14 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           _sectionHeader(
             icon: Icons.dns_outlined,
             title: 'انتخاب پنل',
-            subtitle: 'پنل مورد نظر را انتخاب و لیست کانفیگ‌ها را بارگذاری کنید',
+            subtitle:
+                'پنل مورد نظر را انتخاب و لیست کانفیگ‌ها را بارگذاری کنید',
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
             isExpanded: true,
-            value: _selectedPannelName.isEmpty ? null : _selectedPannelName,
+            initialValue:
+                _selectedPannelName.isEmpty ? null : _selectedPannelName,
             decoration: InputDecoration(
               labelText: 'پنل',
               filled: true,
@@ -378,7 +381,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                       ),
                     )
                   : const Icon(Icons.cloud_download_outlined),
-              label: Text(_loadingUsers ? 'در حال بارگذاری...' : 'دریافت لیست کانفیگ‌ها'),
+              label: Text(_loadingUsers
+                  ? 'در حال بارگذاری...'
+                  : 'دریافت لیست کانفیگ‌ها'),
               style: FilledButton.styleFrom(
                 backgroundColor: AppStyle.primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -578,8 +583,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   }
 
   Widget _buildSelectedConfigsCard(BuildContext context, int selectedCount) {
-    final configs =
-        context.watch<PannelChangeController>().obtinedConfigList;
+    final configs = context.watch<PannelChangeController>().obtinedConfigList;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -638,9 +642,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          item.isActive
-                              ? Icons.circle
-                              : Icons.circle_outlined,
+                          item.isActive ? Icons.circle : Icons.circle_outlined,
                           size: 10,
                           color: item.isActive ? Colors.green : Colors.red,
                         ),
@@ -668,9 +670,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           if (configs.isNotEmpty) ...[
             const SizedBox(height: 8),
             TextButton.icon(
-              onPressed: () => Provider.of<PannelChangeController>(context,
-                      listen: false)
-                  .clearConfigList(),
+              onPressed: () =>
+                  Provider.of<PannelChangeController>(context, listen: false)
+                      .clearConfigList(),
               icon: const Icon(Icons.clear, size: 16),
               label: const Text('پاک کردن انتخاب‌ها'),
             ),
@@ -938,10 +940,10 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   }
 
   void _showAdvancedSelectionSheet(BuildContext context) {
-    final dayGroup =
-        _usersList.map((e) => e.packageDays).toSet().toList()..sort();
-    final capacityGroup =
-        _usersList.map((e) => e.usageLimitGB).toSet().toList()..sort();
+    final dayGroup = _usersList.map((e) => e.packageDays).toSet().toList()
+      ..sort();
+    final capacityGroup = _usersList.map((e) => e.usageLimitGB).toSet().toList()
+      ..sort();
 
     showModalBottomSheet(
       context: context,
@@ -1026,9 +1028,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     final pannelID = _selectedPanelId();
     if (pannelID <= 0) {
       showMsg(
-          msg: 'یک پنل معتبر انتخاب کنید.',
-          context: context,
-          type: 'error');
+          msg: 'یک پنل معتبر انتخاب کنید.', context: context, type: 'error');
       return;
     }
 
@@ -1056,9 +1056,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     } catch (_) {
       if (!mounted) return;
       showMsg(
-          msg: 'خطا در دریافت لیست کانفیگ‌ها',
-          context: context,
-          type: 'error');
+          msg: 'خطا در دریافت لیست کانفیگ‌ها', context: context, type: 'error');
     } finally {
       if (mounted) {
         setState(() => _loadingUsers = false);
@@ -1143,14 +1141,11 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   }
 
   bool _ensureConfigsSelected(BuildContext context) {
-    final configs =
-        Provider.of<PannelChangeController>(context, listen: false)
-            .obtinedConfigList;
+    final configs = Provider.of<PannelChangeController>(context, listen: false)
+        .obtinedConfigList;
     if (configs.isEmpty) {
       showMsg(
-          msg: 'حداقل یک کانفیگ انتخاب کنید.',
-          context: context,
-          type: 'error');
+          msg: 'حداقل یک کانفیگ انتخاب کنید.', context: context, type: 'error');
       return false;
     }
     return true;
@@ -1176,14 +1171,13 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               backgroundColor: AppStyle.secondaryColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
-              title: Text(opr == 'inc'
-                  ? 'افزایش روز یا حجم'
-                  : 'کاهش روز یا حجم'),
+              title:
+                  Text(opr == 'inc' ? 'افزایش روز یا حجم' : 'کاهش روز یا حجم'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selectedOption,
+                    initialValue: selectedOption,
                     decoration: const InputDecoration(
                       labelText: 'نوع تغییر',
                       border: OutlineInputBorder(),
@@ -1245,7 +1239,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('تغییر وضعیت'),
             content: DropdownButtonFormField<String>(
-              value: selectedOption,
+              initialValue: selectedOption,
               decoration: const InputDecoration(
                 labelText: 'عملیات',
                 border: OutlineInputBorder(),
@@ -1338,7 +1332,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selectedOption,
+                    initialValue: selectedOption,
                     decoration: const InputDecoration(
                       labelText: 'نوع تغییر',
                       border: OutlineInputBorder(),
@@ -1367,7 +1361,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                   onPressed: () => _runBatchAction(
                     dialogContext,
                     formKey: formKey,
-                    action: selectedOption == 'روز' ? 'modify_days' : 'modify_vol',
+                    action:
+                        selectedOption == 'روز' ? 'modify_days' : 'modify_vol',
                     day: int.tryParse(input.text) ?? 0,
                     vol: input.text,
                   ),
@@ -1475,7 +1470,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         );
       } else if (status == 'completed' && failed > 0) {
         showMsg(
-          msg: '$actionLabel: $processed از $total انجام شد، $failed مورد ناموفق.',
+          msg:
+              '$actionLabel: $processed از $total انجام شد، $failed مورد ناموفق.',
           context: context,
           type: 'error',
         );
@@ -1704,7 +1700,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                 style: TextStyle(color: Colors.greenAccent.shade100)),
             ...success.map((e) => ListTile(
                   dense: true,
-                  leading: const Icon(Icons.check, color: Colors.greenAccent, size: 18),
+                  leading: const Icon(Icons.check,
+                      color: Colors.greenAccent, size: 18),
                   title: Text((e is Map ? e['name'] : e)?.toString() ?? ''),
                 )),
             const SizedBox(height: 8),
@@ -1712,7 +1709,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                 style: TextStyle(color: Colors.redAccent.shade100)),
             ...failed.map((e) => ListTile(
                   dense: true,
-                  leading: const Icon(Icons.close, color: Colors.redAccent, size: 18),
+                  leading: const Icon(Icons.close,
+                      color: Colors.redAccent, size: 18),
                   title: Text((e is Map ? e['name'] : e)?.toString() ?? ''),
                   subtitle: e is Map && e['error'] != null
                       ? Text(e['error'].toString(),
@@ -1742,9 +1740,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     final pannelID = _selectedPanelId();
     if (pannelID <= 0) {
       showMsg(
-          msg: 'یک پنل معتبر انتخاب کنید.',
-          context: context,
-          type: 'error');
+          msg: 'یک پنل معتبر انتخاب کنید.', context: context, type: 'error');
       return;
     }
 
@@ -1768,7 +1764,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         if (jobId != null) {
           _startPolling(jobId);
           showMsg(
-            msg: 'درخواست ثبت شد. پیشرفت عملیات در بالای صفحه نمایش داده می‌شود.',
+            msg:
+                'درخواست ثبت شد. پیشرفت عملیات در بالای صفحه نمایش داده می‌شود.',
             context: context,
           );
         } else {

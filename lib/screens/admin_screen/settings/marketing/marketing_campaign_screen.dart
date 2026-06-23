@@ -15,7 +15,8 @@ class MarketingCampaignScreen extends StatefulWidget {
   const MarketingCampaignScreen({super.key});
 
   @override
-  State<MarketingCampaignScreen> createState() => _MarketingCampaignScreenState();
+  State<MarketingCampaignScreen> createState() =>
+      _MarketingCampaignScreenState();
 }
 
 class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
@@ -101,9 +102,13 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
 
   Map<String, dynamic> _segmentParams() {
     return switch (_segment) {
-      'low_balance' => {'max_balance': double.tryParse(_maxBalanceCtrl.text) ?? 10000},
+      'low_balance' => {
+          'max_balance': double.tryParse(_maxBalanceCtrl.text) ?? 10000
+        },
       'inactive_days' => {'days': int.tryParse(_inactiveDaysCtrl.text) ?? 30},
-      'user_group' => {'user_group_id': int.tryParse(_userGroupIdCtrl.text) ?? 0},
+      'user_group' => {
+          'user_group_id': int.tryParse(_userGroupIdCtrl.text) ?? 0
+        },
       _ => {},
     };
   }
@@ -137,7 +142,8 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
 
   Future<void> _send() async {
     if (_nameCtrl.text.isEmpty || _messageCtrl.text.isEmpty) {
-      showMsg(msg: 'نام و متن کمپین الزامی است', context: context, type: 'error');
+      showMsg(
+          msg: 'نام و متن کمپین الزامی است', context: context, type: 'error');
       return;
     }
     if (!_sendNow && _scheduledCtrl.text.trim().isEmpty) {
@@ -265,12 +271,13 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _segment,
+                    initialValue: _segment,
                     items: _segments.entries
-                        .map((e) =>
-                            DropdownMenuItem(value: e.key, child: Text(e.value)))
+                        .map((e) => DropdownMenuItem(
+                            value: e.key, child: Text(e.value)))
                         .toList(),
-                    onChanged: (v) => setState(() => _segment = v ?? 'never_purchased'),
+                    onChanged: (v) =>
+                        setState(() => _segment = v ?? 'never_purchased'),
                     decoration: const InputDecoration(labelText: 'سگمنت'),
                   ),
                 ),
@@ -283,11 +290,13 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _segment,
+              initialValue: _segment,
               items: _segments.entries
-                  .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                  .map((e) =>
+                      DropdownMenuItem(value: e.key, child: Text(e.value)))
                   .toList(),
-              onChanged: (v) => setState(() => _segment = v ?? 'never_purchased'),
+              onChanged: (v) =>
+                  setState(() => _segment = v ?? 'never_purchased'),
               decoration: const InputDecoration(labelText: 'سگمنت'),
             ),
           ],
@@ -313,13 +322,15 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _ctaType,
+                    initialValue: _ctaType,
                     items: _ctaTypes.entries
-                        .map((e) =>
-                            DropdownMenuItem(value: e.key, child: Text(e.value)))
+                        .map((e) => DropdownMenuItem(
+                            value: e.key, child: Text(e.value)))
                         .toList(),
-                    onChanged: (v) => setState(() => _ctaType = v ?? 'buy_menu'),
-                    decoration: const InputDecoration(labelText: 'دکمه اقدام (CTA)'),
+                    onChanged: (v) =>
+                        setState(() => _ctaType = v ?? 'buy_menu'),
+                    decoration:
+                        const InputDecoration(labelText: 'دکمه اقدام (CTA)'),
                   ),
                 ),
               ],
@@ -332,9 +343,10 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _ctaType,
+              initialValue: _ctaType,
               items: _ctaTypes.entries
-                  .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                  .map((e) =>
+                      DropdownMenuItem(value: e.key, child: Text(e.value)))
                   .toList(),
               onChanged: (v) => setState(() => _ctaType = v ?? 'buy_menu'),
               decoration: const InputDecoration(labelText: 'دکمه اقدام (CTA)'),
@@ -477,12 +489,14 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
                       const SizedBox(height: 4),
                       Text(
                         '${c['segment_type']} | ${c['status']}',
-                        style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
+                        style: TextStyle(
+                            color: AppStyle.deactiveStatus, fontSize: 13),
                       ),
                       Text(
                         '${c['total_users'] ?? 0} گیرنده'
                         '${c['scheduled_at'] != null ? ' | ${c['scheduled_at']}' : ''}',
-                        style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+                        style: TextStyle(
+                            color: AppStyle.deactiveStatus, fontSize: 12),
                       ),
                     ],
                   ),
@@ -526,9 +540,11 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.workspace_premium, size: 64, color: AppStyle.deactiveStatus),
+            Icon(Icons.workspace_premium,
+                size: 64, color: AppStyle.deactiveStatus),
             const SizedBox(height: 16),
-            const Text('کمپین بازاریابی', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('کمپین بازاریابی',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               'ارسال پیام هدفمند با سگمنت، تصویر و زمان‌بندی فقط در لایسنس طلایی فعال است.',
@@ -547,7 +563,8 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          appBar: appBarWithBackButton(context: context, title: 'کمپین بازاریابی'),
+          appBar:
+              appBarWithBackButton(context: context, title: 'کمپین بازاریابی'),
           body: !_licenseChecked
               ? const Center(child: CircularProgressIndicator())
               : !_isGoldLicense

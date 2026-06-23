@@ -54,10 +54,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
 
   List<int> _parseIdList(dynamic raw) {
     if (raw is! List) return [];
-    return raw
-        .map((e) => int.tryParse(e.toString()))
-        .whereType<int>()
-        .toList();
+    return raw.map((e) => int.tryParse(e.toString())).whereType<int>().toList();
   }
 
   Future<void> _loadFormData() async {
@@ -91,7 +88,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
         ],
       );
 
-  Widget _sectionHeader(BuildContext context, String title, {Widget? trailing}) {
+  Widget _sectionHeader(BuildContext context, String title,
+      {Widget? trailing}) {
     return Row(
       children: [
         Icon(Icons.local_offer, color: AppStyle.primaryColor),
@@ -140,7 +138,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
                 ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('بستن')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('بستن')),
         ],
       ),
     );
@@ -153,8 +152,12 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
         title: const Text('حذف کد تخفیف'),
         content: Text('کد ${item['code']} حذف شود؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حذف')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('انصراف')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('حذف')),
         ],
       ),
     );
@@ -195,12 +198,14 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
         decoration: const InputDecoration(labelText: 'کد'),
       ),
       DropdownButtonFormField<String>(
-        value: type,
+        initialValue: type,
         items: [
           const DropdownMenuItem(value: 'percent', child: Text('درصدی')),
-          const DropdownMenuItem(value: 'fixed_toman', child: Text('مبلغ ثابت (تومان)')),
+          const DropdownMenuItem(
+              value: 'fixed_toman', child: Text('مبلغ ثابت (تومان)')),
           if (isGold)
-            const DropdownMenuItem(value: 'fixed_dollar', child: Text('مبلغ ثابت (دلار)')),
+            const DropdownMenuItem(
+                value: 'fixed_dollar', child: Text('مبلغ ثابت (دلار)')),
         ],
         onChanged: onTypeChanged,
         decoration: const InputDecoration(labelText: 'نوع'),
@@ -225,7 +230,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
       TextField(
         controller: minOrderCtrl,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'حداقل مبلغ سفارش (تومان)'),
+        decoration:
+            const InputDecoration(labelText: 'حداقل مبلغ سفارش (تومان)'),
       ),
       TextField(
         controller: startsCtrl,
@@ -277,7 +283,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
             children: _categories.where((c) => c.isActive).map((c) {
               final selected = selectedCategories.contains(c.id);
               return FilterChip(
-                label: Text(c.categoryName, style: const TextStyle(fontSize: 12)),
+                label:
+                    Text(c.categoryName, style: const TextStyle(fontSize: 12)),
                 selected: selected,
                 onSelected: (v) => setDialogState(() {
                   if (v) {
@@ -342,28 +349,38 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
 
   Future<void> _showForm({Map<String, dynamic>? item}) async {
     if (!_isSilverOrAbove) return;
-    if (item == null && !_isGold && _items.length >= LicenseHelper.silverPromoMax) {
+    if (item == null &&
+        !_isGold &&
+        _items.length >= LicenseHelper.silverPromoMax) {
       showMsg(
-        msg: 'در لایسنس نقره‌ای حداکثر ${LicenseHelper.silverPromoMax} کد تخفیف مجاز است.',
+        msg:
+            'در لایسنس نقره‌ای حداکثر ${LicenseHelper.silverPromoMax} کد تخفیف مجاز است.',
         context: context,
         type: 'error',
       );
       return;
     }
 
-    final codeCtrl = TextEditingController(text: item?['code']?.toString() ?? '');
-    final valueCtrl = TextEditingController(text: item?['value']?.toString() ?? '10');
-    final maxUsesCtrl = TextEditingController(text: item?['max_uses']?.toString() ?? '');
-    final maxPerUserCtrl =
-        TextEditingController(text: item?['max_uses_per_user']?.toString() ?? '1');
-    final minOrderCtrl =
-        TextEditingController(text: item?['min_order_amount']?.toString() ?? '');
-    final startsCtrl = TextEditingController(text: item?['starts_at']?.toString() ?? '');
-    final expiresCtrl = TextEditingController(text: item?['expires_at']?.toString() ?? '');
+    final codeCtrl =
+        TextEditingController(text: item?['code']?.toString() ?? '');
+    final valueCtrl =
+        TextEditingController(text: item?['value']?.toString() ?? '10');
+    final maxUsesCtrl =
+        TextEditingController(text: item?['max_uses']?.toString() ?? '');
+    final maxPerUserCtrl = TextEditingController(
+        text: item?['max_uses_per_user']?.toString() ?? '1');
+    final minOrderCtrl = TextEditingController(
+        text: item?['min_order_amount']?.toString() ?? '');
+    final startsCtrl =
+        TextEditingController(text: item?['starts_at']?.toString() ?? '');
+    final expiresCtrl =
+        TextEditingController(text: item?['expires_at']?.toString() ?? '');
     String type = item?['type']?.toString() ?? 'percent';
     bool isActive = item?['is_active'] == true || item == null;
-    final selectedCategories = _parseIdList(item?['allowed_category_ids']).toSet();
-    final selectedGroups = _parseIdList(item?['allowed_user_group_ids']).toSet();
+    final selectedCategories =
+        _parseIdList(item?['allowed_category_ids']).toSet();
+    final selectedGroups =
+        _parseIdList(item?['allowed_user_group_ids']).toSet();
 
     final ok = await showDialog<bool>(
       context: context,
@@ -386,7 +403,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
                   startsCtrl: startsCtrl,
                   expiresCtrl: expiresCtrl,
                   type: type,
-                  onTypeChanged: (v) => setDialogState(() => type = v ?? 'percent'),
+                  onTypeChanged: (v) =>
+                      setDialogState(() => type = v ?? 'percent'),
                   isActive: isActive,
                   onActiveChanged: (v) => setDialogState(() => isActive = v),
                   selectedCategories: selectedCategories,
@@ -496,7 +514,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
                 Text(
                   'استفاده: ${item['used_count'] ?? 0}'
                   '${item['max_uses'] != null ? ' / ${item['max_uses']}' : ''}',
-                  style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
+                  style:
+                      TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
                 ),
                 if (catCount > 0 || grpCount > 0) ...[
                   const SizedBox(height: 4),
@@ -504,7 +523,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
                     '${catCount > 0 ? '$catCount بسته' : ''}'
                     '${catCount > 0 && grpCount > 0 ? ' · ' : ''}'
                     '${grpCount > 0 ? '$grpCount گروه' : ''}',
-                    style: TextStyle(color: AppStyle.primaryColor, fontSize: 12),
+                    style:
+                        TextStyle(color: AppStyle.primaryColor, fontSize: 12),
                   ),
                 ],
                 const Spacer(),
@@ -538,8 +558,10 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
         children: [
           _sectionHeader(context, 'عملیات'),
           const Divider(height: 24),
-          Text('کل کدها: ${_items.length}', style: TextStyle(color: AppStyle.deactiveStatus)),
-          Text('فعال: $activeCount', style: TextStyle(color: AppStyle.deactiveStatus)),
+          Text('کل کدها: ${_items.length}',
+              style: TextStyle(color: AppStyle.deactiveStatus)),
+          Text('فعال: $activeCount',
+              style: TextStyle(color: AppStyle.deactiveStatus)),
           if (!_isGold)
             Text(
               'حداکثر ${LicenseHelper.silverPromoMax} کد در نقره‌ای',
@@ -634,7 +656,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
       child: Text(
         'نسخه نقره‌ای: حداکثر ${LicenseHelper.silverPromoMax} کد ساده. '
         'برای محدودیت بسته/گروه، تاریخچه و نوع دلاری به طلایی ارتقا دهید.',
-        style: TextStyle(color: AppStyle.deactiveStatus, height: 1.5, fontSize: 13),
+        style: TextStyle(
+            color: AppStyle.deactiveStatus, height: 1.5, fontSize: 13),
       ),
     );
   }
@@ -648,7 +671,8 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
           children: [
             Icon(Icons.lock_outline, size: 64, color: AppStyle.deactiveStatus),
             const SizedBox(height: 16),
-            const Text('کدهای تخفیف', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('کدهای تخفیف',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               'این بخش از لایسنس نقره‌ای به بالا فعال است.',

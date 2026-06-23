@@ -22,6 +22,21 @@ class AdvancedSettingModel {
     'compact_button': 'دکمه فشرده (نام کوتاه + قیمت)',
   };
 
+  static const Set<String> botButtonCustomizationKeys = {
+    'bot_reply_buttons_per_row',
+    'bot_inline_buttons_per_row',
+    'bot_package_buttons_per_row',
+    'bot_reply_keyboard_persistent',
+    'bot_main_menu_first_item_alone',
+    'bot_button_style_rules',
+    packageButtonLayoutKey,
+  };
+
+  static bool isHiddenFromAdvancedSettings(String name) {
+    return name == 'bot_show_one_row_config' ||
+        botButtonCustomizationKeys.contains(name);
+  }
+
   static bool isChoiceSetting(String name) {
     return name == packageButtonLayoutKey;
   }

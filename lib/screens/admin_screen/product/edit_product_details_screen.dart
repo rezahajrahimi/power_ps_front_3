@@ -185,7 +185,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         _userGroups = (groupsData?['groups'] as List<UserGroup>?) ?? [];
         _allowedGroupIds
           ..clear()
-          ..addAll(widget.selectedProductCategory.allowedUserGroupIds ?? const []);
+          ..addAll(
+              widget.selectedProductCategory.allowedUserGroupIds ?? const []);
         _upsellCategoryId = widget.selectedProductCategory.upsellCategoryId;
         _allCategories = categories is List<ProductCategory> ? categories : [];
 
@@ -300,9 +301,11 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
 
   _productInfoTabCard(BuildContext context) {
     _productDetailsWidgetLIst.clear();
-    bool isSanaei = getPanelTypeFromDropdownLabel(_selectedPannelName) == 'sanaei';
+    bool isSanaei =
+        getPanelTypeFromDropdownLabel(_selectedPannelName) == 'sanaei';
     bool isHiddify = _selectedPannelName.contains("Hiddify");
-    bool supportsConfigToggle = panelDropdownSupportsConfigToggle(_selectedPannelName);
+    bool supportsConfigToggle =
+        panelDropdownSupportsConfigToggle(_selectedPannelName);
 
     _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
       controller: _nameEditText,
@@ -552,7 +555,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           Text('محدودیت گروه کاربری (اختیاری)',
               style: theme.textTheme.bodyLarge),
           const SizedBox(height: 4),
-          Text(helper, style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12)),
+          Text(helper,
+              style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12)),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -612,7 +616,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.workspace_premium, color: Colors.amber.shade400, size: 22),
+            Icon(Icons.workspace_premium,
+                color: Colors.amber.shade400, size: 22),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -653,7 +658,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<int?>(
-            value: _upsellCategoryId,
+            initialValue: _upsellCategoryId,
             decoration: const InputDecoration(
               labelText: 'بسته پیشنهادی',
               border: OutlineInputBorder(),

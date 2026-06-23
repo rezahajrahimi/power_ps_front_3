@@ -23,7 +23,8 @@ class AdvancedSettingChoiceWidget extends StatefulWidget {
       _AdvancedSettingChoiceWidgetState();
 }
 
-class _AdvancedSettingChoiceWidgetState extends State<AdvancedSettingChoiceWidget> {
+class _AdvancedSettingChoiceWidgetState
+    extends State<AdvancedSettingChoiceWidget> {
   late String _selectedValue;
 
   @override
@@ -102,7 +103,7 @@ class _AdvancedSettingChoiceWidgetState extends State<AdvancedSettingChoiceWidge
           ),
           SizedBox(height: AppStyle.defaultPadding),
           DropdownButtonFormField<String>(
-            value: _selectedValue,
+            initialValue: _selectedValue,
             isExpanded: true,
             dropdownColor: AppStyle.secondaryColor,
             selectedItemBuilder: (context) => widget.options.entries

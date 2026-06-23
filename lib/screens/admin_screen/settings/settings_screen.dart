@@ -28,6 +28,7 @@ import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/widgets/public/license_gate_dialog.dart';
 import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/appinfo/app_info_manage_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/bot_buttons/bot_button_config_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -144,7 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _advancedSettingWidgetList.clear();
         _advancedSettingChoiceWidgetList.clear();
         for (var item in value) {
-          if (item.name == 'bot_show_one_row_config') {
+          if (AdvancedSettingModel.isHiddenFromAdvancedSettings(item.name)) {
             continue;
           }
 
@@ -433,6 +434,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   _operationInfoCard(BuildContext context) {
     List<Widget> actionsWidgetList = [
+      _buildSettingButton(
+        context: context,
+        label: "شخصی‌سازی دکمه‌ها",
+        icon: Icons.smart_button_outlined,
+        tierBadge: 'نقره‌ای',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'شخصی‌سازی دکمه‌های ربات',
+          message:
+              'رنگ، چیدمان و استایل دکمه‌های ربات را در لایسنس نقره‌ای و طلایی تنظیم کنید.',
+          requiredTier: 'نقره‌ای',
+          screen: const BotButtonConfigScreen(),
+        ),
+      ),
       _buildSettingButton(
         context: context,
         label: "تغییر متن منوها",

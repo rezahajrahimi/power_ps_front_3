@@ -648,7 +648,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                         ? null
                                         : () {
                                             final id = int.tryParse(
-                                                _selectedPannelName.split(':')[0]);
+                                                _selectedPannelName
+                                                    .split(':')[0]);
                                             if (id == null) return;
                                             runSanaeiInboundSync(
                                               context,
@@ -694,14 +695,16 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                       _buildSwitchTile(
                                         'نمایش لینک پنل',
                                         _showPannelLink,
-                                        (v) => setState(() => _showPannelLink = v),
+                                        (v) =>
+                                            setState(() => _showPannelLink = v),
                                       ),
                                     if (panelDropdownSupportsConfigToggle(
                                         _selectedPannelName))
                                       _buildSwitchTile(
                                         'ارسال کانفیگ به کاربر',
                                         _sendConfigToUser,
-                                        (v) => setState(() => _sendConfigToUser = v),
+                                        (v) => setState(
+                                            () => _sendConfigToUser = v),
                                       ),
                                     _buildSwitchTile(
                                       'قابلیت شارژ مجدد',
@@ -829,7 +832,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.workspace_premium, color: Colors.amber.shade400, size: 22),
+            Icon(Icons.workspace_premium,
+                color: Colors.amber.shade400, size: 22),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -862,7 +866,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
           const Text('پیشنهاد ارتقا (Upsell)'),
           const SizedBox(height: 8),
           DropdownButtonFormField<int?>(
-            value: _upsellCategoryId,
+            initialValue: _upsellCategoryId,
             decoration: const InputDecoration(
               labelText: 'بسته پیشنهادی هنگام خرید',
               border: OutlineInputBorder(),
@@ -977,9 +981,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         expDay: int.parse(_expireDayEditText.text),
         volume: int.parse(_volumeEditText.text),
         rechargable: _rechargable,
-        showPannelLink: _selectedPannelName.contains("Hiddify")
-            ? _showPannelLink
-            : false,
+        showPannelLink:
+            _selectedPannelName.contains("Hiddify") ? _showPannelLink : false,
         showSubscriptionLink: _showSubscriptionLink,
         sendConfigToUser: panelDropdownSupportsConfigToggle(_selectedPannelName)
             ? _sendConfigToUser

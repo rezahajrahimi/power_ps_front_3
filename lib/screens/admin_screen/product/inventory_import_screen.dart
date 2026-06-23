@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1019,9 +1017,8 @@ class _InventoryImportScreenState extends State<InventoryImportScreen>
       if (!mounted) return;
       if (result != null) {
         showMsg(
-          msg: kIsWeb
-              ? 'فایل نمونه دانلود شد'
-              : 'فایل نمونه ذخیره شد:\n$result',
+          msg:
+              kIsWeb ? 'فایل نمونه دانلود شد' : 'فایل نمونه ذخیره شد:\n$result',
           context: context,
           type: 'success',
         );
