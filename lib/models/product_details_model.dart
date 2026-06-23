@@ -48,11 +48,15 @@ class ProductDetails {
       panelLink: json['panel_link'].toString(),
       isActive: json['isActive'] == null
           ? null
-          : int.parse(json['isActive'].toString()) == 1 ||
+          : json['isActive'] == true ||
+              json['isActive'] == 1 ||
+              json['isActive'].toString() == '1' ||
               json['isActive'].toString() == 'true',
       deactiveByAdmin: json['deactive_by_admin'] == null
           ? false
-          : int.parse(json['deactive_by_admin'].toString()) == 1 ||
+          : json['deactive_by_admin'] == true ||
+              json['deactive_by_admin'] == 1 ||
+              json['deactive_by_admin'].toString() == '1' ||
               json['deactive_by_admin'].toString() == 'true',
       createdAt: json['created_at'].toString(),
       updatedAt: json['updated_at'].toString(),
