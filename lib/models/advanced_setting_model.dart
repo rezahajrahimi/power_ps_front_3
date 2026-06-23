@@ -1,5 +1,12 @@
+import 'package:powerps/helper/license_helper.dart';
+
 class AdvancedSettingModel {
   static const String packageButtonLayoutKey = 'bot_package_button_layout';
+
+  static const Set<String> goldTierSettings = {
+    'bot_auto_set_price_by_dollar_price',
+    'bot_calculate_product_category_price_in_dollar_by_toman',
+  };
 
   static const Map<String, String> defaultDescriptions = {
     'bot_show_configs_by_panels_category':
@@ -43,6 +50,35 @@ class AdvancedSettingModel {
 
   static bool isChoiceSetting(String name) {
     return name == packageButtonLayoutKey;
+  }
+
+  static AdvancedSettingLicenseTier? tierBadgeType(String name) {
+    if (isHiddenFromAdvancedSettings(name)) {
+      return null;
+    }
+    if (goldTierSettings.contains(name)) {
+      return AdvancedSettingLicenseTier.gold;
+    }
+    return AdvancedSettingLicenseTier.silver;
+  }
+
+  static bool isAllowedForLicense(String name, String licenseType) {
+    final tier = tierBadgeType(name);
+    if (tier == null) {
+      return true;
+    }
+    switch (tier) {
+      case AdvancedSettingLicenseTier.gold:
+        return LicenseHelper.isGold(licenseType);
+      case AdvancedSettingLicenseTier.silver:
+        return LicenseHelper.isSilverOrAbove(licenseType);
+    }
+  }
+
+  static String requiredTierLabel(String name) {
+    return tierBadgeType(name) == AdvancedSettingLicenseTier.gold
+        ? 'طلایی'
+        : 'نقره‌ای';
   }
 
   static String packageButtonLayoutLabel(String value) {

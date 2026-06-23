@@ -39,3 +39,5 @@ class LicenseHelper {
     }
   }
 }
+
+enum AdvancedSettingLicenseTier { silver, gold }

@@ -209,6 +209,8 @@ Future<bool> changeAdvancedSettingValue({
 
     if (response.statusCode == 200 && response.data != null) {
       return true;
+    } else if (response.statusCode == 403) {
+      return false;
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -219,6 +221,9 @@ Future<bool> changeAdvancedSettingValue({
       return false;
     }
   } on DioException catch (e) {
+    if (e.response?.statusCode == 403) {
+      return false;
+    }
     debugPrint(e.message.toString());
     return false;
   } catch (e) {

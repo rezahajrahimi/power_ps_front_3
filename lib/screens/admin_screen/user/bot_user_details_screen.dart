@@ -256,6 +256,13 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               icon: const Icon(Icons.person_outline, color: Colors.green),
               itemName: "نام",
               itemValue: "${_botUser!.firstName} ${_botUser!.lastName}")),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+              icon: const Icon(Icons.phone_android_outlined, color: Colors.cyan),
+              itemName: "شماره موبایل تاییدشده",
+              itemValue: _botUser!.phoneNumber?.isNotEmpty == true
+                  ? _botUser!.phoneNumber!
+                  : "ثبت نشده")),
       if (_botUser!.adminAlias != null && _botUser!.adminAlias!.isNotEmpty)
         DetailsInfoItemWidget(
             item: DetailsInfoItem(

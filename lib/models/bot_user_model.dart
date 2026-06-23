@@ -14,6 +14,7 @@ class BotUser {
   String? username;
   String? firstName;
   String? lastName;
+  String? phoneNumber;
   String? adminAlias;
   String createdAt;
   String updatedAt;
@@ -30,6 +31,7 @@ class BotUser {
       required this.username,
       required this.firstName,
       required this.lastName,
+      this.phoneNumber,
       this.adminAlias,
       required this.createdAt,
       required this.updatedAt,
@@ -52,6 +54,9 @@ class BotUser {
       firstName:
           json['first_name'] != null ? json['first_name'].toString() : "",
       lastName: json['last_name'] != null ? json['last_name'].toString() : "",
+      phoneNumber: json['phone_number']?.toString().trim().isEmpty == true
+          ? null
+          : json['phone_number']?.toString(),
       adminAlias: json['admin_alias']?.toString().trim().isEmpty == true
           ? null
           : json['admin_alias']?.toString(),
@@ -89,6 +94,7 @@ class BotUser {
       'username': username,
       'firstName': firstName,
       'lastName': lastName,
+      'phoneNumber': phoneNumber,
       'adminAlias': adminAlias,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -105,6 +111,7 @@ class BotUser {
       username: map['username'],
       firstName: map['firstName'],
       lastName: map['lastName'],
+      phoneNumber: map['phoneNumber'],
       adminAlias: map['adminAlias'],
       createdAt: map['createdAt'] ?? '',
       updatedAt: map['updatedAt'] ?? '',

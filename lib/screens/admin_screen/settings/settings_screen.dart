@@ -32,6 +32,7 @@ import 'package:powerps/screens/admin_screen/settings/bot_buttons/bot_button_con
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:powerps/widgets/public/license_tier_badge.dart';
 import 'package:powerps/widgets/setting/advanced_setting_info_widget.dart';
 import 'package:powerps/widgets/setting/advanced_setting_choice_widget.dart';
 
@@ -53,9 +54,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final List<Widget> _advancedSettingChoiceWidgetList = [];
   @override
   void initState() {
-    _fillData();
-    _loadLicenseType();
     super.initState();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _loadLicenseType();
+    await _fillData();
   }
 
   bool get _isGoldLicense => LicenseHelper.isGold(_licenseType);
@@ -119,38 +124,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _fillData() async {
-    await getBotSetting().then((value) {
-      if (!mounted) return;
-      if (null != value) {
-        setState(() {
-          _setting = value;
-          _showData = true;
-        });
-      } else {
-        setState(() {
-          _setting = Setting(
-              adminId: "تعریف نشده",
-              botName: "تعریف نشده",
-              botToken: "تعریف نشده",
-              id: "تعریف نشده",
-              panelAddress: "لینک هسته ربات را وارد کنید");
-          _showData = true;
-        });
-      }
-    });
-    await getBotAdvancedSetting().then((value) {
-      if (!mounted) return;
-      if (value.isNotEmpty && value != null) {
-        _advancedSettingWidgetList.clear();
-        _advancedSettingChoiceWidgetList.clear();
-        for (var item in value) {
-          if (AdvancedSettingModel.isHiddenFromAdvancedSettings(item.name)) {
-            continue;
-          }
+  Future<void> _fillData() async {
+    final setting = await getBotSetting();
+    if (!mounted) return;
+    if (setting != null) {
+      setState(() {
+        _setting = setting;
+        _showData = true;
+      });
+    } else {
+      setState(() {
+        _setting = Setting(
+          adminId: "تعریف نشده",
+          botName: "تعریف نشده",
+          botToken: "تعریف نشده",
+          id: "تعریف نشده",
+          panelAddress: "لینک هسته ربات را وارد کنید",
+        );
+        _showData = true;
+      });
+    }
 
-          if (AdvancedSettingModel.isChoiceSetting(item.name)) {
-            _advancedSettingChoiceWidgetList.add(AdvancedSettingChoiceWidget(
+    final value = await getBotAdvancedSetting();
+    if (!mounted) return;
+    if (value.isNotEmpty && value != null) {
+      _advancedSettingWidgetList.clear();
+      _advancedSettingChoiceWidgetList.clear();
+      for (var item in value) {
+        if (AdvancedSettingModel.isHiddenFromAdvancedSettings(item.name)) {
+          continue;
+        }
+
+        final allowed = AdvancedSettingModel.isAllowedForLicense(
+          item.name,
+          _licenseType,
+        );
+        final requiredTier = AdvancedSettingModel.requiredTierLabel(item.name);
+
+        if (AdvancedSettingModel.isChoiceSetting(item.name)) {
+          _advancedSettingChoiceWidgetList.add(
+            AdvancedSettingChoiceWidget(
               name: item.name,
               value: item.value,
               options: AdvancedSettingModel.packageButtonLayoutOptions,
@@ -158,24 +171,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 item.name,
                 item.description,
               ),
-            ));
-            continue;
-          }
+              locked: !allowed,
+              requiredTier: requiredTier,
+            ),
+          );
+          continue;
+        }
 
-          _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
-            state: item.value == "true" ? true : false,
+        _advancedSettingWidgetList.add(
+          AdvancedSettingInfoWidget(
+            state: item.value == "true",
             description: AdvancedSettingModel.displayDescription(
               item.name,
               item.description,
             ),
             name: item.name,
-          ));
-        }
-        setState(() {
-          _showAdvancedSetting = true;
-        });
+            locked: !allowed,
+            requiredTier: requiredTier,
+          ),
+        );
       }
-    });
+      setState(() {
+        _showAdvancedSetting = true;
+      });
+    }
   }
 
   _content(BuildContext context) {
@@ -718,16 +737,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               IconButton(
                 tooltip: "بازنشانی تنظیمات پیش فرض",
-                onPressed: () async {
-                  _advancedSettingWidgetList.clear();
-                  _advancedSettingChoiceWidgetList.clear();
-                  _restoreAdvancedSettings();
-                },
+                onPressed: _isSilverOrAbove
+                    ? () async {
+                        _advancedSettingWidgetList.clear();
+                        _advancedSettingChoiceWidgetList.clear();
+                        _restoreAdvancedSettings();
+                      }
+                    : () => showLicenseGateDialog(
+                          context: context,
+                          title: 'بازنشانی تنظیمات پیشرفته',
+                          message:
+                              'بازنشانی تنظیمات پیشرفته در لایسنس نقره‌ای و طلایی فعال است.',
+                          requiredTier: 'نقره‌ای',
+                        ),
                 icon: const Icon(Icons.refresh, color: Colors.white70),
               ),
             ],
           ),
           const Divider(height: 32, color: Colors.white10),
+          _advancedSettingsLicenseLegend(),
+          if (!_isSilverOrAbove) ...[
+            SizedBox(height: AppStyle.defaultPadding),
+            _advancedSettingsBronzeBanner(),
+          ],
+          SizedBox(height: AppStyle.defaultPadding),
           if (_advancedSettingChoiceWidgetList.isNotEmpty) ...[
             ..._advancedSettingChoiceWidgetList,
             SizedBox(height: AppStyle.defaultPadding),
@@ -752,6 +785,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _advancedSettingsLicenseLegend() {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          'راهنمای برچسب‌ها:',
+          style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+        ),
+        const LicenseTierBadge(tier: LicenseTierBadgeType.silver, compact: true),
+        Text(
+          'نقره‌ای و طلایی',
+          style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+        ),
+        const LicenseTierBadge(tier: LicenseTierBadgeType.gold, compact: true),
+        Text(
+          'فقط طلایی',
+          style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _advancedSettingsBronzeBanner() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: Colors.orangeAccent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        'تنظیمات پیشرفته در لایسنس نقره‌ای و طلایی فعال می‌شود. '
+        'برخی گزینه‌ها (مثل قیمت‌گذاری خودکار دلار) فقط در لایسنس طلایی در دسترس هستند.',
+        style: TextStyle(color: AppStyle.deactiveStatus, height: 1.5, fontSize: 13),
       ),
     );
   }
