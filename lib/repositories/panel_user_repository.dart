@@ -26,29 +26,28 @@ Future<dynamic> getUserInfo() async {
   }
 }
 
-Future<bool> updateUser({required User user, required String password}) async {
+Future<bool> updateUser({required User user, String? password}) async {
   try {
-    Response response = await GenaralApi.dio.put("/api/updateUser", data: {
+    final data = <String, dynamic>{
       "name": user.name,
-      "password": password,
       "account_id": user.accountId,
       "id": user.id,
-      "role": user.role
-    });
-
-    if (response.statusCode == 200 && response.data != null && response.data['user'] != null) {
-      User user = User.fromJson(response.data["user"]);
-      AuthChangeController().setUser(user);
-      return true;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
+      "role": user.role,
+    };
+    if (password != null && password.isNotEmpty) {
+      data["password"] = password;
     }
+
+    Response response = await GenaralApi.dio.put("/api/updateUser", data: data);
+
+    if (response.statusCode == 200 &&
+        response.data != null &&
+        response.data['user'] != null) {
+      User updatedUser = User.fromJson(response.data["user"]);
+      AuthChangeController().setUser(updatedUser);
+      return true;
+    }
+    return false;
   } on DioException catch (e) {
     debugPrint(e.message.toString());
     return false;
@@ -62,17 +61,14 @@ Future<bool> updateUserPassword({required String password}) async {
       "password": password,
     });
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 &&
+        response.data != null &&
+        response.data['user'] != null) {
+      User updatedUser = User.fromJson(response.data['user']);
+      AuthChangeController().setUser(updatedUser);
       return true;
-    } else if (response.statusCode == 200) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
     }
+    return false;
   } on DioException catch (e) {
     debugPrint(e.message.toString());
     return false;
@@ -208,17 +204,10 @@ changeAgentPassword({required String password}) async {
       "password": password,
     });
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200) {
       return true;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
     }
+    return false;
   } on DioException catch (e) {
     debugPrint(e.message.toString());
     return false;
