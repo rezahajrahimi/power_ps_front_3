@@ -4,6 +4,7 @@ import 'package:powerps/models/ballance_model.dart';
 import 'package:powerps/models/blocked_user_model.dart';
 import 'package:powerps/models/log_model.dart';
 import 'package:powerps/models/product_details_model.dart';
+import 'package:powerps/models/loyalty_wallet_model.dart';
 import 'package:powerps/models/referral_wallet_model.dart';
 import 'package:powerps/models/transaction_model.dart';
 import 'package:powerps/models/user_model.dart';
@@ -23,6 +24,7 @@ class BotUser {
   List<Transaction>? transactions = [];
   Ballance? ballance;
   ReferralWalletModel? referralWallet;
+  LoyaltyWalletModel? loyaltyWallet;
   BlockedUserModel? blockedUser;
   User? panelUser;
   BotUser(
@@ -38,6 +40,7 @@ class BotUser {
       this.logs,
       this.ballance,
       this.referralWallet,
+      this.loyaltyWallet,
       this.transactions,
       this.products,
       this.blockedUser,
@@ -67,6 +70,10 @@ class BotUser {
       referralWallet:
           json['user'] != null && json['user']['referral_wallet'] != null
               ? ReferralWalletModel.fromJson(json['user']['referral_wallet'])
+              : null,
+      loyaltyWallet:
+          json['user'] != null && json['user']['loyalty_wallet'] != null
+              ? LoyaltyWalletModel.fromJson(json['user']['loyalty_wallet'])
               : null,
       logs: json['logs'] != null
           ? List<Log>.from(

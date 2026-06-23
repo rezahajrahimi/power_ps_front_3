@@ -17,6 +17,7 @@ import 'package:powerps/screens/admin_screen/settings/pannel/pannel_screen.dart'
 import 'package:powerps/screens/admin_screen/settings/payment_type/payment_type_details_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/user_groups/user_groups_manage_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/loyalty/loyalty_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/promo/promo_codes_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/marketing/marketing_campaign_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/reports/group_operations_screen.dart';
@@ -598,6 +599,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'با لایسنس طلایی نام، رنگ، لوگو و فوتر پنل را شخصی‌سازی کنید و برند PowerPS را مخفی کنید.',
           requiredTier: 'طلایی',
           screen: const AppInfoManageScreen(),
+        ),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "باشگاه مشتریان",
+        icon: Icons.stars_outlined,
+        tierBadge: 'نقره',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'باشگاه مشتریان',
+          message:
+              'سیستم امتیازدهی و استفاده از امتیاز در خرید برای لایسنس نقره‌ای و طلایی فعال است.',
+          requiredTier: 'نقره‌ای',
+          screen: const LoyaltyScreen(),
         ),
       ),
       _buildSettingButton(

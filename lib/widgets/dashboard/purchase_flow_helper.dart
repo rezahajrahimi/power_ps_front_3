@@ -4,6 +4,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
+import 'package:powerps/repositories/loyalty_setting_repository.dart';
 import 'package:powerps/repositories/webapp_user_repository.dart';
 import 'package:powerps/widgets/dashboard/mobile_verification_helper.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -48,10 +49,21 @@ class PurchaseFlowHelper {
   }) async {
     final remarkController = TextEditingController();
     final promoController = TextEditingController();
-    Map<String, dynamic>? promoPreview;
-    bool validatingPromo = false;
     final packageNameHint = await getWebAppPackageNameHint();
+    final loyaltyInfo = await getWebAppLoyaltyInfo();
     if (!context.mounted) return;
+
+    bool useLoyaltyPoints = loyaltyInfo?['is_active'] == true &&
+        loyaltyInfo?['redeem_enabled'] == true;
+    Map<String, dynamic>? loyaltyPreview;
+    if (useLoyaltyPoints) {
+      loyaltyPreview = await validateLoyaltyRedemption(
+        orderAmountToman: product.price.toDouble(),
+        useLoyaltyPoints: true,
+      );
+    }
+    bool validatingPromo = false;
+    Map<String, dynamic>? promoPreview;
 
     if (userRole == 'user') {
       final canPurchase =
@@ -64,10 +76,33 @@ class PurchaseFlowHelper {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setLocalState) {
+            final Map<String, dynamic>? preview = promoPreview;
+            final discountedToman = preview != null && preview['valid'] == true
+                ? preview['final_price_toman']
+                : null;
+
+            Future<void> refreshLoyaltyPreview() async {
+              if (!useLoyaltyPoints) {
+                setLocalState(() => loyaltyPreview = null);
+                return;
+              }
+              final basePrice = discountedToman != null
+                  ? double.tryParse(discountedToman.toString()) ??
+                      product.price.toDouble()
+                  : product.price.toDouble();
+              final result = await validateLoyaltyRedemption(
+                orderAmountToman: basePrice,
+                useLoyaltyPoints: true,
+              );
+              if (!context.mounted) return;
+              setLocalState(() => loyaltyPreview = result);
+            }
+
             Future<void> validatePromo() async {
               final code = promoController.text.trim();
               if (code.isEmpty) {
                 setLocalState(() => promoPreview = null);
+                await refreshLoyaltyPreview();
                 return;
               }
               setLocalState(() => validatingPromo = true);
@@ -80,12 +115,12 @@ class PurchaseFlowHelper {
                 validatingPromo = false;
                 promoPreview = result;
               });
+              await refreshLoyaltyPreview();
             }
 
-            final Map<String, dynamic>? preview = promoPreview;
-            final discountedToman = preview != null && preview['valid'] == true
-                ? preview['final_price_toman']
-                : null;
+            final finalPrice = loyaltyPreview?['final_price_toman'] ??
+                discountedToman ??
+                product.price;
 
             return Directionality(
               textDirection: TextDirection.rtl,
@@ -99,10 +134,32 @@ class PurchaseFlowHelper {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          '${thousandSeperatorFormatter(product.price.toString())} تومان'
-                          '${discountedToman != null ? ' → ${thousandSeperatorFormatter(discountedToman.toString())} تومان' : ''}',
+                          'مبلغ نهایی: ${thousandSeperatorFormatter(finalPrice.toString())} تومان',
                           style: const TextStyle(color: Colors.white70),
                         ),
+                        if (loyaltyInfo?['is_active'] == true &&
+                            loyaltyInfo?['redeem_enabled'] == true)
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              'استفاده از امتیاز (${loyaltyInfo?['balance'] ?? 0} امتیاز)',
+                            ),
+                            value: useLoyaltyPoints,
+                            onChanged: (value) async {
+                              useLoyaltyPoints = value;
+                              setLocalState(() {});
+                              await refreshLoyaltyPreview();
+                            },
+                          ),
+                        if (loyaltyPreview?['toman_discount'] != null &&
+                            (loyaltyPreview?['toman_discount'] as num) > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'تخفیف امتیاز: ${thousandSeperatorFormatter((loyaltyPreview?['toman_discount'] ?? 0).toString())} تومان',
+                              style: const TextStyle(color: Colors.amber),
+                            ),
+                          ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: remarkController,
@@ -203,6 +260,7 @@ class PurchaseFlowHelper {
                         remark: remark,
                         promoCode:
                             promoCode.isEmpty ? null : promoCode,
+                        useLoyaltyPoints: useLoyaltyPoints,
                       );
                       EasyLoading.dismiss();
                       if (!dialogContext.mounted) return;
@@ -248,6 +306,7 @@ class PurchaseFlowHelper {
     required ProductCategory product,
     required String remark,
     String? promoCode,
+    bool useLoyaltyPoints = true,
   }) async {
     dynamic val;
     if (userRole == 'agent') {
@@ -255,12 +314,14 @@ class PurchaseFlowHelper {
         productID: product.id,
         remark: remark,
         promoCode: promoCode,
+        useLoyaltyPoints: useLoyaltyPoints,
       );
     } else {
       val = await buyProductByUserWithPrID(
         productID: product.id,
         remark: remark,
         promoCode: promoCode,
+        useLoyaltyPoints: useLoyaltyPoints,
       );
     }
 

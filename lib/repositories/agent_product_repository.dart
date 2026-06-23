@@ -314,6 +314,7 @@ Future buyProductByAgentWithPrID({
   required int productID,
   required String remark,
   String? promoCode,
+  bool useLoyaltyPoints = true,
 }) async {
   try {
     Response response =
@@ -323,6 +324,7 @@ Future buyProductByAgentWithPrID({
               "remark": remark,
               if (promoCode != null && promoCode.isNotEmpty)
                 "promo_code": promoCode,
+              "use_loyalty_points": useLoyaltyPoints,
             },
             options: Options(headers: {
               'Accept': 'application/json',
@@ -352,6 +354,7 @@ Future buyProductByUserWithPrID({
   required int productID,
   required String remark,
   String? promoCode,
+  bool useLoyaltyPoints = true,
 }) async {
   try {
     Response response =
@@ -361,6 +364,7 @@ Future buyProductByUserWithPrID({
               "remark": remark,
               if (promoCode != null && promoCode.isNotEmpty)
                 "promo_code": promoCode,
+              "use_loyalty_points": useLoyaltyPoints,
             },
             options: Options(headers: {
               'Accept': 'application/json',

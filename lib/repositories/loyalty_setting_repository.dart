@@ -1,0 +1,211 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:powerps/helper/connector/dio.dart';
+import 'package:powerps/models/loyalty_setting_model.dart';
+import 'package:powerps/models/loyalty_transaction_model.dart';
+
+Future<LoyaltySettingModel?> getLoyaltySetting() async {
+  try {
+    final response = await GenaralApi.dio.get(
+      '/api/getLoyaltySetting',
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      return LoyaltySettingModel.fromMap(
+          Map<String, dynamic>.from(response.data));
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<bool> updateLoyaltySetting(LoyaltySettingModel model) async {
+  try {
+    final response = await GenaralApi.dio.put(
+      '/api/updateLoyaltySetting',
+      data: model.toApiMap(),
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    return response.statusCode == 200;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
+
+Future<bool> setLoyaltyPointsBalance({
+  required int balance,
+  required int userID,
+}) async {
+  try {
+    final response = await GenaralApi.dio.put(
+      '/api/editLoyaltyPointsByAccountId',
+      data: {
+        'balance': balance,
+        'account_id': userID,
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    return response.statusCode == 200 &&
+        response.data is Map &&
+        (response.data['success'] == true || response.data['success'] == 1);
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return false;
+  }
+}
+
+Future<List<LoyaltyTransactionModel>?> getAllLoyaltyLogs() async {
+  try {
+    final response = await GenaralApi.dio.get(
+      '/api/getAllLoyaltyLogs',
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data is List) {
+      return (response.data as List)
+          .map((e) => LoyaltyTransactionModel.fromMap(
+              Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return [];
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<List<Map<String, dynamic>>?> getTopLoyaltyUsers() async {
+  try {
+    final response = await GenaralApi.dio.get(
+      '/api/getTopLoyaltyUsers',
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data is List) {
+      return List<Map<String, dynamic>>.from(
+        (response.data as List).map((e) => Map<String, dynamic>.from(e)),
+      );
+    }
+    return [];
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<List<LoyaltyTransactionModel>?> getLoyaltyLogsByAccountId({
+  required int userID,
+}) async {
+  try {
+    final response = await GenaralApi.dio.get(
+      '/api/getLoyaltyLogsByAccountId/$userID',
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data is List) {
+      return (response.data as List)
+          .map((e) => LoyaltyTransactionModel.fromMap(
+              Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return [];
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<Map<String, dynamic>?> validateLoyaltyRedemption({
+  required double orderAmountToman,
+  bool useLoyaltyPoints = true,
+}) async {
+  try {
+    final response = await GenaralApi.dio.post(
+      '/api/webapp/validate-loyalty-redemption',
+      data: {
+        'order_amount_toman': orderAmountToman,
+        'use_loyalty_points': useLoyaltyPoints,
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future<Map<String, dynamic>?> getWebAppLoyaltyInfo() async {
+  try {
+    final response = await GenaralApi.dio.get(
+      '/api/webapp/loyalty-info',
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}

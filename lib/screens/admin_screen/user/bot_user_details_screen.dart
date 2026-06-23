@@ -6,6 +6,7 @@ import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/repositories/blocked_user_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/repositories/product_details_repository.dart';
+import 'package:powerps/repositories/loyalty_setting_repository.dart';
 import 'package:powerps/repositories/referral_setting_repository.dart';
 import 'package:powerps/widgets/product_details/user_bougth_products_info_card_widget.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +26,9 @@ import 'package:powerps/widgets/public/user_verification_toggle_widget.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:powerps/models/loyalty_wallet_model.dart';
 import 'package:powerps/models/referral_wallet_model.dart';
+import 'package:powerps/screens/admin_screen/user/loyalty/loyalty_report_screen.dart';
 import 'package:powerps/screens/admin_screen/user/referral/referral_report_screen.dart';
 import 'package:powerps/widgets/transaction/transaction_info_item_widget.dart';
 
@@ -179,6 +182,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     if (Responsive.isMobile(context))
                       _referralBallanceInfoCard(context),
                     if (Responsive.isMobile(context))
+                      _loyaltyPointsInfoCard(context),
+                    if (Responsive.isMobile(context))
                       SizedBox(height: AppStyle.defaultPadding),
                     _showBoughtProduct
                         ? _productInfoItemCard(context)
@@ -206,6 +211,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     _accountBallanceInfoCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     _referralBallanceInfoCard(context),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    _loyaltyPointsInfoCard(context),
                   ],
                 ),
               ),
@@ -474,6 +481,76 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   childAspectRatio: 4.5,
                   crossAxisCount: 2),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _loyaltyPointsInfoCard(BuildContext context) {
+    final points = _botUser!.loyaltyWallet?.balance ?? 0;
+    return Container(
+      margin: Responsive.isMobile(context)
+          ? EdgeInsets.only(top: AppStyle.defaultPadding)
+          : EdgeInsets.zero,
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.stars_outlined, color: Colors.amber),
+              SizedBox(width: 8),
+              Text(
+                'امتیاز باشگاه مشتریان',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 32, color: Colors.white10),
+          DetailsInfoItemWidget(
+            item: DetailsInfoItem(
+              icon: const Icon(Icons.stars, color: Colors.amber),
+              itemName: 'موجودی امتیاز',
+              itemValue: '${thousandSeperatorFormatter(points.toString())} امتیاز',
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildActionButton(
+            context: context,
+            label: 'ویرایش امتیاز',
+            icon: Icons.edit_note,
+            onPressed: () => _editLoyaltyPointsDialog(context),
+          ),
+          _buildActionButton(
+            context: context,
+            label: 'تاریخچه امتیاز',
+            icon: Icons.history,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoyaltyReportScreen(
+                    accountId: _botUser!.accountId,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -1198,6 +1275,93 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     }
                   },
                   child: const Text("تایید"),
+                )
+              ],
+            ))));
+  }
+
+  _editLoyaltyPointsDialog(BuildContext context) async {
+    _ballanceController.text =
+        (_botUser!.loyaltyWallet?.balance ?? 0).toString();
+    showDialog(
+        context: context,
+        builder: (context) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: SingleChildScrollView(
+                child: AlertDialog(
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.stars_outlined, color: Colors.amber),
+                  SizedBox(width: 10),
+                  Text('ویرایش امتیاز باشگاه مشتریان',
+                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('لطفا تعداد امتیاز را وارد کنید',
+                      style: TextStyle(color: Colors.white70)),
+                  SizedBox(height: AppStyle.defaultPadding),
+                  CustomTextFromFieldWidget(
+                    controller: _ballanceController,
+                    textHint: 'تعداد امتیاز',
+                    validationError: 'تعداد امتیاز را وارد کنید',
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('انصراف',
+                      style: TextStyle(color: Colors.white70)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final balance =
+                        int.tryParse(_ballanceController.text.trim());
+                    if (balance == null || balance < 0) {
+                      showMsg(
+                        context: context,
+                        msg: 'امتیاز معتبر وارد کنید',
+                        type: 'error',
+                      );
+                      return;
+                    }
+
+                    EasyLoading.show();
+                    final value = await setLoyaltyPointsBalance(
+                      balance: balance,
+                      userID: _botUser!.accountId.toInt(),
+                    );
+                    if (!context.mounted) return;
+                    EasyLoading.dismiss();
+                    if (value) {
+                      setState(() {
+                        _botUser!.loyaltyWallet =
+                            (_botUser!.loyaltyWallet ?? LoyaltyWalletModel(
+                              id: 0,
+                              userId: _botUser!.id.toInt(),
+                              balance: 0,
+                            )).copyWith(balance: balance);
+                      });
+                      showMsg(
+                        context: context,
+                        msg: 'امتیاز با موفقیت ویرایش شد',
+                      );
+                      Navigator.pop(context);
+                      _ballanceController.clear();
+                      _fillData();
+                    } else {
+                      showMsg(context: context, msg: 'خطا', type: 'error');
+                    }
+                  },
+                  child: const Text('تایید'),
                 )
               ],
             ))));
