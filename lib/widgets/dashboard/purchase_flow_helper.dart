@@ -5,6 +5,7 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/repositories/webapp_user_repository.dart';
+import 'package:powerps/widgets/dashboard/mobile_verification_helper.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -51,6 +52,12 @@ class PurchaseFlowHelper {
     bool validatingPromo = false;
     final packageNameHint = await getWebAppPackageNameHint();
     if (!context.mounted) return;
+
+    if (userRole == 'user') {
+      final canPurchase =
+          await MobileVerificationHelper.ensureVerifiedForPurchase(context);
+      if (!canPurchase) return;
+    }
 
     await showDialog(
       context: context,
@@ -259,6 +266,13 @@ class PurchaseFlowHelper {
 
     if (val == false || val == null) {
       return (result: null, error: 'خطا در برقراری ارتباط با سرور');
+    }
+
+    if (MobileVerificationHelper.isVerificationError(val)) {
+      return (
+        result: null,
+        error: MobileVerificationHelper.verificationErrorMessage(val),
+      );
     }
 
     final text = val.toString();

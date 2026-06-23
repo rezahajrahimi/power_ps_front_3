@@ -157,3 +157,16 @@ Future<Map<String, dynamic>> getWebAppPackageNameHint() async {
 
   return fallback;
 }
+
+Future<Map<String, dynamic>?> getWebAppMobileVerificationStatus() async {
+  try {
+    final response =
+        await GenaralApi.dio.get('/api/webapp/mobile-verification-status');
+    if (response.statusCode == 200 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+  } on DioException catch (e) {
+    debugPrint('getWebAppMobileVerificationStatus: ${e.message}');
+  }
+  return null;
+}

@@ -12,6 +12,7 @@ import 'package:powerps/widgets/dashboard/dashboard_action_handler.dart';
 import 'package:powerps/widgets/dashboard/dashboard_product_catalog_section.dart';
 import 'package:powerps/widgets/dashboard/dashboard_purchase_history_section.dart';
 import 'package:powerps/widgets/dashboard/dashboard_section_card.dart';
+import 'package:powerps/widgets/dashboard/mobile_verification_helper.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -123,6 +124,7 @@ class _USerDasboardScreenState extends State<USerDasboardScreen> {
           ),
         const DashboardWelcomeHeader(),
         SizedBox(height: AppStyle.defaultPadding),
+        const MobileVerificationBanner(userRole: 'user'),
         DashboardQuickActionsSection(
           onAction: (key) => _actionHandler(context).handle(key),
         ),

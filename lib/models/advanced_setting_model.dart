@@ -10,6 +10,10 @@ class AdvancedSettingModel {
         'قیمت گذاری اتوماتیک بر اساس قیمت تومان',
     'bot_show_one_row_config': 'نمایش پیکربندی ها در یک ردیف (قدیمی)',
     packageButtonLayoutKey: 'نحوه نمایش لیست بسته‌ها در ربات',
+    'bot_require_mobile_verification':
+        'الزام تایید موبایل قبل از خرید (ارسال شماره تماس در تلگرام)',
+    'bot_mobile_verification_iran_only':
+        'تایید موبایل فقط برای شماره‌های ایران (+98)',
     'bot_daily_backup': 'برای ایجاد بکاپ روزانه',
     'bot_auto_delete_expired_configs':
         'حذف کانفیگ هایی که 10 روز از انقضا آنها می گذرد',

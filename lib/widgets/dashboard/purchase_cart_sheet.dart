@@ -4,6 +4,7 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/provider/purchase_cart_provider.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/dashboard/purchase_flow_helper.dart';
+import 'package:powerps/widgets/dashboard/mobile_verification_helper.dart';
 import 'package:powerps/repositories/webapp_user_repository.dart';
 import 'package:provider/provider.dart';
 
@@ -344,6 +345,13 @@ class _PurchaseCartSheetBodyState extends State<_PurchaseCartSheetBody> {
   Future<void> _executeCheckout() async {
     final cart = context.read<PurchaseCartProvider>();
     if (cart.items.isEmpty) return;
+
+    if (widget.userRole == 'user') {
+      final canPurchase =
+          await MobileVerificationHelper.ensureVerifiedForPurchase(context);
+      if (!canPurchase) return;
+    }
+
     final sheetNavigator = Navigator.of(context);
     final hostContext = Navigator.of(context, rootNavigator: true).context;
 

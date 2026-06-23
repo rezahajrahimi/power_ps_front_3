@@ -372,6 +372,8 @@ Future buyProductByUserWithPrID({
 
     if (response.statusCode == 200) {
       return response.data;
+    } else if (response.statusCode == 403 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -382,6 +384,10 @@ Future buyProductByUserWithPrID({
       return false;
     }
   } on DioException catch (e) {
+    final data = e.response?.data;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
     return e.error;
   }
 }
