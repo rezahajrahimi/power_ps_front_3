@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/log_model.dart';
 import 'package:powerps/repositories/loyalty_setting_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
