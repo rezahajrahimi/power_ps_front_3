@@ -108,7 +108,11 @@ class _CustomTextFromFieldWidgetState extends State<CustomTextFromFieldWidget> {
               return null;
             }
           } else {
-            return (value!.isEmpty) ? widget.validationError : null;
+            if (value == null || value.isEmpty) {
+              if (widget.validationError.isEmpty) return null;
+              return widget.validationError;
+            }
+            return null;
           }
         },
         textInputAction: widget.textInputAction,

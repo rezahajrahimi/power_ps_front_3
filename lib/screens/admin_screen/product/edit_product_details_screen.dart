@@ -433,7 +433,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       ));
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _sampleInboundEditText,
-        textHint: "کانفیگ نمونه",
+        textHint: "کانفیگ نمونه (اختیاری)",
         validationError: "",
         keyboardType: TextInputType.text,
       ));
@@ -785,7 +785,16 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   }
 
   _submitData(BuildContext context) async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      if (context.mounted) {
+        showMsg(
+          msg: "لطفاً فیلدهای اجباری را تکمیل کنید.",
+          context: context,
+          type: "error",
+        );
+      }
+      return;
+    }
 
     EasyLoading.show(status: 'در حال بروزرسانی...');
     try {
