@@ -3,6 +3,7 @@ import 'dart:convert';
 class AgentPermisson {
   int userId;
   bool minusBallance;
+  double? minusBallanceLimit;
   bool createProducts;
   bool deleteProducts;
   double trafficLimitationTB;
@@ -12,6 +13,7 @@ class AgentPermisson {
       required this.createProducts,
       required this.deleteProducts,
       required this.minusBallance,
+      this.minusBallanceLimit,
       required this.trafficLimitationTB,
       required this.productLimitation});
 
@@ -19,6 +21,7 @@ class AgentPermisson {
     return {
       'userId': userId,
       'minusBallance': minusBallance,
+      'minusBallanceLimit': minusBallanceLimit,
       'createProducts': createProducts,
       'deleteProducts': deleteProducts,
       'trafficLimitationTB': trafficLimitationTB,
@@ -27,9 +30,13 @@ class AgentPermisson {
   }
 
   factory AgentPermisson.fromMap(Map<String, dynamic> map) {
+    final rawLimit = map['minus_ballance_limit'];
     return AgentPermisson(
       userId: map['user_id']?.toInt() ?? 0,
       minusBallance: _parseBool(map['minus_ballance']),
+      minusBallanceLimit: rawLimit == null
+          ? null
+          : double.tryParse(rawLimit.toString()),
       createProducts: _parseBool(map['create_products']),
       deleteProducts: _parseBool(map['delete_products']),
       trafficLimitationTB:

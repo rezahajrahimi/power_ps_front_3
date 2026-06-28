@@ -74,12 +74,19 @@ class _AgentBallanceInfoItemCardWidgetState
 
   void _fillData() async {
     botUserWidgetLIst.clear();
+    final tomanBalance = context.read<AgentBallanceProvider>().ballanceInToman;
+    final isNegative = tomanBalance < 0;
+
     botUserWidgetLIst.add(DetailsInfoItemWidget(
       item: DetailsInfoItem(
-          icon: const Icon(Icons.money),
-          itemName: "موجودی",
-          itemValue:
-              "${thousandSeperatorFormatter(context.read<AgentBallanceProvider>().ballanceInToman.toString())} تومان"),
+          icon: Icon(
+            isNegative ? Icons.warning_amber_rounded : Icons.money,
+            color: isNegative ? Colors.orangeAccent : null,
+          ),
+          itemName: isNegative ? "موجودی (بدهکار)" : "موجودی",
+          itemValue: isNegative
+              ? "${thousandSeperatorFormatter((-tomanBalance).toString())} تومان بدهی"
+              : "${thousandSeperatorFormatter(tomanBalance.toString())} تومان"),
     ));
 
     botUserWidgetLIst.add(DetailsInfoItemWidget(

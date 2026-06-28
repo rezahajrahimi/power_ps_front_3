@@ -17,6 +17,7 @@ Future createAndEditBatchOfUserAgentProduct(
   var formData = FormData.fromMap({
     'UserID': userID,
     'minusBallance': agentPermisson.minusBallance,
+    'minusBallanceLimit': agentPermisson.minusBallanceLimit,
     'deleteProducts': agentPermisson.deleteProducts,
     'createProducts': agentPermisson.createProducts,
     'trafficLimitationTB': agentPermisson.trafficLimitationTB,

@@ -248,7 +248,9 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
         AgentRtlRow(
           label: 'موجودی تومان',
           value: user.balanceToman != null
-              ? '${thousandSeperatorFormatter(user.balanceToman.toString())} تومان'
+              ? user.balanceToman! < 0
+                  ? '${thousandSeperatorFormatter((-user.balanceToman!).toString())} تومان بدهی'
+                  : '${thousandSeperatorFormatter(user.balanceToman.toString())} تومان'
               : '—',
         ),
         AgentRtlRow(

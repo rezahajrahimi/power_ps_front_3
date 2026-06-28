@@ -59,6 +59,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
       TextEditingController();
   final TextEditingController _maxProdouctLimitationTxtController =
       TextEditingController();
+  final TextEditingController _minusBallanceLimitTxtController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -77,6 +79,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
   void dispose() {
     _maxTrafficLimitationTxtController.dispose();
     _maxProdouctLimitationTxtController.dispose();
+    _minusBallanceLimitTxtController.dispose();
     super.dispose();
   }
 
@@ -292,6 +295,16 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           value: _minusBallance,
           onChanged: (val) => setState(() => _minusBallance = val),
         ),
+        if (_minusBallance) ...[
+          SizedBox(height: AppStyle.defaultPadding / 2),
+          CustomTextFromFieldWidget(
+            controller: _minusBallanceLimitTxtController,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: false),
+            textHint: 'سقف بدهی (تومان) — خالی = بدون محدودیت',
+            validationError: 'سقف بدهی باید عددی بزرگتر از صفر باشد',
+          ),
+        ],
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title:
@@ -464,6 +477,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         _copySourceAgent = agent;
         _minusBallance = detail.permission!.minusBallance;
         _deleteProducts = detail.permission!.deleteProducts;
+        _minusBallanceLimitTxtController.text =
+            detail.permission!.minusBallanceLimit?.toStringAsFixed(0) ?? '';
         _maxProdouctLimitationTxtController.text =
             detail.permission!.productLimitation.toString();
         _maxTrafficLimitationTxtController.text =
@@ -727,6 +742,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         if (permission is AgentPermisson) {
           _minusBallance = permission.minusBallance;
           _deleteProducts = permission.deleteProducts;
+          _minusBallanceLimitTxtController.text =
+              permission.minusBallanceLimit?.toStringAsFixed(0) ?? '';
           _maxProdouctLimitationTxtController.text =
               permission.productLimitation.toString();
           _maxTrafficLimitationTxtController.text =
@@ -774,6 +791,20 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
       return;
     }
 
+    double? minusBallanceLimit;
+    final limitText = _minusBallanceLimitTxtController.text.trim();
+    if (_minusBallance && limitText.isNotEmpty) {
+      minusBallanceLimit = double.tryParse(limitText.replaceAll(',', ''));
+      if (minusBallanceLimit == null || minusBallanceLimit <= 0) {
+        showMsg(
+          msg: "سقف بدهی باید عددی بزرگتر از صفر باشد",
+          context: context,
+          type: "error",
+        );
+        return;
+      }
+    }
+
     final selectedProducts = Provider.of<AgentProvider>(context, listen: false)
         .getAgentCategoriesAdded();
     if (selectedProducts.isEmpty) {
@@ -796,6 +827,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           createProducts: false,
           deleteProducts: _deleteProducts,
           minusBallance: _minusBallance,
+          minusBallanceLimit: minusBallanceLimit,
           productLimitation: productLimit,
           trafficLimitationTB: trafficLimit,
         ),

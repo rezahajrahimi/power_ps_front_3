@@ -94,6 +94,23 @@ class AgentLimitsInfoCardWidget extends StatelessWidget {
             label: "موجودی منفی",
             value: permission.minusBallance ? "مجاز" : "غیرمجاز",
           ),
+          if (permission.minusBallance) ...[
+            const SizedBox(height: 14),
+            if (usage != null && usage!.hasDebtUsage)
+              _debtUsageSection(context)
+            else ...[
+              const SizedBox(height: 8),
+              _limitRow(
+                context,
+                icon: Icons.money_off_csred_outlined,
+                label: "سقف بدهی",
+                value: permission.minusBallanceLimit != null &&
+                        permission.minusBallanceLimit! > 0
+                    ? "${thousandSeperatorFormatter(permission.minusBallanceLimit!.toStringAsFixed(0))} تومان"
+                    : "بدون محدودیت",
+              ),
+            ],
+          ],
           const SizedBox(height: 8),
           _limitRow(
             context,
@@ -103,6 +120,59 @@ class AgentLimitsInfoCardWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _debtUsageSection(BuildContext context) {
+    final debt = usage!.currentDebt;
+    final limit = usage!.minusBallanceLimit;
+    final remaining = usage!.remainingDebtLimit;
+    final hasLimit = limit != null && limit > 0;
+
+    if (hasLimit) {
+      return _usageProgress(
+        context,
+        icon: Icons.money_off_csred_outlined,
+        label: 'بدهی',
+        used: debt,
+        limit: limit,
+        remaining: remaining ?? 0,
+        percent: usage!.debtUsagePercent,
+        unit: 'تومان',
+        isDouble: true,
+        formatAsMoney: true,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _limitRow(
+          context,
+          icon: Icons.money_off_csred_outlined,
+          label: "سقف بدهی",
+          value: "بدون محدودیت",
+        ),
+        const SizedBox(height: 8),
+        _limitRow(
+          context,
+          icon: Icons.account_balance_wallet_outlined,
+          label: "بدهی فعلی",
+          value: debt > 0
+              ? "${thousandSeperatorFormatter(debt.toStringAsFixed(0))} تومان"
+              : "بدون بدهی",
+        ),
+        if (usage!.currentBalance != null) ...[
+          const SizedBox(height: 8),
+          _limitRow(
+            context,
+            icon: Icons.payments_outlined,
+            label: "موجودی فعلی",
+            value:
+                "${thousandSeperatorFormatter(usage!.currentBalance!.toStringAsFixed(0))} تومان",
+          ),
+        ],
+      ],
     );
   }
 
@@ -116,11 +186,26 @@ class AgentLimitsInfoCardWidget extends StatelessWidget {
     required double percent,
     required String unit,
     bool isDouble = false,
+    bool formatAsMoney = false,
   }) {
-    final usedText = isDouble ? used.toStringAsFixed(2) : used.toString();
-    final limitText = isDouble ? limit.toStringAsFixed(2) : limit.toString();
-    final remainingText =
-        isDouble ? remaining.toStringAsFixed(2) : remaining.toString();
+    final usedText = formatAsMoney
+        ? thousandSeperatorFormatter(
+            isDouble ? used.toStringAsFixed(0) : used.toString())
+        : isDouble
+            ? used.toStringAsFixed(2)
+            : used.toString();
+    final limitText = formatAsMoney
+        ? thousandSeperatorFormatter(
+            isDouble ? limit.toStringAsFixed(0) : limit.toString())
+        : isDouble
+            ? limit.toStringAsFixed(2)
+            : limit.toString();
+    final remainingText = formatAsMoney
+        ? thousandSeperatorFormatter(
+            isDouble ? remaining.toStringAsFixed(0) : remaining.toString())
+        : isDouble
+            ? remaining.toStringAsFixed(2)
+            : remaining.toString();
     final color = percent >= 100
         ? Colors.redAccent
         : percent >= 80
