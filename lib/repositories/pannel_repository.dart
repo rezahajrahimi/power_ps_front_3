@@ -118,7 +118,7 @@ Future<bool> addNewPannel({required Pannel pannel}) async {
 
 Future<bool> addNewPannelMarzban({
   required Pannel pannel,
-  required List<Map<String, dynamic>> dynamicInbounds,
+  List<Map<String, dynamic>> dynamicInbounds = const [],
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/addNewPannelMarzban",
@@ -130,7 +130,7 @@ Future<bool> addNewPannelMarzban({
           "location": pannel.location,
           "url_port": pannel.urlPort,
           "capacity": pannel.capacity,
-          "dynamic_inbounds": dynamicInbounds,
+          if (dynamicInbounds.isNotEmpty) "dynamic_inbounds": dynamicInbounds,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -158,19 +158,20 @@ Future<bool> addNewPannelMarzban({
 
 Future<bool> editMarzbanPannel({
   required Pannel pannel,
-  required List<Map<String, dynamic>> dynamicInbounds,
+  List<Map<String, dynamic>> dynamicInbounds = const [],
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/editMarzbanPannel",
         data: {
           "id": int.parse(pannel.id),
+          "type": pannel.type,
           "username": pannel.username,
           "password": pannel.password,
           "token": pannel.token,
           "location": pannel.location,
           "url_port": pannel.urlPort,
           "capacity": pannel.capacity,
-          "dynamic_inbounds": dynamicInbounds,
+          if (dynamicInbounds.isNotEmpty) "dynamic_inbounds": dynamicInbounds,
         },
         options: Options(headers: {
           'Accept': 'application/json',

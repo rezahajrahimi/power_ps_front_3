@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:powerps/helpers/marzban_proxy_settings.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -42,7 +41,6 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
   final _urlPortEditTxt = TextEditingController();
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
-  final _proxySettings = MarzbanProxySettings();
 
   @override
   void initState() {
@@ -52,7 +50,7 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
     _urlPortEditTxt.text = widget.selectedPannel.urlPort ?? "";
     _userNameEditTxt.text = widget.selectedPannel.username ?? "";
     _userPasswordEditTxt.text = widget.selectedPannel.password ?? "";
-    _initData();
+    _fillFields();
     super.initState();
   }
 
@@ -64,43 +62,6 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
     _userNameEditTxt.dispose();
     _userPasswordEditTxt.dispose();
     super.dispose();
-  }
-
-  Future<void> _initData() async {
-    await _loadInboundsFromPanel();
-    final proxies =
-        await getProxiesByPannelID(pannelId: int.parse(widget.selectedPannel.id));
-    if (_proxySettings.isLoaded && proxies.isNotEmpty) {
-      _proxySettings.applyFromSavedProxies(proxies);
-    }
-    _fillFields();
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _loadInboundsFromPanel() async {
-    if (_marzbanToken.isEmpty ||
-        _urlPortEditTxt.text.isEmpty ||
-        _userNameEditTxt.text.isEmpty ||
-        _userPasswordEditTxt.text.isEmpty) {
-      return;
-    }
-
-    final url = _getMarzbanUrl(_urlPortEditTxt.text);
-    var token = _marzbanToken;
-    if (!token.toLowerCase().startsWith('bearer ')) {
-      final fresh = await checkIsMarzbanUrl(
-        url: url,
-        password: _userPasswordEditTxt.text.trim(),
-        username: _userNameEditTxt.text.trim(),
-      );
-      if (fresh != null) token = fresh;
-    }
-
-    final inbounds = await fetchMarzbanPanelInbounds(url: url, token: token);
-    if (inbounds != null && inbounds.isNotEmpty) {
-      _proxySettings.loadFromPanel(inbounds);
-      _marzbanToken = token;
-    }
   }
 
   @override
@@ -151,16 +112,7 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
           children: [
             Expanded(
               flex: 5,
-              child: Column(
-                children: [
-                  _marzbanInfoCard(context),
-                  SizedBox(height: AppStyle.defaultPadding),
-                  MarzbanProxiesCard(
-                    settings: _proxySettings,
-                    onChanged: () => setState(() {}),
-                  ),
-                ],
-              ),
+              child: _marzbanInfoCard(context),
             ),
             if (!Responsive.isMobile(context)) ...[
               SizedBox(width: AppStyle.defaultPadding),
@@ -208,6 +160,14 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("اطلاعات پنل", style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(
+            'Inboundها هنگام تعریف بسته انتخاب می‌شوند.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
+          ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
             width: double.infinity,
@@ -238,9 +198,10 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
                 password: _userPasswordEditTxt.text.trim(),
                 username: _userNameEditTxt.text.trim(),
               );
+              EasyLoading.dismiss();
+              if (!context.mounted) return;
+
               if (token == null) {
-                EasyLoading.dismiss();
-                if (!context.mounted) return;
                 showMsg(
                     msg: "اتصال ناموفق.",
                     context: context,
@@ -248,31 +209,7 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
                 return;
               }
 
-              final inbounds = await fetchMarzbanPanelInbounds(
-                url: url,
-                token: token,
-              );
-              EasyLoading.dismiss();
-              if (!context.mounted) return;
-
-              if (inbounds == null || inbounds.isEmpty) {
-                showMsg(
-                    msg: "inbound فعالی در پنل $_panelLabel یافت نشد.",
-                    context: context,
-                    type: "error");
-                return;
-              }
-
-              final saved = await getProxiesByPannelID(
-                  pannelId: int.parse(widget.selectedPannel.id));
-
-              setState(() {
-                _marzbanToken = token;
-                _proxySettings.loadFromPanel(inbounds);
-                if (saved.isNotEmpty) {
-                  _proxySettings.applyFromSavedProxies(saved);
-                }
-              });
+              setState(() => _marzbanToken = token);
               if (context.mounted) {
                 showMsg(msg: "اتصال موفق", context: context);
               }
@@ -343,14 +280,6 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
       return;
     }
 
-    if (!_proxySettings.isLoaded) {
-      showMsg(
-          msg: "inboundهای پنل بارگذاری نشده. «بررسی اتصال» را بزنید.",
-          context: context,
-          type: "error");
-      return;
-    }
-
     final capacity = int.tryParse(_capacityEditTxt.text) ?? 0;
     if (capacity <= 0) {
       showMsg(msg: "ظرفیت نامعتبر است.", context: context, type: "error");
@@ -370,7 +299,6 @@ class _EditMarzbanPanelScreenState extends State<EditMarzbanPanelScreen> {
           token: _marzbanToken,
           capacity: capacity,
         ),
-        dynamicInbounds: _proxySettings.toApiPayload(),
       );
 
       EasyLoading.dismiss();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:powerps/helpers/marzban_proxy_settings.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -33,7 +32,6 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
   final _urlPortEditTxt = TextEditingController();
   final _userNameEditTxt = TextEditingController();
   final _userPasswordEditTxt = TextEditingController();
-  final _proxySettings = MarzbanProxySettings();
 
   @override
   void initState() {
@@ -99,16 +97,7 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
           children: [
             Expanded(
               flex: 5,
-              child: Column(
-                children: [
-                  _marzbanInfoCard(context),
-                  SizedBox(height: AppStyle.defaultPadding),
-                  MarzbanProxiesCard(
-                    settings: _proxySettings,
-                    onChanged: () => setState(() {}),
-                  ),
-                ],
-              ),
+              child: _marzbanInfoCard(context),
             ),
             if (!Responsive.isMobile(context)) ...[
               SizedBox(width: AppStyle.defaultPadding),
@@ -156,6 +145,14 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("اطلاعات پنل", style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(
+            'Inboundها هنگام تعریف بسته انتخاب می‌شوند.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
+          ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(
             width: double.infinity,
@@ -192,9 +189,10 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
                 password: _userPasswordEditTxt.text.trim(),
                 username: _userNameEditTxt.text.trim(),
               );
+              EasyLoading.dismiss();
+              if (!context.mounted) return;
+
               if (token == null) {
-                EasyLoading.dismiss();
-                if (!context.mounted) return;
                 showMsg(
                     msg: "اتصال ناموفق. اطلاعات را بررسی کنید.",
                     context: context,
@@ -202,25 +200,7 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
                 return;
               }
 
-              final inbounds = await fetchMarzbanPanelInbounds(
-                url: url,
-                token: token,
-              );
-              EasyLoading.dismiss();
-              if (!context.mounted) return;
-
-              if (inbounds == null || inbounds.isEmpty) {
-                showMsg(
-                    msg: "inbound فعالی در پنل $_panelLabel یافت نشد.",
-                    context: context,
-                    type: "error");
-                return;
-              }
-
-              setState(() {
-                _marzbanToken = token;
-                _proxySettings.loadFromPanel(inbounds);
-              });
+              setState(() => _marzbanToken = token);
               showMsg(msg: "اتصال موفق", context: context);
             },
             icon: const Icon(Icons.checklist_rtl),
@@ -289,14 +269,6 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
       return;
     }
 
-    if (!_proxySettings.isLoaded) {
-      showMsg(
-          msg: "ابتدا «بررسی اتصال» را بزنید تا inboundهای پنل بارگذاری شوند.",
-          context: context,
-          type: "error");
-      return;
-    }
-
     final capacity = int.tryParse(_capacityEditTxt.text) ?? 0;
     if (capacity <= 0) {
       showMsg(msg: "ظرفیت نامعتبر است.", context: context, type: "error");
@@ -316,7 +288,6 @@ class _AddNewMarzbanPanelScreenState extends State<AddNewMarzbanPanelScreen> {
           token: _marzbanToken,
           capacity: capacity,
         ),
-        dynamicInbounds: _proxySettings.toApiPayload(),
       );
 
       EasyLoading.dismiss();

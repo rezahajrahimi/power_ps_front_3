@@ -22,6 +22,7 @@ class ProductCategory {
   List<int>? allowedUserGroupIds;
   int? inboundId;
   List<int>? inboundIds;
+  Map<String, List<String>>? marzbanInbounds;
   int? ipLimit;
   String? sampleInbound;
   int? upsellCategoryId;
@@ -45,6 +46,7 @@ class ProductCategory {
     this.allowedUserGroupIds,
     this.inboundId,
     this.inboundIds,
+    this.marzbanInbounds,
     this.ipLimit,
     this.sampleInbound,
     this.upsellCategoryId,
@@ -76,6 +78,7 @@ class ProductCategory {
     List<int>? allowedUserGroupIds,
     int? inboundId,
     List<int>? inboundIds,
+    Map<String, List<String>>? marzbanInbounds,
     int? ipLimit,
     String? sampleInbound,
     int? upsellCategoryId,
@@ -99,6 +102,7 @@ class ProductCategory {
       allowedUserGroupIds: allowedUserGroupIds ?? this.allowedUserGroupIds,
       inboundId: inboundId ?? this.inboundId,
       inboundIds: inboundIds ?? this.inboundIds,
+      marzbanInbounds: marzbanInbounds ?? this.marzbanInbounds,
       ipLimit: ipLimit ?? this.ipLimit,
       sampleInbound: sampleInbound ?? this.sampleInbound,
       upsellCategoryId: upsellCategoryId ?? this.upsellCategoryId,
@@ -126,12 +130,42 @@ class ProductCategory {
       'allowed_user_group_ids': allowedUserGroupIds,
       'inbound_id': inboundId,
       'inbound_ids': inboundIds,
+      'marzban_inbounds': marzbanInbounds,
       'ip_limit': ipLimit,
       'sample_inbound': sampleInbound,
       'upsell_category_id': upsellCategoryId,
       // 'agentAddCategoriyModel': agentAddCategoriyModel?.toMap(),
       // 'pannel': pannel?,
     };
+  }
+
+  static Map<String, List<String>>? _parseMarzbanInbounds(dynamic raw) {
+    if (raw == null) return null;
+    Map<String, dynamic>? map;
+    if (raw is String) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) map = Map<String, dynamic>.from(decoded);
+      } catch (_) {
+        return null;
+      }
+    } else if (raw is Map) {
+      map = Map<String, dynamic>.from(raw);
+    }
+    if (map == null || map.isEmpty) return null;
+
+    final result = <String, List<String>>{};
+    map.forEach((protocol, tags) {
+      if (tags is! List) return;
+      final normalized = tags
+          .map((t) => t.toString().trim())
+          .where((t) => t.isNotEmpty)
+          .toList();
+      if (normalized.isNotEmpty) {
+        result[protocol.toString().toLowerCase()] = normalized;
+      }
+    });
+    return result.isEmpty ? null : result;
   }
 
   static List<int>? _parseInboundIds(dynamic raw) {
@@ -213,6 +247,7 @@ class ProductCategory {
         allowedUserGroupIds: _parseAllowedGroupIds(map['allowed_user_group_ids']),
         inboundId: map['inbound_id']?.toInt(),
         inboundIds: _parseInboundIds(map['inbound_ids']),
+        marzbanInbounds: _parseMarzbanInbounds(map['marzban_inbounds']),
         ipLimit: map['ip_limit']?.toInt(),
         sampleInbound: map['sample_inbound']?.toString(),
         upsellCategoryId: map['upsell_category_id']?.toInt(),

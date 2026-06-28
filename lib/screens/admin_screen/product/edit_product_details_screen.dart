@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/marzban_inbound_sync.dart';
 import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -40,6 +41,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   final _expireDayEditText = TextEditingController();
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
+  final _marzbanInboundsEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
   final _sampleInboundEditText = TextEditingController();
 
@@ -76,6 +78,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     _expireDayEditText.dispose();
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
+    _marzbanInboundsEditText.dispose();
     _ipLimitEditText.dispose();
     _sampleInboundEditText.dispose();
     super.dispose();
@@ -231,6 +234,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         _volumeEditText.text = widget.selectedProductCategory.volume.toString();
         _inboundIdEditText.text = formatInboundIdsText(
             widget.selectedProductCategory.resolvedInboundIds);
+        _marzbanInboundsEditText.text = formatMarzbanInboundsText(
+            widget.selectedProductCategory.marzbanInbounds ?? {});
         _ipLimitEditText.text =
             widget.selectedProductCategory.ipLimit?.toString() ?? "0";
         _sampleInboundEditText.text =
@@ -376,6 +381,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     _productDetailsWidgetLIst.clear();
     bool isSanaei =
         getPanelTypeFromDropdownLabel(_selectedPannelName) == 'sanaei';
+    bool isMarzban = isMarzbanCompatiblePanel(
+        getPanelTypeFromDropdownLabel(_selectedPannelName));
     bool isHiddify = _selectedPannelName.contains("Hiddify");
     bool supportsConfigToggle =
         panelDropdownSupportsConfigToggle(_selectedPannelName);
@@ -441,6 +448,34 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
                 context,
                 pannelId: id,
                 inboundIdController: _inboundIdEditText,
+              );
+            },
+            icon: const Icon(Icons.sync, size: 18),
+            label: const Text('انتخاب Inboundها از پنل'),
+          ),
+        ),
+      );
+    }
+
+    if (isMarzban) {
+      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+        controller: _marzbanInboundsEditText,
+        textHint: "Inboundهای Marzban/PasarGuard (JSON)",
+        validationError: "حداقل یک Inbound انتخاب کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _productDetailsWidgetLIst.add(
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              final id = int.tryParse(_selectedPannelName.split(':')[0]);
+              if (id == null) return;
+              runMarzbanInboundSync(
+                context,
+                pannelId: id,
+                inboundsController: _marzbanInboundsEditText,
+                panelType: getPanelTypeFromDropdownLabel(_selectedPannelName),
               );
             },
             icon: const Icon(Icons.sync, size: 18),
@@ -764,6 +799,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           panelDropdownSupportsConfigToggle(_selectedPannelName);
 
       final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
+      final marzbanInbounds =
+          parseMarzbanInboundsFromText(_marzbanInboundsEditText.text);
 
       var res = await editProductCategory(
           name: _nameEditText.text,
@@ -782,6 +819,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           id: widget.selectedProductCategory.id.toInt(),
           inboundId: inboundIds.isNotEmpty ? inboundIds.first : null,
           inboundIds: inboundIds.isEmpty ? null : inboundIds,
+          marzbanInbounds:
+              marzbanInbounds.isEmpty ? null : marzbanInbounds,
           ipLimit: _ipLimitEditText.text.isNotEmpty
               ? int.tryParse(_ipLimitEditText.text)
               : 0,

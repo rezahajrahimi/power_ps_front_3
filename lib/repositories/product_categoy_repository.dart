@@ -49,6 +49,7 @@ Future addNewProductCategory({
   List<int>? allowedUserGroupIds,
   int? inboundId,
   List<int>? inboundIds,
+  Map<String, List<String>>? marzbanInbounds,
   int? ipLimit,
   String? sampleInbound,
   int? upsellCategoryId,
@@ -71,6 +72,8 @@ Future addNewProductCategory({
           "inbound_id": inboundId,
           if (inboundIds != null && inboundIds.isNotEmpty)
             "inbound_ids": inboundIds,
+          if (marzbanInbounds != null && marzbanInbounds.isNotEmpty)
+            "marzban_inbounds": marzbanInbounds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
           "upsell_category_id": upsellCategoryId,
@@ -118,6 +121,7 @@ Future<bool> editProductCategory({
   List<int>? allowedUserGroupIds,
   int? inboundId,
   List<int>? inboundIds,
+  Map<String, List<String>>? marzbanInbounds,
   int? ipLimit,
   String? sampleInbound,
   int? upsellCategoryId,
@@ -141,6 +145,8 @@ Future<bool> editProductCategory({
           "inbound_id": inboundId,
           if (inboundIds != null && inboundIds.isNotEmpty)
             "inbound_ids": inboundIds,
+          if (marzbanInbounds != null && marzbanInbounds.isNotEmpty)
+            "marzban_inbounds": marzbanInbounds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
           "upsell_category_id": upsellCategoryId,

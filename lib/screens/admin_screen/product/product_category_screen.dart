@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/marzban_inbound_sync.dart';
 import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -42,6 +43,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final _expireDayEditText = TextEditingController();
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
+  final _marzbanInboundsEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
   final _sampleInboundEditText = TextEditingController();
 
@@ -78,6 +80,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _expireDayEditText.dispose();
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
+    _marzbanInboundsEditText.dispose();
     _ipLimitEditText.dispose();
     _sampleInboundEditText.dispose();
     _selectedPannelName = "";
@@ -676,6 +679,43 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                   keyboardType: TextInputType.text,
                                 ),
                               ],
+                              if (isMarzbanCompatiblePanel(
+                                  getPanelTypeFromDropdownLabel(
+                                      _selectedPannelName))) ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _marzbanInboundsEditText,
+                                  label: 'Inboundهای Marzban/PasarGuard',
+                                  hint: 'JSON: {"vless":["TAG1"]}',
+                                  icon: Icons.hub_outlined,
+                                  keyboardType: TextInputType.text,
+                                ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton.icon(
+                                    onPressed: _selectedPannelName.isEmpty
+                                        ? null
+                                        : () {
+                                            final id = int.tryParse(
+                                                _selectedPannelName
+                                                    .split(':')[0]);
+                                            if (id == null) return;
+                                            runMarzbanInboundSync(
+                                              context,
+                                              pannelId: id,
+                                              inboundsController:
+                                                  _marzbanInboundsEditText,
+                                              panelType:
+                                                  getPanelTypeFromDropdownLabel(
+                                                      _selectedPannelName),
+                                            );
+                                          },
+                                    icon: const Icon(Icons.sync, size: 18),
+                                    label: const Text('انتخاب Inboundها از پنل'),
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 20),
                               Container(
                                 padding: const EdgeInsets.all(8),
@@ -984,6 +1024,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       }
 
       final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
+      final marzbanInbounds =
+          parseMarzbanInboundsFromText(_marzbanInboundsEditText.text);
 
       final val = await addNewProductCategory(
         name: _nameEditText.text,
@@ -1003,6 +1045,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),
         inboundId: inboundIds.isNotEmpty ? inboundIds.first : null,
         inboundIds: inboundIds.isEmpty ? null : inboundIds,
+        marzbanInbounds:
+            marzbanInbounds.isEmpty ? null : marzbanInbounds,
         ipLimit: _ipLimitEditText.text.isNotEmpty
             ? int.tryParse(_ipLimitEditText.text)
             : 0,
