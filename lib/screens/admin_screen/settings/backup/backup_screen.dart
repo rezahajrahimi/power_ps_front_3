@@ -1,9 +1,11 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helper/file_download.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/backup_repository.dart';
@@ -18,7 +20,8 @@ class BackupScreen extends StatefulWidget {
 }
 
 class _BackupScreenState extends State<BackupScreen> {
-  File? _file;
+  Uint8List? _fileBytes;
+  String? _fileName;
   bool _isLoading = false;
   bool _isUploading = false;
   _content(BuildContext context) {
@@ -62,6 +65,63 @@ class _BackupScreenState extends State<BackupScreen> {
     );
   }
 
+  Future<void> _createBackup() async {
+    showMsg(msg: "در حال پشتیبان‌گیری از اطلاعات...", context: context);
+    setState(() => _isLoading = true);
+
+    try {
+      final url = await createBackup();
+      if (!mounted) return;
+
+      if (url == null) {
+        showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+        return;
+      }
+
+      final fileName = url.split('/').last;
+
+      if (kIsWeb) {
+        final bytes = await downloadBackupBytes(url);
+        if (!mounted) return;
+
+        if (bytes == null) {
+          showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+          return;
+        }
+
+        final saved = await saveBytesToDevice(bytes: bytes, fileName: fileName);
+        if (!mounted) return;
+
+        if (saved != null) {
+          showMsg(
+            msg: "فایل پشتیبان دانلود شد",
+            context: context,
+            type: "success",
+          );
+        } else {
+          showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+        }
+      } else {
+        final launched = await launchUrl(
+          Uri.parse(url),
+          mode: LaunchMode.externalApplication,
+        );
+        if (!mounted) return;
+
+        if (!launched) {
+          showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+        }
+      }
+    } catch (_) {
+      if (!mounted) return;
+      showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Card _createBackuopInfoWidget() {
     return Card(
       elevation: 4,
@@ -84,28 +144,7 @@ class _BackupScreenState extends State<BackupScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: _isLoading
-                  ? null
-                  : () async {
-                      showMsg(
-                          msg: "در حال پشتیبان‌گیری از اطلاعات...",
-                          context: context);
-                      setState(() => _isLoading = true);
-                      await createBackup().then((val) {
-                        if (val != null) {
-                          // open val in browser
-                          launchUrl(Uri.parse(val));
-                          setState(() => _isLoading = false);
-                        } else {
-                          if (!mounted) return;
-                          showMsg(
-                              msg: "خطایی رخ داده است",
-                              context: context,
-                              type: "error");
-                          setState(() => _isLoading = false);
-                        }
-                      });
-                    },
+              onPressed: _isLoading ? null : _createBackup,
               icon: _isLoading
                   ? const SizedBox(
                       width: 20,
@@ -146,6 +185,13 @@ class _BackupScreenState extends State<BackupScreen> {
               'بازیابی اطلاعات از آخرین نسخه پشتیبان',
               style: TextStyle(color: Colors.grey),
             ),
+            if (_fileName != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'فایل انتخاب‌شده: $_fileName',
+                style: const TextStyle(fontSize: 13),
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -185,16 +231,16 @@ class _BackupScreenState extends State<BackupScreen> {
   }
 
   _selectBackupFile() async {
-    // select file from storage witch extension is .sql
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-    if (result != null) {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['sql'],
+      withData: true,
+    );
+    if (result != null && result.files.single.bytes != null) {
       setState(() {
-        _file = File(result.files.single.path!);
+        _fileBytes = result.files.single.bytes;
+        _fileName = result.files.single.name;
       });
-      // _file  = File(result.files.single.path!);
-      // debugPrint("file=>${_file!.path}");
-      // upload file to server
-      // create a form data
     } else {
       if (!mounted) return;
       showMsg(msg: "فایل پشتیبان را انتخاب کنید", context: context);
@@ -223,28 +269,36 @@ class _BackupScreenState extends State<BackupScreen> {
   }
 
   _uploadBackup() async {
-    if (_file == null) {
+    if (_fileBytes == null || _fileName == null) {
       showMsg(msg: "فایل پشتیبان را انتخاب کنید", context: context);
       return;
     }
     EasyLoading.show();
     setState(() => _isUploading = true);
-    FormData formData = FormData.fromMap({
-      "backup_file": await MultipartFile.fromFile(_file!.path,
-          filename: _file!.path.split('/').last),
-    });
+    try {
+      FormData formData = FormData.fromMap({
+        "backup_file": MultipartFile.fromBytes(
+          _fileBytes!,
+          filename: _fileName,
+        ),
+      });
 
-    // upload file to server
-    restoreBackup(formData: formData).then((val) {
+      final val = await restoreBackup(formData: formData);
       if (!mounted) return;
-      EasyLoading.dismiss();
 
-      if (val != false) {
+      if (val) {
         showMsg(msg: "بازیابی انجام شد", context: context);
       } else {
         showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
       }
-    });
-    setState(() => _isUploading = false);
+    } catch (_) {
+      if (!mounted) return;
+      showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+    } finally {
+      EasyLoading.dismiss();
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
   }
 }

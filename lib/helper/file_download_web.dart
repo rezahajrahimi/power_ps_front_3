@@ -6,10 +6,11 @@ import 'package:web/web.dart';
 Future<String?> saveBytesToDevice({
   required Uint8List bytes,
   required String fileName,
+  String mimeType = 'application/octet-stream',
 }) async {
   final blob = Blob(
     [bytes.toJS].toJS,
-    BlobPropertyBag(type: 'text/csv'),
+    BlobPropertyBag(type: mimeType),
   );
   final url = URL.createObjectURL(blob);
   final anchor = HTMLAnchorElement()

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
@@ -23,6 +25,22 @@ Future<String?> createBackup() async {
     debugPrint(e.toString());
     return null;
   }
+}
+
+Future<Uint8List?> downloadBackupBytes(String backupUrl) async {
+  try {
+    final filename = backupUrl.split('/').last;
+    final response = await GenaralApi.dio.get(
+      "/api/downloadBackup/$filename",
+      options: Options(responseType: ResponseType.bytes),
+    );
+    if (response.statusCode == 200 && response.data != null) {
+      return Uint8List.fromList(response.data);
+    }
+  } catch (e) {
+    debugPrint(e.toString());
+  }
+  return null;
 }
 
 Future<bool> restoreBackup({required FormData formData}) async {
