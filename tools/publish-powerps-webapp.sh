@@ -28,6 +28,10 @@ done
 OUTPUT_DIR="${OUTPUT_DIR:-${PROJECT_ROOT}/dist/powerps-webapp}"
 VERSION="$(awk '/^version:/{print $2; exit}' "${PROJECT_ROOT}/pubspec.yaml")"
 
+if [[ ! -f "${PROJECT_ROOT}/assets/.env" ]]; then
+    cp "${PROJECT_ROOT}/tools/assets-dotenv.template" "${PROJECT_ROOT}/assets/.env"
+fi
+
 if [[ "${SKIP_BUILD}" -eq 0 ]]; then
     echo "==> Building Flutter web (release)"
     cd "${PROJECT_ROOT}"

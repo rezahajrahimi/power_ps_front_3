@@ -1,4 +1,5 @@
 import 'package:powerps/helper/connector/dio.dart';
+import 'package:powerps/helper/env_loader.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
@@ -21,14 +22,11 @@ import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import 'package:flutter/material.dart';
 
 Future main() async {
-  // await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
-  // load persisted base URL (if set)
+  await loadAppEnv();
   await initBaseUrl();
   await restoreAuthSession();
   // await AppInfoPreference().init();

@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:powerps/helper/env_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-const String _kBaseUrlKey = 'https://core.example.com';
+const String _kBaseUrlKey = 'base_url';
+const String _kLegacyBaseUrlKey = 'https://core.example.com';
 
-// default to a valid local address so Dio initialization won't fail
-String baseURL = "https://core.example.com";
+String baseURL = defaultBaseUrl;
 String imageURL = baseURL;
 const String telgramApiURL = "https://api.telegram.org";
 // const String baseURL = "https://powernad.ir/public";
@@ -19,15 +19,30 @@ String _normalizeUrl(String url) {
   return u;
 }
 
-/// Initialize `baseURL` from SharedPreferences (if saved) and update Dio.
+/// Initialize `baseURL` from SharedPreferences, then `.env`, then default.
 Future<void> initBaseUrl() async {
   final prefs = await SharedPreferences.getInstance();
-  final saved = prefs.getString(_kBaseUrlKey);
-  if (saved != null && saved.isNotEmpty && saved != "**") {
-    baseURL = _normalizeUrl(saved);
-    imageURL = baseURL;
+  var saved = prefs.getString(_kBaseUrlKey);
+
+  if (saved == null || saved.isEmpty) {
+    final legacy = prefs.getString(_kLegacyBaseUrlKey);
+    if (legacy != null && legacy.isNotEmpty && legacy != '**') {
+      saved = legacy;
+      await prefs.setString(_kBaseUrlKey, legacy);
+      await prefs.remove(_kLegacyBaseUrlKey);
+    }
   }
-  // ensure Dio uses the correct base URL
+
+  if (saved != null && saved.isNotEmpty && saved != '**') {
+    baseURL = _normalizeUrl(saved);
+  } else {
+    final fromEnv = envBaseUrl();
+    if (fromEnv != null) {
+      baseURL = _normalizeUrl(fromEnv);
+    }
+  }
+
+  imageURL = baseURL;
   GenaralApi.dio.options.baseUrl = baseURL;
 }
 
