@@ -1,7 +1,7 @@
 name: powerps
 description: "Best soloution for selling v2ray vpn by telegram with advanced tools."
 publish_to: 'none'
-version: 9.1.0
+version: 9.5.0
 
 environment:
   sdk: ^3.6.1
@@ -33,6 +33,7 @@ dependencies:
   file_picker: ^8.1.7
   qr_flutter: ^4.1.0
   image_picker: ^1.1.2
+  web: ^1.1.0
 
 dev_dependencies:
   flutter_test:

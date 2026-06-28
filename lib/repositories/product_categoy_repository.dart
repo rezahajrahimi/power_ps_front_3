@@ -48,6 +48,7 @@ Future addNewProductCategory({
   required bool sendConfigToUser,
   List<int>? allowedUserGroupIds,
   int? inboundId,
+  List<int>? inboundIds,
   int? ipLimit,
   String? sampleInbound,
   int? upsellCategoryId,
@@ -68,6 +69,8 @@ Future addNewProductCategory({
           "send_config_to_user": sendConfigToUser,
           "allowed_user_group_ids": allowedUserGroupIds ?? [],
           "inbound_id": inboundId,
+          if (inboundIds != null && inboundIds.isNotEmpty)
+            "inbound_ids": inboundIds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
           "upsell_category_id": upsellCategoryId,
@@ -80,25 +83,21 @@ Future addNewProductCategory({
           'Access-Control-Allow-Origin': '*'
         }));
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data is List) {
       productCategoryList.clear();
-      var data = response.data;
+      var data = response.data as List;
       for (var i in data) {
         productCategoryList.add(ProductCategory.fromMap(i));
       }
 
       return true;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
     }
+    debugPrint(
+        'addNewProductCategory failed: status=${response.statusCode} data=${response.data}');
+    return false;
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
+    debugPrint('addNewProductCategory DioException: ${e.message}');
+    debugPrint('addNewProductCategory response: ${e.response?.data}');
     return false;
   }
 }
@@ -118,6 +117,7 @@ Future<bool> editProductCategory({
   required bool isActive,
   List<int>? allowedUserGroupIds,
   int? inboundId,
+  List<int>? inboundIds,
   int? ipLimit,
   String? sampleInbound,
   int? upsellCategoryId,
@@ -139,6 +139,8 @@ Future<bool> editProductCategory({
           "id": id,
           "allowed_user_group_ids": allowedUserGroupIds ?? [],
           "inbound_id": inboundId,
+          if (inboundIds != null && inboundIds.isNotEmpty)
+            "inbound_ids": inboundIds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
           "upsell_category_id": upsellCategoryId,
@@ -151,26 +153,22 @@ Future<bool> editProductCategory({
           'Access-Control-Allow-Origin': '*'
         }));
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data is List) {
       debugPrint("Edit response: ${response.data}");
       productCategoryList.clear();
-      var data = response.data;
+      var data = response.data as List;
       for (var i in data) {
         debugPrint("Updated product: $i");
         productCategoryList.add(ProductCategory.fromMap(i));
       }
       return true;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
     }
+    debugPrint(
+        'editProductCategory failed: status=${response.statusCode} data=${response.data}');
+    return false;
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
+    debugPrint('editProductCategory DioException: ${e.message}');
+    debugPrint('editProductCategory response: ${e.response?.data}');
     return false;
   }
 }

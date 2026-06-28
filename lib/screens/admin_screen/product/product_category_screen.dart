@@ -600,7 +600,12 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               const SizedBox(height: 16),
                               DropdownButtonFormField<String>(
                                 isExpanded: true,
-                                initialValue: _selectedPannelName,
+                                initialValue:
+                                    _pannelNameList.contains(_selectedPannelName)
+                                        ? _selectedPannelName
+                                        : (_pannelNameList.isNotEmpty
+                                            ? _pannelNameList.first
+                                            : null),
                                 dropdownColor: AppStyle.secondaryColor,
                                 decoration: _inputDecoration(
                                     'انتخاب پنل', Icons.dns_outlined),
@@ -624,9 +629,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                     Expanded(
                                       child: _buildTextField(
                                         controller: _inboundIdEditText,
-                                        label: 'Inbound ID',
+                                        label: 'Inbound IDs',
+                                        hint: 'مثال: 1, 2, 3',
                                         icon: Icons.numbers,
-                                        keyboardType: TextInputType.number,
+                                        keyboardType: TextInputType.text,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -659,7 +665,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                             );
                                           },
                                     icon: const Icon(Icons.sync, size: 18),
-                                    label: const Text('انتخاب Inbound از پنل'),
+                                    label: const Text('انتخاب Inboundها از پنل'),
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -852,6 +858,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     final options = _productCategoryList
         .where((c) => c.pannelId == pannelId && c.isActive)
         .toList();
+    final upsellDropdownValue = _upsellCategoryId != null &&
+            options.any((c) => c.id == _upsellCategoryId)
+        ? _upsellCategoryId
+        : null;
 
     return Container(
       padding: const EdgeInsets.all(8),
@@ -866,7 +876,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
           const Text('پیشنهاد ارتقا (Upsell)'),
           const SizedBox(height: 8),
           DropdownButtonFormField<int?>(
-            initialValue: _upsellCategoryId,
+            initialValue: upsellDropdownValue,
             decoration: const InputDecoration(
               labelText: 'بسته پیشنهادی هنگام خرید',
               border: OutlineInputBorder(),
@@ -973,6 +983,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         pannelID = int.parse(_selectedPannelName.split(":")[0]);
       }
 
+      final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
+
       final val = await addNewProductCategory(
         name: _nameEditText.text,
         price: int.parse(_priceEditText.text),
@@ -989,9 +1001,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             : false,
         allowedUserGroupIds:
             _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),
-        inboundId: _inboundIdEditText.text.isNotEmpty
-            ? int.tryParse(_inboundIdEditText.text)
-            : null,
+        inboundId: inboundIds.isNotEmpty ? inboundIds.first : null,
+        inboundIds: inboundIds.isEmpty ? null : inboundIds,
         ipLimit: _ipLimitEditText.text.isNotEmpty
             ? int.tryParse(_ipLimitEditText.text)
             : 0,

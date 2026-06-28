@@ -21,6 +21,7 @@ class ProductCategory {
   /// Uses `0` as sentinel for "بدون گروه".
   List<int>? allowedUserGroupIds;
   int? inboundId;
+  List<int>? inboundIds;
   int? ipLimit;
   String? sampleInbound;
   int? upsellCategoryId;
@@ -43,6 +44,7 @@ class ProductCategory {
     required this.isActive,
     this.allowedUserGroupIds,
     this.inboundId,
+    this.inboundIds,
     this.ipLimit,
     this.sampleInbound,
     this.upsellCategoryId,
@@ -73,6 +75,7 @@ class ProductCategory {
     bool? isActive,
     List<int>? allowedUserGroupIds,
     int? inboundId,
+    List<int>? inboundIds,
     int? ipLimit,
     String? sampleInbound,
     int? upsellCategoryId,
@@ -95,6 +98,7 @@ class ProductCategory {
       isActive: isActive ?? this.isActive,
       allowedUserGroupIds: allowedUserGroupIds ?? this.allowedUserGroupIds,
       inboundId: inboundId ?? this.inboundId,
+      inboundIds: inboundIds ?? this.inboundIds,
       ipLimit: ipLimit ?? this.ipLimit,
       sampleInbound: sampleInbound ?? this.sampleInbound,
       upsellCategoryId: upsellCategoryId ?? this.upsellCategoryId,
@@ -121,12 +125,48 @@ class ProductCategory {
       'isActive': isActive,
       'allowed_user_group_ids': allowedUserGroupIds,
       'inbound_id': inboundId,
+      'inbound_ids': inboundIds,
       'ip_limit': ipLimit,
       'sample_inbound': sampleInbound,
       'upsell_category_id': upsellCategoryId,
       // 'agentAddCategoriyModel': agentAddCategoriyModel?.toMap(),
       // 'pannel': pannel?,
     };
+  }
+
+  static List<int>? _parseInboundIds(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is List) {
+      final out = <int>[];
+      for (final v in raw) {
+        final i = int.tryParse(v.toString());
+        if (i != null) out.add(i);
+      }
+      return out.isEmpty ? null : out;
+    }
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return null;
+      final parts = s.split(RegExp(r'[,; ]+')).where((p) => p.trim().isNotEmpty);
+      final out = <int>[];
+      for (final p in parts) {
+        final i = int.tryParse(p.trim());
+        if (i != null) out.add(i);
+      }
+      return out.isEmpty ? null : out;
+    }
+    return null;
+  }
+
+  /// Resolved inbound IDs (supports legacy single inbound_id).
+  List<int> get resolvedInboundIds {
+    if (inboundIds != null && inboundIds!.isNotEmpty) {
+      return List<int>.from(inboundIds!);
+    }
+    if (inboundId != null) {
+      return [inboundId!];
+    }
+    return [];
   }
 
   static List<int>? _parseAllowedGroupIds(dynamic raw) {
@@ -172,6 +212,7 @@ class ProductCategory {
         isActive: map['is_active'] == 1 ? true : false,
         allowedUserGroupIds: _parseAllowedGroupIds(map['allowed_user_group_ids']),
         inboundId: map['inbound_id']?.toInt(),
+        inboundIds: _parseInboundIds(map['inbound_ids']),
         ipLimit: map['ip_limit']?.toInt(),
         sampleInbound: map['sample_inbound']?.toString(),
         upsellCategoryId: map['upsell_category_id']?.toInt(),
@@ -208,6 +249,7 @@ class ProductCategory {
         other.sendConfigToUser == sendConfigToUser &&
         other.isActive == isActive &&
         other.inboundId == inboundId &&
+        other.inboundIds == inboundIds &&
         other.ipLimit == ipLimit &&
         other.sampleInbound == sampleInbound &&
         other.agentAddCategoriyModel == agentAddCategoriyModel;
@@ -229,6 +271,7 @@ class ProductCategory {
         sendConfigToUser.hashCode ^
         isActive.hashCode ^
         inboundId.hashCode ^
+        inboundIds.hashCode ^
         ipLimit.hashCode ^
         sampleInbound.hashCode ^
         agentAddCategoriyModel.hashCode;

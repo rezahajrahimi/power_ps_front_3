@@ -39,6 +39,24 @@ class SanaeiInboundItem {
   }
 }
 
+/// Parses comma/semicolon/space-separated inbound IDs from text input.
+List<int> parseInboundIdsFromText(String text) {
+  if (text.trim().isEmpty) return [];
+  return text
+      .split(RegExp(r'[,; ]+'))
+      .map((part) => int.tryParse(part.trim()))
+      .whereType<int>()
+      .toSet()
+      .toList()
+    ..sort();
+}
+
+String formatInboundIdsText(List<int> ids) {
+  if (ids.isEmpty) return '';
+  final sorted = List<int>.from(ids)..sort();
+  return sorted.join(', ');
+}
+
 Future<List<SanaeiInboundItem>?> fetchSanaeiInbounds(int pannelId) async {
   try {
     final response = await GenaralApi.dio.get(
@@ -96,8 +114,8 @@ Future<bool> refreshSanaeiPanelLogin(int pannelId) async {
   }
 }
 
-/// Fetches inbounds from panel and shows picker dialog.
-/// If [inboundIdController] is set, selected inbound id is written into it.
+/// Fetches inbounds from panel and shows multi-select picker dialog.
+/// If [inboundIdController] is set, selected inbound ids are written as comma-separated text.
 Future<void> showSanaeiInboundPicker(
   BuildContext context, {
   required int pannelId,
@@ -122,51 +140,88 @@ Future<void> showSanaeiInboundPicker(
     return;
   }
 
+  final initialSelected = inboundIdController != null
+      ? parseInboundIdsFromText(inboundIdController.text).toSet()
+      : <int>{};
+
   await showDialog<void>(
     context: context,
-    builder: (ctx) => Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        backgroundColor: AppStyle.secondaryColor,
-        title: const Text('Inboundهای پنل', style: TextStyle(color: Colors.white)),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.separated(
-            shrinkWrap: true,
-            itemCount: inbounds.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (_, index) {
-              final item = inbounds[index];
-              return ListTile(
-                title: Text(
-                  item.label,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+    builder: (ctx) {
+      final selectedIds = Set<int>.from(initialSelected);
+
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            backgroundColor: AppStyle.secondaryColor,
+            title: const Text(
+              'انتخاب Inboundها',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: inbounds.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (_, index) {
+                  final item = inbounds[index];
+                  final itemId = item.id;
+                  final isSelectable =
+                      inboundIdController != null && itemId != null;
+                  final isSelected =
+                      itemId != null && selectedIds.contains(itemId);
+
+                  return CheckboxListTile(
+                    value: isSelected,
+                    activeColor: AppStyle.primaryColor,
+                    checkColor: Colors.white,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      item.label,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                    onChanged: isSelectable
+                        ? (checked) {
+                            setDialogState(() {
+                              if (checked == true) {
+                                selectedIds.add(itemId);
+                              } else {
+                                selectedIds.remove(itemId);
+                              }
+                            });
+                          }
+                        : null,
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('انصراف'),
+              ),
+              if (inboundIdController != null)
+                ElevatedButton(
+                  onPressed: selectedIds.isEmpty
+                      ? null
+                      : () {
+                          inboundIdController.text =
+                              formatInboundIdsText(selectedIds.toList());
+                          Navigator.pop(ctx);
+                          showMsg(
+                            msg:
+                                '${selectedIds.length} Inbound انتخاب شد: ${formatInboundIdsText(selectedIds.toList())}',
+                            context: context,
+                          );
+                        },
+                  child: const Text('تأیید انتخاب'),
                 ),
-                trailing: inboundIdController != null
-                    ? const Icon(Icons.touch_app, color: Colors.white54, size: 18)
-                    : null,
-                onTap: inboundIdController != null && item.id != null
-                    ? () {
-                        inboundIdController.text = '${item.id}';
-                        Navigator.pop(ctx);
-                        showMsg(
-                          msg: 'Inbound ID ${item.id} انتخاب شد.',
-                          context: context,
-                        );
-                      }
-                    : null,
-              );
-            },
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('بستن'),
-          ),
-        ],
-      ),
-    ),
+      );
+    },
   );
 }
 

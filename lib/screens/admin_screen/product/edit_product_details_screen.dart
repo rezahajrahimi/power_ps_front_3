@@ -125,6 +125,65 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     if (mounted) setState(f);
   }
 
+  String? _resolvePanelDropdownValue() {
+    if (_pannelNameList.isEmpty) return null;
+    if (_selectedPannelName.isNotEmpty &&
+        _pannelNameList.contains(_selectedPannelName)) {
+      return _selectedPannelName;
+    }
+    final panelId = widget.selectedProductCategory.pannelId;
+    for (final name in _pannelNameList) {
+      if (name.startsWith('$panelId:')) return name;
+    }
+    return _pannelNameList.first;
+  }
+
+  int? _resolveUpsellCategoryId(int? upsellId) {
+    if (upsellId == null) return null;
+    final exists = _allCategories.any((c) => c.id == upsellId);
+    return exists ? upsellId : null;
+  }
+
+  List<ProductCategory> _upsellDropdownOptions() {
+    final currentPannelId = int.tryParse(
+          _selectedPannelName.isNotEmpty
+              ? _selectedPannelName.split(':')[0]
+              : '${widget.selectedProductCategory.pannelId}',
+        ) ??
+        widget.selectedProductCategory.pannelId;
+
+    final options = _allCategories
+        .where((c) =>
+            c.id != widget.selectedProductCategory.id &&
+            c.pannelId == currentPannelId &&
+            c.isActive)
+        .toList();
+
+    if (_upsellCategoryId != null &&
+        !options.any((c) => c.id == _upsellCategoryId)) {
+      ProductCategory? selected;
+      for (final c in _allCategories) {
+        if (c.id == _upsellCategoryId) {
+          selected = c;
+          break;
+        }
+      }
+      if (selected != null) {
+        options.add(selected);
+      }
+    }
+
+    return options;
+  }
+
+  int? _resolveUpsellDropdownValue(List<ProductCategory> options) {
+    if (_upsellCategoryId == null) return null;
+    if (options.any((c) => c.id == _upsellCategoryId)) {
+      return _upsellCategoryId;
+    }
+    return null;
+  }
+
   _buildBottomNavigationBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -170,8 +229,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         _expireDayEditText.text =
             widget.selectedProductCategory.expireDay.toString();
         _volumeEditText.text = widget.selectedProductCategory.volume.toString();
-        _inboundIdEditText.text =
-            widget.selectedProductCategory.inboundId?.toString() ?? "";
+        _inboundIdEditText.text = formatInboundIdsText(
+            widget.selectedProductCategory.resolvedInboundIds);
         _ipLimitEditText.text =
             widget.selectedProductCategory.ipLimit?.toString() ?? "0";
         _sampleInboundEditText.text =
@@ -199,9 +258,23 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
 
           _selectedPannelName =
               "${widget.selectedProductCategory.pannel!.id}: ${getPannelName(name: widget.selectedProductCategory.pannel!.type)} - ${widget.selectedProductCategory.pannel!.location}";
+
+          if (!_pannelNameList.contains(_selectedPannelName)) {
+            final panelId = widget.selectedProductCategory.pannelId;
+            final matches = _pannelNameList
+                .where((name) => name.startsWith('$panelId:'))
+                .toList();
+            if (matches.isNotEmpty) {
+              _selectedPannelName = matches.first;
+            } else {
+              _pannelNameList.insert(0, _selectedPannelName);
+            }
+          }
         } else {
           _selectedPannelName = "";
         }
+
+        _upsellCategoryId = _resolveUpsellCategoryId(_upsellCategoryId);
 
         _showData = true;
       });
@@ -341,9 +414,9 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     if (isSanaei) {
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _inboundIdEditText,
-        textHint: "Inbound ID",
-        validationError: "Inbound ID را وارد کنید.",
-        keyboardType: TextInputType.number,
+        textHint: "Inbound IDs (با کاما جدا کنید)",
+        validationError: "حداقل یک Inbound ID وارد کنید.",
+        keyboardType: TextInputType.text,
       ));
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _ipLimitEditText,
@@ -371,7 +444,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
               );
             },
             icon: const Icon(Icons.sync, size: 18),
-            label: const Text('انتخاب Inbound از پنل'),
+            label: const Text('انتخاب Inboundها از پنل'),
           ),
         ),
       );
@@ -390,8 +463,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButtonFormField<String>(
           isExpanded: true,
-          initialValue:
-              _selectedPannelName.isNotEmpty ? _selectedPannelName : null,
+          initialValue: _resolvePanelDropdownValue(),
           decoration: const InputDecoration(
             labelText: "انتخاب پنل",
             border: InputBorder.none,
@@ -630,13 +702,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       );
     }
 
-    final currentPannelId = widget.selectedProductCategory.pannelId;
-    final options = _allCategories
-        .where((c) =>
-            c.id != widget.selectedProductCategory.id &&
-            c.pannelId == currentPannelId &&
-            c.isActive)
-        .toList();
+    final options = _upsellDropdownOptions();
+    final upsellDropdownValue = _resolveUpsellDropdownValue(options);
 
     return Container(
       margin: EdgeInsets.only(top: AppStyle.defaultPadding),
@@ -658,7 +725,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<int?>(
-            initialValue: _upsellCategoryId,
+            initialValue: upsellDropdownValue,
             decoration: const InputDecoration(
               labelText: 'بسته پیشنهادی',
               border: OutlineInputBorder(),
@@ -696,6 +763,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       final supportsConfigToggle =
           panelDropdownSupportsConfigToggle(_selectedPannelName);
 
+      final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
+
       var res = await editProductCategory(
           name: _nameEditText.text,
           price: int.parse(_priceEditText.text),
@@ -711,9 +780,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           allowedUserGroupIds:
               _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),
           id: widget.selectedProductCategory.id.toInt(),
-          inboundId: _inboundIdEditText.text.isNotEmpty
-              ? int.tryParse(_inboundIdEditText.text)
-              : null,
+          inboundId: inboundIds.isNotEmpty ? inboundIds.first : null,
+          inboundIds: inboundIds.isEmpty ? null : inboundIds,
           ipLimit: _ipLimitEditText.text.isNotEmpty
               ? int.tryParse(_ipLimitEditText.text)
               : 0,

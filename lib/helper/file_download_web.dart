@@ -1,19 +1,25 @@
-import 'dart:html' as html;
+import 'dart:js_interop';
 import 'dart:typed_data';
+
+import 'package:web/web.dart';
 
 Future<String?> saveBytesToDevice({
   required Uint8List bytes,
   required String fileName,
 }) async {
-  final blob = html.Blob([bytes], 'text/csv');
-  final url = html.Url.createObjectUrlFromBlob(blob);
-  final anchor = html.AnchorElement(href: url)
-    ..setAttribute('download', fileName)
+  final blob = Blob(
+    [bytes.toJS].toJS,
+    BlobPropertyBag(type: 'text/csv'),
+  );
+  final url = URL.createObjectURL(blob);
+  final anchor = HTMLAnchorElement()
+    ..href = url
+    ..download = fileName
     ..style.display = 'none';
 
-  html.document.body?.children.add(anchor);
+  document.body?.append(anchor);
   anchor.click();
   anchor.remove();
-  html.Url.revokeObjectUrl(url);
+  URL.revokeObjectURL(url);
   return fileName;
 }
