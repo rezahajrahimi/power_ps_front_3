@@ -18,19 +18,42 @@ Future<LoyaltySettingModel?> getLoyaltySetting() async {
     );
 
     if (response.statusCode == 200 && response.data != null) {
-      return LoyaltySettingModel.fromMap(
-          Map<String, dynamic>.from(response.data));
+      if (response.data is Map && response.data['data'] is Map) {
+        return LoyaltySettingModel.fromMap(
+            Map<String, dynamic>.from(response.data['data']));
+      }
+      if (response.data is Map) {
+        return LoyaltySettingModel.fromMap(
+            Map<String, dynamic>.from(response.data));
+      }
     }
     return null;
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
+    debugPrint('getLoyaltySetting: ${e.message}');
+    debugPrint('getLoyaltySetting response: ${e.response?.data}');
     return null;
   }
 }
 
-Future<bool> updateLoyaltySetting(LoyaltySettingModel model) async {
+String? _loyaltyApiErrorMessage(dynamic data) {
+  if (data is! Map) return null;
+  final message = data['message']?.toString();
+  if (message != null && message.isNotEmpty) return message;
+
+  final errors = data['errors'];
+  if (errors is Map && errors.isNotEmpty) {
+    final first = errors.values.first;
+    if (first is List && first.isNotEmpty) {
+      return first.first.toString();
+    }
+    return first?.toString();
+  }
+  return null;
+}
+
+Future<String?> updateLoyaltySetting(LoyaltySettingModel model) async {
   try {
-    final response = await GenaralApi.dio.put(
+    final response = await GenaralApi.dio.post(
       '/api/updateLoyaltySetting',
       data: model.toApiMap(),
       options: Options(headers: {
@@ -42,10 +65,20 @@ Future<bool> updateLoyaltySetting(LoyaltySettingModel model) async {
       }),
     );
 
-    return response.statusCode == 200;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.data is Map && response.data['success'] == false) {
+        return _loyaltyApiErrorMessage(response.data) ??
+            'خطا در ذخیره تنظیمات';
+      }
+      return null;
+    }
+
+    return _loyaltyApiErrorMessage(response.data) ?? 'خطا در ذخیره تنظیمات';
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
-    return false;
+    debugPrint('updateLoyaltySetting: ${e.message}');
+    debugPrint('updateLoyaltySetting response: ${e.response?.data}');
+    return _loyaltyApiErrorMessage(e.response?.data) ??
+        'خطا در ذخیره تنظیمات';
   }
 }
 

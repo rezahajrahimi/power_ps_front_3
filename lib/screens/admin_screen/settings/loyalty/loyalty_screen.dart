@@ -667,13 +667,13 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
       minRedeemPoints: int.tryParse(_minRedeemController.text) ?? 0,
       maxRedeemPercent: int.tryParse(_maxRedeemPercentController.text) ?? 0,
     );
-    final ok = await updateLoyaltySetting(model);
+    final error = await updateLoyaltySetting(model);
     EasyLoading.dismiss();
     if (!mounted) return;
-    if (ok) {
+    if (error == null) {
       showMsg(msg: 'تنظیمات باشگاه مشتریان ذخیره شد', context: context);
     } else {
-      showMsg(msg: 'خطا در ذخیره تنظیمات', context: context, type: 'error');
+      showMsg(msg: error, context: context, type: 'error');
     }
   }
 }
