@@ -1,3 +1,4 @@
+import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
@@ -51,8 +52,11 @@ class _HomeScreenState extends State<HomeScreen>
   ];
   @override
   void initState() {
-    _fillData();
     super.initState();
+    _selectedIndex = widget.selectedPage;
+    loggedUSer =
+        Provider.of<AuthChangeController>(context, listen: false).getUser();
+    _fillData();
   }
 
   @override
@@ -269,14 +273,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _fillData() async {
-    //     if (context.mounted) {
-    // }
-    setState(() {
-      _selectedIndex = widget.selectedPage;
+    final token = await LoggingPreference().getToken();
+    if (token != 'void' && token.isNotEmpty) {
+      GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
+      GenaralApi.dio.options.headers['x-access-token'] = token;
+    }
 
-      loggedUSer =
-          Provider.of<AuthChangeController>(context, listen: false).getUser();
-    });
+    if (!mounted) return;
     await getlogedUserData().then((onValue) {
       if (onValue != false) {
         // when a have a user page, wee have to remove if statement

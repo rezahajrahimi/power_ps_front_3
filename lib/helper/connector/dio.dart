@@ -31,6 +31,16 @@ Future<void> initBaseUrl() async {
   GenaralApi.dio.options.baseUrl = baseURL;
 }
 
+/// Restore auth headers from persisted token (needed on web refresh).
+Future<void> restoreAuthSession() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+  if (token != null && token.isNotEmpty && token != 'void') {
+    GenaralApi.dio.options.headers['Authorization'] = 'Bearer $token';
+    GenaralApi.dio.options.headers['x-access-token'] = token;
+  }
+}
+
 /// Persist the provided [newUrl] and update global variables and Dio instance.
 Future<void> saveBaseUrl(String newUrl) async {
   final normalized = _normalizeUrl(newUrl);

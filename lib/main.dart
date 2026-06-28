@@ -30,6 +30,7 @@ Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // load persisted base URL (if set)
   await initBaseUrl();
+  await restoreAuthSession();
   // await AppInfoPreference().init();
   runApp(const MyApp());
 }
@@ -62,10 +63,8 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (context) => CategoryTypeProvider()),
           ChangeNotifierProvider(create: (context) => PurchaseCartProvider()),
         ],
-        child: Consumer2<AuthChangeController, AppInfoProvider>(
-          builder: (context, authController, appInfoProvider, child) {
-            authController.checkAuthStatus();
-
+        child: Consumer<AppInfoProvider>(
+          builder: (context, appInfoProvider, child) {
             return MaterialApp(
               builder: EasyLoading.init(),
               title: appInfoProvider.displayTitle,
@@ -98,8 +97,9 @@ class MyApp extends StatelessWidget {
                       textDirection: TextDirection.rtl,
                       child: CheckAuth(),
                     ),
-                '/home': (context) => const HomeScreen(
-                      selectedPage: 0,
+                '/home': (context) => const Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: CheckAuth(),
                     ),
                 '/login': (context) => const LoginScreen(),
               },

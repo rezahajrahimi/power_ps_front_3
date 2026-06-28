@@ -4,20 +4,21 @@ import 'package:powerps/helper/shared_prefrencess.dart';
 
 class AuthChangeController extends ChangeNotifier {
   User _user = User(accountId: 0, id: 0, name: "unathicated", role: "unknown");
-  bool _initialized = false;
+  Future<void>? _authCheckFuture;
 
   User get user => _user;
 
-  // متد جدید برای بررسی وضعیت احراز هویت در زمان راه‌اندازی
   Future<void> checkAuthStatus() async {
-    if (_initialized) return;
-    
+    _authCheckFuture ??= _loadAuthStatus();
+    return _authCheckFuture!;
+  }
+
+  Future<void> _loadAuthStatus() async {
     User? savedUser = await LoggingPreference().getUserData();
     if (savedUser != null) {
       _user = savedUser;
       notifyListeners();
     }
-    _initialized = true;
   }
 
   void setUser(User user) {
