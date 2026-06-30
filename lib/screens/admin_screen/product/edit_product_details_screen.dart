@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
 import 'package:powerps/helpers/marzban_inbound_sync.dart';
+import 'package:powerps/helpers/pasarguard_group_sync.dart';
 import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -42,6 +43,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
   final _marzbanInboundsEditText = TextEditingController();
+  final _pasarguardGroupIdsEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
   final _sampleInboundEditText = TextEditingController();
 
@@ -79,6 +81,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
     _marzbanInboundsEditText.dispose();
+    _pasarguardGroupIdsEditText.dispose();
     _ipLimitEditText.dispose();
     _sampleInboundEditText.dispose();
     super.dispose();
@@ -236,6 +239,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
             widget.selectedProductCategory.resolvedInboundIds);
         _marzbanInboundsEditText.text = formatMarzbanInboundsText(
             widget.selectedProductCategory.marzbanInbounds ?? {});
+        _pasarguardGroupIdsEditText.text = formatPasarguardGroupIdsText(
+            widget.selectedProductCategory.pasarguardGroupIds ?? []);
         _ipLimitEditText.text =
             widget.selectedProductCategory.ipLimit?.toString() ?? "0";
         _sampleInboundEditText.text =
@@ -381,7 +386,9 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     _productDetailsWidgetLIst.clear();
     bool isSanaei =
         getPanelTypeFromDropdownLabel(_selectedPannelName) == 'sanaei';
-    bool isMarzban = isMarzbanCompatiblePanel(
+    bool isMarzban = isMarzbanPanel(
+        getPanelTypeFromDropdownLabel(_selectedPannelName));
+    bool isPasarguard = isPasarguardPanel(
         getPanelTypeFromDropdownLabel(_selectedPannelName));
     bool isHiddify = _selectedPannelName.contains("Hiddify");
     bool supportsConfigToggle =
@@ -460,7 +467,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     if (isMarzban) {
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _marzbanInboundsEditText,
-        textHint: "Inboundهای Marzban/PasarGuard (JSON)",
+        textHint: "Inboundهای Marzban (JSON)",
         validationError: "حداقل یک Inbound انتخاب کنید.",
         keyboardType: TextInputType.text,
       ));
@@ -475,11 +482,38 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
                 context,
                 pannelId: id,
                 inboundsController: _marzbanInboundsEditText,
-                panelType: getPanelTypeFromDropdownLabel(_selectedPannelName),
+                panelType: 'marzban',
               );
             },
             icon: const Icon(Icons.sync, size: 18),
             label: const Text('انتخاب Inboundها از پنل'),
+          ),
+        ),
+      );
+    }
+
+    if (isPasarguard) {
+      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+        controller: _pasarguardGroupIdsEditText,
+        textHint: "گروه‌های PasarGuard ([1,2] یا 1,2)",
+        validationError: "حداقل یک گروه انتخاب کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _productDetailsWidgetLIst.add(
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              final id = int.tryParse(_selectedPannelName.split(':')[0]);
+              if (id == null) return;
+              runPasarguardGroupSync(
+                context,
+                pannelId: id,
+                groupIdsController: _pasarguardGroupIdsEditText,
+              );
+            },
+            icon: const Icon(Icons.sync, size: 18),
+            label: const Text('انتخاب گروه‌ها از پنل'),
           ),
         ),
       );
@@ -810,6 +844,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
       final marzbanInbounds =
           parseMarzbanInboundsFromText(_marzbanInboundsEditText.text);
+      final pasarguardGroupIds =
+          parsePasarguardGroupIdsFromText(_pasarguardGroupIdsEditText.text);
 
       var res = await editProductCategory(
           name: _nameEditText.text,
@@ -830,6 +866,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           inboundIds: inboundIds.isEmpty ? null : inboundIds,
           marzbanInbounds:
               marzbanInbounds.isEmpty ? null : marzbanInbounds,
+          pasarguardGroupIds:
+              pasarguardGroupIds.isEmpty ? null : pasarguardGroupIds,
           ipLimit: _ipLimitEditText.text.isNotEmpty
               ? int.tryParse(_ipLimitEditText.text)
               : 0,

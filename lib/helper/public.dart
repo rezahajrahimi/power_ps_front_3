@@ -117,6 +117,14 @@ bool isMarzbanCompatiblePanel(String type) {
   return type == 'marzban' || type == 'pasarguard';
 }
 
+bool isMarzbanPanel(String type) {
+  return type == 'marzban';
+}
+
+bool isPasarguardPanel(String type) {
+  return type == 'pasarguard';
+}
+
 bool isInventoryPanelType(String type) {
   return type == 'custome';
 }

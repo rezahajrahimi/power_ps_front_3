@@ -50,6 +50,7 @@ Future addNewProductCategory({
   int? inboundId,
   List<int>? inboundIds,
   Map<String, List<String>>? marzbanInbounds,
+  List<int>? pasarguardGroupIds,
   int? ipLimit,
   String? sampleInbound,
   int? upsellCategoryId,
@@ -74,6 +75,8 @@ Future addNewProductCategory({
             "inbound_ids": inboundIds,
           if (marzbanInbounds != null && marzbanInbounds.isNotEmpty)
             "marzban_inbounds": marzbanInbounds,
+          if (pasarguardGroupIds != null && pasarguardGroupIds.isNotEmpty)
+            "pasarguard_group_ids": pasarguardGroupIds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
           "upsell_category_id": upsellCategoryId,
@@ -122,6 +125,7 @@ Future<bool> editProductCategory({
   int? inboundId,
   List<int>? inboundIds,
   Map<String, List<String>>? marzbanInbounds,
+  List<int>? pasarguardGroupIds,
   int? ipLimit,
   String? sampleInbound,
   int? upsellCategoryId,
@@ -147,6 +151,8 @@ Future<bool> editProductCategory({
             "inbound_ids": inboundIds,
           if (marzbanInbounds != null && marzbanInbounds.isNotEmpty)
             "marzban_inbounds": marzbanInbounds,
+          if (pasarguardGroupIds != null && pasarguardGroupIds.isNotEmpty)
+            "pasarguard_group_ids": pasarguardGroupIds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
           "upsell_category_id": upsellCategoryId,

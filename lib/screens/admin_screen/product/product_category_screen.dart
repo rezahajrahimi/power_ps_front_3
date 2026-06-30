@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helpers/sanaei_inbound_sync.dart';
 import 'package:powerps/helpers/marzban_inbound_sync.dart';
+import 'package:powerps/helpers/pasarguard_group_sync.dart';
 import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -44,6 +45,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
   final _marzbanInboundsEditText = TextEditingController();
+  final _pasarguardGroupIdsEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
   final _sampleInboundEditText = TextEditingController();
 
@@ -81,6 +83,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
     _marzbanInboundsEditText.dispose();
+    _pasarguardGroupIdsEditText.dispose();
     _ipLimitEditText.dispose();
     _sampleInboundEditText.dispose();
     _selectedPannelName = "";
@@ -679,13 +682,13 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                   keyboardType: TextInputType.text,
                                 ),
                               ],
-                              if (isMarzbanCompatiblePanel(
+                              if (isMarzbanPanel(
                                   getPanelTypeFromDropdownLabel(
                                       _selectedPannelName))) ...[
                                 const SizedBox(height: 16),
                                 _buildTextField(
                                   controller: _marzbanInboundsEditText,
-                                  label: 'Inboundهای Marzban/PasarGuard',
+                                  label: 'Inboundهای Marzban',
                                   hint: 'JSON: {"vless":["TAG1"]}',
                                   icon: Icons.hub_outlined,
                                   keyboardType: TextInputType.text,
@@ -706,13 +709,45 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                               pannelId: id,
                                               inboundsController:
                                                   _marzbanInboundsEditText,
-                                              panelType:
-                                                  getPanelTypeFromDropdownLabel(
-                                                      _selectedPannelName),
+                                              panelType: 'marzban',
                                             );
                                           },
                                     icon: const Icon(Icons.sync, size: 18),
                                     label: const Text('انتخاب Inboundها از پنل'),
+                                  ),
+                                ),
+                              ],
+                              if (isPasarguardPanel(
+                                  getPanelTypeFromDropdownLabel(
+                                      _selectedPannelName))) ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _pasarguardGroupIdsEditText,
+                                  label: 'گروه‌های PasarGuard',
+                                  hint: '[1,2] یا 1,2',
+                                  icon: Icons.groups_outlined,
+                                  keyboardType: TextInputType.text,
+                                ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton.icon(
+                                    onPressed: _selectedPannelName.isEmpty
+                                        ? null
+                                        : () {
+                                            final id = int.tryParse(
+                                                _selectedPannelName
+                                                    .split(':')[0]);
+                                            if (id == null) return;
+                                            runPasarguardGroupSync(
+                                              context,
+                                              pannelId: id,
+                                              groupIdsController:
+                                                  _pasarguardGroupIdsEditText,
+                                            );
+                                          },
+                                    icon: const Icon(Icons.sync, size: 18),
+                                    label: const Text('انتخاب گروه‌ها از پنل'),
                                   ),
                                 ),
                               ],
@@ -1026,6 +1061,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
       final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
       final marzbanInbounds =
           parseMarzbanInboundsFromText(_marzbanInboundsEditText.text);
+      final pasarguardGroupIds =
+          parsePasarguardGroupIdsFromText(_pasarguardGroupIdsEditText.text);
 
       final val = await addNewProductCategory(
         name: _nameEditText.text,
@@ -1047,6 +1084,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         inboundIds: inboundIds.isEmpty ? null : inboundIds,
         marzbanInbounds:
             marzbanInbounds.isEmpty ? null : marzbanInbounds,
+        pasarguardGroupIds:
+            pasarguardGroupIds.isEmpty ? null : pasarguardGroupIds,
         ipLimit: _ipLimitEditText.text.isNotEmpty
             ? int.tryParse(_ipLimitEditText.text)
             : 0,

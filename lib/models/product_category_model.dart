@@ -23,6 +23,7 @@ class ProductCategory {
   int? inboundId;
   List<int>? inboundIds;
   Map<String, List<String>>? marzbanInbounds;
+  List<int>? pasarguardGroupIds;
   int? ipLimit;
   String? sampleInbound;
   int? upsellCategoryId;
@@ -47,6 +48,7 @@ class ProductCategory {
     this.inboundId,
     this.inboundIds,
     this.marzbanInbounds,
+    this.pasarguardGroupIds,
     this.ipLimit,
     this.sampleInbound,
     this.upsellCategoryId,
@@ -79,6 +81,7 @@ class ProductCategory {
     int? inboundId,
     List<int>? inboundIds,
     Map<String, List<String>>? marzbanInbounds,
+    List<int>? pasarguardGroupIds,
     int? ipLimit,
     String? sampleInbound,
     int? upsellCategoryId,
@@ -103,6 +106,7 @@ class ProductCategory {
       inboundId: inboundId ?? this.inboundId,
       inboundIds: inboundIds ?? this.inboundIds,
       marzbanInbounds: marzbanInbounds ?? this.marzbanInbounds,
+      pasarguardGroupIds: pasarguardGroupIds ?? this.pasarguardGroupIds,
       ipLimit: ipLimit ?? this.ipLimit,
       sampleInbound: sampleInbound ?? this.sampleInbound,
       upsellCategoryId: upsellCategoryId ?? this.upsellCategoryId,
@@ -131,6 +135,7 @@ class ProductCategory {
       'inbound_id': inboundId,
       'inbound_ids': inboundIds,
       'marzban_inbounds': marzbanInbounds,
+      'pasarguard_group_ids': pasarguardGroupIds,
       'ip_limit': ipLimit,
       'sample_inbound': sampleInbound,
       'upsell_category_id': upsellCategoryId,
@@ -248,6 +253,7 @@ class ProductCategory {
         inboundId: map['inbound_id']?.toInt(),
         inboundIds: _parseInboundIds(map['inbound_ids']),
         marzbanInbounds: _parseMarzbanInbounds(map['marzban_inbounds']),
+        pasarguardGroupIds: _parseInboundIds(map['pasarguard_group_ids']),
         ipLimit: map['ip_limit']?.toInt(),
         sampleInbound: map['sample_inbound']?.toString(),
         upsellCategoryId: map['upsell_category_id']?.toInt(),
