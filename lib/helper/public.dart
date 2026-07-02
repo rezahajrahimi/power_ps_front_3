@@ -135,6 +135,10 @@ bool panelSupportsGroupOperations(String type) {
       isMarzbanCompatiblePanel(type);
 }
 
+bool panelSupportsRemarkRename(String type) {
+  return type == 'hiddify' || type == 'sanaei';
+}
+
 String getPanelTypeFromDropdownLabel(String panelDropdownValue) {
   if (panelDropdownValue.isEmpty) {
     return '';

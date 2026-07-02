@@ -322,11 +322,15 @@ class _AgentBoughtProductInfoWidgetState
                                 _showChangeProductsDialog(context);
                               },
                               child: const Text('تغییر بسته')),
-                        ElevatedButton(
-                            onPressed: () async {
-                              _showRenameDialog(context);
-                            },
-                            child: const Text('تغییر نام')),
+                        if (panelSupportsRemarkRename(
+                            widget.boughtProductDetailsModel.productCategory
+                                    ?.pannel?.type ??
+                                ''))
+                          ElevatedButton(
+                              onPressed: () async {
+                                _showRenameDialog(context);
+                              },
+                              child: const Text('تغییر نام')),
                         ElevatedButton(
                             onPressed: () async {
                               EasyLoading.show();
