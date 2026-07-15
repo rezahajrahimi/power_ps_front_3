@@ -1,7 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:persian_datetimepickers/persian_datetimepickers.dart';
 import 'package:powerps/models/log_model.dart';
 
 DataRow recentEventDataRow(Log event) {
+  final username = (event.username == null ||
+          event.username == 'null' ||
+          event.username!.trim().isEmpty)
+      ? ''
+      : event.username!.trim();
+  final createdAtDateTime = (event.createdAt == null ||
+          event.createdAt == 'null' ||
+          event.createdAt!.trim().isEmpty)
+      ? null
+      : DateTime.tryParse(event.createdAt!.trim());
+  final createdAt = (event.createdAt == null ||
+          event.createdAt == 'null' ||
+          event.createdAt!.trim().isEmpty)
+      ? '—'
+      : (createdAtDateTime != null
+          ? '${createdAtDateTime.toPersianDate()} ${createdAtDateTime.hour}:${createdAtDateTime.minute}'
+          : event.createdAt!.trim());
+  final details = (event.message != null &&
+          event.message != 'null' &&
+          event.message!.trim().isNotEmpty)
+      ? event.message!.trim()
+      : (event.event != null &&
+              event.event != 'null' &&
+              event.event!.trim().isNotEmpty)
+          ? event.event!.trim()
+          : '—';
+
   return DataRow(
     cells: [
       // DataCell(
@@ -16,9 +44,9 @@ DataRow recentEventDataRow(Log event) {
       //     ],
       //   ),
       // ),
-      DataCell(Text("${event.username} - ${event.accountId}")),
-      DataCell(Text(event.createdAt!)),
-      DataCell(Text(event.message!)),
+      DataCell(Text("${event.accountId}")),
+      DataCell(Text(createdAt)),
+      DataCell(Text(details)),
     ],
   );
 }

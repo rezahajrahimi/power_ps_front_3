@@ -265,7 +265,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               itemValue: "${_botUser!.firstName} ${_botUser!.lastName}")),
       DetailsInfoItemWidget(
           item: DetailsInfoItem(
-              icon: const Icon(Icons.phone_android_outlined, color: Colors.cyan),
+              icon:
+                  const Icon(Icons.phone_android_outlined, color: Colors.cyan),
               itemName: "شماره موبایل تاییدشده",
               itemValue: _botUser!.phoneNumber?.isNotEmpty == true
                   ? _botUser!.phoneNumber!
@@ -273,7 +274,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
       if (_botUser!.adminAlias != null && _botUser!.adminAlias!.isNotEmpty)
         DetailsInfoItemWidget(
             item: DetailsInfoItem(
-                icon: const Icon(Icons.label_outline, color: Colors.amberAccent),
+                icon:
+                    const Icon(Icons.label_outline, color: Colors.amberAccent),
                 itemName: "اسم مستعار",
                 itemValue: _botUser!.adminAlias!)),
       DetailsInfoItemWidget(
@@ -489,6 +491,30 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
 
   _loyaltyPointsInfoCard(BuildContext context) {
     final points = _botUser!.loyaltyWallet?.balance ?? 0;
+    final actionsWidgetList = [
+      _buildActionButton(
+        context: context,
+        label: 'ویرایش امتیاز',
+        icon: Icons.edit_note,
+        onPressed: () => _editLoyaltyPointsDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: 'تاریخچه امتیاز',
+        icon: Icons.history,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LoyaltyReportScreen(
+                accountId: _botUser!.accountId,
+              ),
+            ),
+          );
+        },
+      ),
+    ];
+
     return Container(
       margin: Responsive.isMobile(context)
           ? EdgeInsets.only(top: AppStyle.defaultPadding)
@@ -527,30 +553,30 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
             item: DetailsInfoItem(
               icon: const Icon(Icons.stars, color: Colors.amber),
               itemName: 'موجودی امتیاز',
-              itemValue: '${thousandSeperatorFormatter(points.toString())} امتیاز',
+              itemValue:
+                  '${thousandSeperatorFormatter(points.toString())} امتیاز',
             ),
           ),
           const SizedBox(height: 16),
-          _buildActionButton(
-            context: context,
-            label: 'ویرایش امتیاز',
-            icon: Icons.edit_note,
-            onPressed: () => _editLoyaltyPointsDialog(context),
-          ),
-          _buildActionButton(
-            context: context,
-            label: 'تاریخچه امتیاز',
-            icon: Icons.history,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LoyaltyReportScreen(
-                    accountId: _botUser!.accountId,
-                  ),
-                ),
-              );
-            },
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 3.5,
+                  context: context,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionsWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2),
+            ),
           ),
         ],
       ),
@@ -650,18 +676,18 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               mobile: widgetsGridview(
                   childAspectRatio: 3.5,
                   context: context,
-                  crossAxisCount: 1,
+                  crossAxisCount: 2,
                   importedList: actionsWidgetList),
               tablet: widgetsGridview(
                   context: context,
                   childAspectRatio: 4.5,
-                  crossAxisCount: 1,
+                  crossAxisCount: 2,
                   importedList: actionsWidgetList),
               desktop: widgetsGridview(
                   importedList: actionsWidgetList,
                   context: context,
                   childAspectRatio: 4.5,
-                  crossAxisCount: 1),
+                  crossAxisCount: 2),
             ),
           ),
         ],
@@ -819,7 +845,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   importedList: actionsWidgetList,
                   context: context,
                   childAspectRatio: 4.5,
-                  crossAxisCount: 1),
+                  crossAxisCount: 2),
             ),
           ),
         ],
@@ -1236,7 +1262,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                         horizontal: 20, vertical: 10),
                   ),
                   onPressed: () async {
-                    final amount = int.tryParse(_ballanceController.text.trim());
+                    final amount =
+                        int.tryParse(_ballanceController.text.trim());
                     if (amount == null || amount < 0) {
                       showMsg(
                         context: context,
@@ -1256,12 +1283,13 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     EasyLoading.dismiss();
                     if (value == true) {
                       setState(() {
-                        _botUser!.referralWallet =
-                            (_botUser!.referralWallet ?? ReferralWalletModel(
-                              id: 0,
-                              referralUserId: _botUser!.id.toInt(),
-                              amount: 0,
-                            )).copyWith(amount: amount);
+                        _botUser!.referralWallet = (_botUser!.referralWallet ??
+                                ReferralWalletModel(
+                                  id: 0,
+                                  referralUserId: _botUser!.id.toInt(),
+                                  amount: 0,
+                                ))
+                            .copyWith(amount: amount);
                       });
                       showMsg(
                         context: context,
@@ -1343,12 +1371,13 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     EasyLoading.dismiss();
                     if (value) {
                       setState(() {
-                        _botUser!.loyaltyWallet =
-                            (_botUser!.loyaltyWallet ?? LoyaltyWalletModel(
-                              id: 0,
-                              userId: _botUser!.id.toInt(),
-                              balance: 0,
-                            )).copyWith(balance: balance);
+                        _botUser!.loyaltyWallet = (_botUser!.loyaltyWallet ??
+                                LoyaltyWalletModel(
+                                  id: 0,
+                                  userId: _botUser!.id.toInt(),
+                                  balance: 0,
+                                ))
+                            .copyWith(balance: balance);
                       });
                       showMsg(
                         context: context,
@@ -1649,8 +1678,9 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
 
     await getAllProdctCategory().then((res) {
       if (res != null && res != false) {
-        productCategoryList =
-            (res as List<ProductCategory>).where((c) => c.isAllowedForUserGroup(userGroupId)).toList();
+        productCategoryList = (res as List<ProductCategory>)
+            .where((c) => c.isAllowedForUserGroup(userGroupId))
+            .toList();
         for (var i in productCategoryList) {
           productCategoryItemList.add("${i.id} - ${i.categoryName}");
         }
@@ -1691,7 +1721,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                             color: Colors.greenAccent),
                         SizedBox(width: 10),
                         Text("خرید کانفیگ جدید",
-                            style: TextStyle(color: Colors.white, fontSize: 18)),
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 18)),
                       ],
                     ),
                     content: Column(
