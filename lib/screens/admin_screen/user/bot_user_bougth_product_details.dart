@@ -19,7 +19,6 @@ import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/models/product_details_model.dart';
 import 'package:powerps/provider/prodct_provider.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
-import 'package:powerps/repositories/marzban_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -53,24 +52,111 @@ class _BotUserBoughtProductDetailsScreenState
     _fillData();
   }
 
-  ({String url, String admin, String password, String username})?
-      get _marzbanCredentials {
-    final admin = _pannel?.username;
-    final password = _pannel?.password;
-    final remark = widget.productDetails.remark;
-    final urlPort = _pannel?.urlPort;
-    if (admin == null ||
-        password == null ||
-        remark == null ||
-        urlPort == null) {
+  String? get _panelUsername {
+    return resolveMarzbanUsernameFromProduct(
+      configs: widget.productDetails.configs,
+      remark: widget.productDetails.remark,
+      panelLink: widget.productDetails.panelLink,
+      subscriptionLink: widget.productDetails.subscriptionLink,
+    );
+  }
+
+  bool get _isMarzbanUserActive {
+    final status =
+        _normalizeNullableText(_marzbanConfig?.status)?.toLowerCase();
+    if (status == 'active') {
+      return true;
+    }
+    if (status == 'disabled') {
+      return false;
+    }
+    return widget.productDetails.isActive == true &&
+        widget.productDetails.deactiveByAdmin != true;
+  }
+
+  String? _normalizeNullableText(String? value) {
+    final text = value?.trim();
+    if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
       return null;
     }
-    return (
-      url: getMarzbanConfigApiUrl(adminUrl: urlPort),
-      admin: admin,
-      password: password,
-      username: remark,
-    );
+    return text;
+  }
+
+  String _formatTrafficUsage(int bytes) {
+    return "${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)} GB";
+  }
+
+  String _formatTrafficLimit(int bytes) {
+    if (bytes <= 0) {
+      return "نامحدود";
+    }
+    return _formatTrafficUsage(bytes);
+  }
+
+  String _formatPersianDateTimeFromString(
+    String? value, {
+    required String fallback,
+  }) {
+    final normalized = _normalizeNullableText(value);
+    if (normalized == null ||
+        normalized.contains('0001-01-01') ||
+        normalized.contains('1-01-01')) {
+      return fallback;
+    }
+
+    final parsed = DateTime.tryParse(normalized);
+    if (parsed == null) {
+      return normalized;
+    }
+
+    final local = parsed.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return "${local.toPersianDate()} - $hour:$minute";
+  }
+
+  String _formatExpireDate(DateTime expire) {
+    if (expire.millisecondsSinceEpoch <= 0 || expire.year <= 1970) {
+      return "نامحدود";
+    }
+    final local = expire.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return "${local.toPersianDate()} - $hour:$minute";
+  }
+
+  String _getMarzbanStatusLabel(String? status) {
+    switch (_normalizeNullableText(status)?.toLowerCase()) {
+      case 'active':
+        return 'فعال';
+      case 'disabled':
+        return 'غیرفعال';
+      case 'limited':
+        return 'محدود';
+      case 'expired':
+        return 'منقضی';
+      case 'on_hold':
+        return 'در انتظار';
+      default:
+        return 'نامشخص';
+    }
+  }
+
+  Color _getMarzbanStatusColor(String? status) {
+    switch (_normalizeNullableText(status)?.toLowerCase()) {
+      case 'active':
+        return Colors.green;
+      case 'disabled':
+        return Colors.red;
+      case 'limited':
+        return Colors.orange;
+      case 'expired':
+        return Colors.deepOrange;
+      case 'on_hold':
+        return Colors.amber;
+      default:
+        return Colors.blueGrey;
+    }
   }
 
   @override
@@ -199,26 +285,39 @@ class _BotUserBoughtProductDetailsScreenState
               _showdata = true;
             });
           } else if (isMarzbanCompatiblePanel(_pannel!.type)) {
-            final creds = _marzbanCredentials;
-            if (creds == null) {
-              if (mounted) {
+            await getProductBoughtedByProductId(
+                    productID: widget.productDetails.id.toInt())
+                .then((value) {
+              if (!mounted) return;
+
+              if (value != null && value != false) {
+                try {
+                  setState(() {
+                    _marzbanConfig = MarzbanConfig.fromJson(
+                      Map<String, dynamic>.from(value as Map),
+                    );
+                  });
+                } catch (e) {
+                  debugPrint('MarzbanConfig.fromJson: $e');
+                  if (mounted) {
+                    showMsg(
+                        msg:
+                            "خطا در پردازش اطلاعات پنل ${getMarzbanCompatiblePanelLabel(_pannel!.type)}.",
+                        context: context,
+                        type: "error");
+                  }
+                }
+              } else if (mounted) {
                 showMsg(
-                    msg: "اطلاعات پنل مرزبان ناقص است.",
+                    msg:
+                        "خطا در دریافت اطلاعات از پنل ${getMarzbanCompatiblePanelLabel(_pannel!.type)}. آیا این اکانت را بصورت دستی از پنل حذف کردید؟",
                     context: context,
                     type: "error");
               }
-            } else {
-              await getMarzbanUserInfo(
-                      url: creds.url,
-                      admin: creds.admin,
-                      password: creds.password,
-                      username: creds.username)
-                  .then((value) {
-                setState(() {
-                  _marzbanConfig = value;
-                });
-              });
-            }
+            });
+            setState(() {
+              _showdata = true;
+            });
           }
         }
       }).whenComplete(() async {
@@ -769,61 +868,135 @@ class _BotUserBoughtProductDetailsScreenState
   }
 
   _marzbanConfigCardData(BuildContext context) {
-    if (_marzbanConfig == null) {
+    if (_pannel == null || !isMarzbanCompatiblePanel(_pannel!.type)) {
       return const SizedBox();
     }
     final Size size = MediaQuery.of(context).size;
+    final panelLabel = getMarzbanCompatiblePanelLabel(_pannel!.type);
+    final hasPanelInfo = _marzbanConfig != null;
 
-    List<Widget> pannelWidgetList = [
-      DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "نام کاربری",
-        itemValue: _marzbanConfig!.username!,
-        icon: const Icon(Icons.person_outline, color: Colors.blue),
-      )),
-      DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "میزان حجم استفاده شده",
-        itemValue:
-            "${(_marzbanConfig!.usedTraffic / 1024 / 1024 / 1024).toStringAsFixed(2)} GB",
-        icon: const Icon(Icons.data_usage_outlined, color: Colors.orange),
-      )),
-      DetailsInfoItemWidget(
-          item: DetailsInfoItem(
-        itemName: "وضعیت",
-        itemValue: _marzbanConfig!.status ?? "نامشخص",
-        icon: const Icon(Icons.info_outline, color: Colors.green),
-      )),
-    ];
+    List<Widget> pannelWidgetList = hasPanelInfo
+        ? [
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+              itemName: "نام کاربری",
+              itemValue: _marzbanConfig!.username ?? _panelUsername ?? "نامشخص",
+              icon: const Icon(Icons.person_outline, color: Colors.blue),
+            )),
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+              itemName: "میزان حجم استفاده شده",
+              itemValue: _formatTrafficUsage(_marzbanConfig!.usedTraffic),
+              icon: const Icon(Icons.data_usage_outlined, color: Colors.orange),
+            )),
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+              itemName: "حجم کل",
+              itemValue: _formatTrafficLimit(_marzbanConfig!.dataLimit),
+              icon: const Icon(Icons.storage_outlined, color: Colors.green),
+            )),
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+              itemName: "آخرین زمان آنلاین",
+              itemValue: _formatPersianDateTimeFromString(
+                _marzbanConfig!.onlineAt,
+                fallback: "استفاده نشده",
+              ),
+              icon: const Icon(Icons.history_outlined, color: Colors.purple),
+            )),
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+              itemName: "تاریخ انقضا",
+              itemValue: _formatExpireDate(_marzbanConfig!.expire),
+              icon:
+                  const Icon(Icons.calendar_today_outlined, color: Colors.teal),
+            )),
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+              itemName: "وضعیت",
+              itemValue: _getMarzbanStatusLabel(_marzbanConfig!.status),
+              icon: Icon(
+                _isMarzbanUserActive
+                    ? Icons.check_circle_outline
+                    : Icons.block_flipped,
+                color: _getMarzbanStatusColor(_marzbanConfig!.status),
+              ),
+            )),
+          ]
+        : [
+            DetailsInfoItemWidget(
+                item: DetailsInfoItem(
+              itemName: "وضعیت دریافت اطلاعات",
+              itemValue: _panelUsername == null
+                  ? "نام کاربری اکانت در این بسته ثبت نشده است."
+                  : "در حال حاضر اطلاعات این اکانت از پنل $panelLabel دریافت نشد.",
+              icon:
+                  const Icon(Icons.warning_amber_rounded, color: Colors.amber),
+            )),
+          ];
 
     List<Widget> actionWidgetList = [
+      _buildActionButton(
+        context: context,
+        label: "مشاهده در پنل",
+        icon: Icons.open_in_new,
+        onPressed: () async {
+          EasyLoading.show();
+          await getBoughtProductsPannelLinkFromServerByIdAdminMode(
+                  productID: widget.productDetails.id.toInt())
+              .then((link) {
+            EasyLoading.dismiss();
+            if (!context.mounted) return;
+            if (link != false && link != null) {
+              launchUrl(Uri.parse(link));
+            } else {
+              showMsg(
+                  msg: "خطا در دریافت لینک", context: context, type: "error");
+            }
+          });
+        },
+      ),
       _buildActionButton(
         context: context,
         label: "ریست کردن بسته",
         icon: Icons.refresh,
         onPressed: () async {
-          final creds = _marzbanCredentials;
-          if (creds == null) {
-            showMsg(
-                msg: "اطلاعات پنل مرزبان ناقص است.",
-                context: context,
-                type: "error");
-            return;
-          }
           EasyLoading.show();
-          await resetMarzbanUser(
-                  url: creds.url,
-                  admin: creds.admin,
-                  password: creds.password,
-                  username: creds.username)
+          await reChargeProductByAdminWithPrID(
+                  productID: widget.productDetails.id.toInt())
               .then((value) {
             EasyLoading.dismiss();
             if (!context.mounted) return;
             if (value) {
               showMsg(msg: "با موفقیت انجام شد", context: context);
+              Provider.of<ProductProvider>(context, listen: false)
+                  .setChanged(true);
               _fillData();
             } else {
               showMsg(msg: "خطا در ریست کردن", context: context, type: "error");
+            }
+          });
+        },
+      ),
+      _buildActionButton(
+        context: context,
+        label: _isMarzbanUserActive ? "غیر فعال سازی" : "فعال سازی",
+        icon: _isMarzbanUserActive ? Icons.visibility_off : Icons.visibility,
+        color: _isMarzbanUserActive ? Colors.orange : Colors.green,
+        onPressed: () async {
+          EasyLoading.show();
+          await changeActivationOfHiddifyUserByAdmin(
+                  enable: !_isMarzbanUserActive,
+                  productID: widget.productDetails.id.toInt())
+              .then((res) {
+            EasyLoading.dismiss();
+            if (!context.mounted) return;
+            if (res) {
+              showMsg(msg: "تغییر وضعیت با موفقیت انجام شد", context: context);
+              _fillData();
+            } else {
+              showMsg(
+                  msg: "خطا در تغییر وضعیت", context: context, type: "error");
             }
           });
         },
@@ -858,7 +1031,7 @@ class _BotUserBoughtProductDetailsScreenState
               const Icon(Icons.settings_outlined, color: Colors.blueAccent),
               const SizedBox(width: 8),
               Text(
-                "وضعیت بسته خریداری شده (مرزبان)",
+                "وضعیت بسته خریداری شده ($panelLabel)",
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -1017,62 +1190,27 @@ class _BotUserBoughtProductDetailsScreenState
                       child: const Text("تایید و حذف نهایی"),
                       onPressed: () async {
                         EasyLoading.show();
-
-                        if (isMarzbanCompatiblePanel(_pannel!.type)) {
-                          final creds = _marzbanCredentials;
-                          if (creds == null) {
-                            EasyLoading.dismiss();
+                        await softDeleteProductByAgentWithPrIDAdminMOde(
+                                productID: widget.productDetails.id.toInt())
+                            .then((value) {
+                          if (!context.mounted) return;
+                          EasyLoading.dismiss();
+                          if (value) {
                             showMsg(
-                                msg: "اطلاعات پنل مرزبان ناقص است.",
+                                msg: "با موفقیت انجام شد", context: context);
+                            Provider.of<ProductProvider>(context,
+                                    listen: false)
+                                .setChanged(true);
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          } else {
+                            showMsg(
+                                msg: "خطا در حذف بسته",
                                 context: context,
                                 type: "error");
-                            return;
+                            Navigator.pop(context);
                           }
-                          await deleteMarzbanUser(
-                                  url: creds.url,
-                                  admin: creds.admin,
-                                  password: creds.password,
-                                  username: creds.username,
-                                  productID: widget.productDetails.id.toInt())
-                              .then((value) {
-                            if (!context.mounted) return;
-                            EasyLoading.dismiss();
-                            if (value) {
-                              showMsg(
-                                  msg: "با موفقیت انجام شد", context: context);
-                              Provider.of<ProductProvider>(context,
-                                      listen: false)
-                                  .setChanged(true);
-                              Navigator.pop(context);
-                              Navigator.pop(context);
-                            } else {
-                              showMsg(
-                                  msg: "خطا در حذف کاربر",
-                                  context: context,
-                                  type: "error");
-                            }
-                          });
-                        } else if (_pannel!.type == "hiddify" ||
-                            _pannel!.type == "sanaei") {
-                          await softDeleteProductByAgentWithPrIDAdminMOde(
-                                  productID: widget.productDetails.id.toInt())
-                              .then((value) {
-                            if (!context.mounted) return;
-                            EasyLoading.dismiss();
-                            if (value) {
-                              showMsg(
-                                  msg: "با موفقیت انجام شد", context: context);
-                              Navigator.pop(context);
-                              Navigator.pop(context);
-                            } else {
-                              showMsg(
-                                  msg: "خطا در حذف بسته",
-                                  context: context,
-                                  type: "error");
-                              Navigator.pop(context);
-                            }
-                          });
-                        }
+                        });
                       })
                 ]),
           );
@@ -1090,6 +1228,42 @@ class _BotUserBoughtProductDetailsScreenState
         onPressed: () => _showChangeProductsDialog(context),
       ),
     ];
+
+    if (_pannel != null && isMarzbanCompatiblePanel(_pannel!.type)) {
+      operationWidgetList.addAll([
+        _buildActionButton(
+          context: context,
+          label: _isMarzbanUserActive ? "غیر فعال سازی" : "فعال سازی",
+          icon: _isMarzbanUserActive ? Icons.visibility_off : Icons.visibility,
+          color: _isMarzbanUserActive ? Colors.orange : Colors.green,
+          onPressed: () async {
+            EasyLoading.show();
+            await changeActivationOfHiddifyUserByAdmin(
+                    enable: !_isMarzbanUserActive,
+                    productID: widget.productDetails.id.toInt())
+                .then((res) {
+              EasyLoading.dismiss();
+              if (!context.mounted) return;
+              if (res) {
+                showMsg(
+                    msg: "تغییر وضعیت با موفقیت انجام شد", context: context);
+                _fillData();
+              } else {
+                showMsg(
+                    msg: "خطا در تغییر وضعیت", context: context, type: "error");
+              }
+            });
+          },
+        ),
+        _buildActionButton(
+          context: context,
+          label: "حذف بسته",
+          icon: Icons.delete_forever,
+          color: Colors.red,
+          onPressed: () => _showDeleteDialog(context: context),
+        ),
+      ]);
+    }
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),

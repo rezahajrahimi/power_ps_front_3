@@ -3,11 +3,6 @@ import 'package:persian_datetimepickers/persian_datetimepickers.dart';
 import 'package:powerps/models/log_model.dart';
 
 DataRow recentEventDataRow(Log event) {
-  final username = (event.username == null ||
-          event.username == 'null' ||
-          event.username!.trim().isEmpty)
-      ? ''
-      : event.username!.trim();
   final createdAtDateTime = (event.createdAt == null ||
           event.createdAt == 'null' ||
           event.createdAt!.trim().isEmpty)

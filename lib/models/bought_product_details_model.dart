@@ -35,7 +35,7 @@ class BoughtProductDetailsModel {
     return BoughtProductDetailsModel(
       id: BigInt.from(json['id']),
       productCategoriesId: BigInt.from(json['product_categories_id']),
-      remark: json['remark'].toString(),
+      remark: _parseNullableString(json['remark']),
       accountId: BigInt.from(json['account_id'] ?? 0),
       configs: json['configs'].toString(),
       subscriptionLink: json['subscription_link'].toString(),
@@ -48,5 +48,13 @@ class BoughtProductDetailsModel {
           ? ProductCategory.fromMap(json['product_category_and_panel'])
           : null,
     );
+  }
+
+  static String? _parseNullableString(dynamic value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+      return null;
+    }
+    return text;
   }
 }

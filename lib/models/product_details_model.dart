@@ -39,7 +39,7 @@ class ProductDetails {
     return ProductDetails(
       id: BigInt.from(json['id']),
       productCategoriesId: BigInt.from(json['product_categories_id']),
-      remark: json['remark'].toString(),
+      remark: _parseNullableString(json['remark']),
       accountId: json['account_id'] == null
           ? null
           : BigInt.from(json['account_id']),
@@ -65,6 +65,14 @@ class ProductDetails {
           ? ProductCategory.fromMap(json['product_category'])
           : null,
     );
+  }
+
+  static String? _parseNullableString(dynamic value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+      return null;
+    }
+    return text;
   }
 
   Map<String, dynamic> toMap() {

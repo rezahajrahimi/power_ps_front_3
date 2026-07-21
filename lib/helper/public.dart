@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'dart:math' as math;
+import 'dart:convert';
 
 removeZeroChars(String number) {
   try {
@@ -173,8 +174,115 @@ String getHiddifyConfigApiUrl({required String adminUrl}) {
 }
 
 String getMarzbanConfigApiUrl({required String adminUrl}) {
-  Uri ur = Uri.parse(adminUrl);
-  return ur.origin;
+  return getMarzbanPanelBaseUrl(urlPort: adminUrl) ?? adminUrl;
+}
+
+String? getMarzbanPanelBaseUrl({String? urlPort, String? adminUrl}) {
+  var url = urlPort?.trim();
+  if (url == null || url.isEmpty || url.toLowerCase() == 'null') {
+    url = adminUrl?.trim();
+  }
+  if (url == null || url.isEmpty || url.toLowerCase() == 'null') {
+    return null;
+  }
+
+  url = url
+      .replaceAll('/dashboard/', '/')
+      .replaceAll('/dashboard', '')
+      .replaceAll(RegExp(r'/+$'), '');
+
+  final uri = Uri.tryParse(url);
+  if (uri != null && uri.hasScheme) {
+    if (uri.path.isEmpty || uri.path == '/') {
+      return uri.origin;
+    }
+    return url;
+  }
+
+  return url;
+}
+
+String? resolveMarzbanUsernameFromProduct({
+  required String configs,
+  String? remark,
+  String? panelLink,
+  String? subscriptionLink,
+}) {
+  final configsRaw = configs.trim();
+  if (configsRaw.isNotEmpty && configsRaw.toLowerCase() != 'null') {
+    try {
+      final decoded = jsonDecode(configsRaw);
+      if (decoded is Map) {
+        final username = decoded['username']?.toString().trim();
+        if (username != null &&
+            username.isNotEmpty &&
+            username.toLowerCase() != 'null') {
+          return username;
+        }
+      }
+    } catch (_) {}
+  }
+
+  for (final candidate in [panelLink, subscriptionLink, remark]) {
+    final extracted = extractUsernameFromPanelUrl(candidate);
+    if (extracted != null) {
+      return extracted;
+    }
+  }
+
+  final normalizedRemark = remark?.trim();
+  if (normalizedRemark != null &&
+      normalizedRemark.isNotEmpty &&
+      normalizedRemark.toLowerCase() != 'null') {
+    return normalizedRemark;
+  }
+
+  return null;
+}
+
+String? extractUsernameFromPanelUrl(String? rawUrl) {
+  final url = rawUrl?.trim();
+  if (url == null || url.isEmpty || url.toLowerCase() == 'null') {
+    return null;
+  }
+
+  final uri = Uri.tryParse(url);
+  if (uri == null) {
+    return null;
+  }
+
+  for (final key in const ['username', 'user', 'email', 'remark', 'client']) {
+    final candidate = uri.queryParameters[key]?.trim();
+    if (candidate != null &&
+        candidate.isNotEmpty &&
+        candidate.toLowerCase() != 'null') {
+      return Uri.decodeComponent(candidate);
+    }
+  }
+
+  const excludedSegments = {
+    'admin',
+    'panel',
+    'user',
+    'users',
+    'client',
+    'clients',
+    'subscription',
+    'subscriptions',
+    'sub',
+    'config',
+    'configs',
+  };
+  for (final segment in uri.pathSegments.reversed) {
+    final candidate = Uri.decodeComponent(segment).trim();
+    if (candidate.isNotEmpty &&
+        candidate.toLowerCase() != 'null' &&
+        !excludedSegments.contains(candidate.toLowerCase())) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 Color randomColorGenerator() {
