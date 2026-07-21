@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/agent_add_categoriy_model.dart';
+import 'package:powerps/models/agent_limit_usage_model.dart';
 import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/models/product_category_model.dart';
@@ -51,6 +52,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
   User? _selectedUser;
   User? _copySourceAgent;
   User? _agentProfile;
+  AgentLimitUsage? _agentLimitUsage;
   List<Pannel> _panels = [];
   int? _selectedPanelId;
   bool _minusBallance = false;
@@ -304,6 +306,8 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
             textHint: 'سقف بدهی (تومان) — خالی = بدون محدودیت',
             validationError: 'سقف بدهی باید عددی بزرگتر از صفر باشد',
           ),
+          if (!widget.isCreate && _agentLimitUsage != null)
+            _debtUsageSummary(context),
         ],
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -362,6 +366,52 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
             ],
           ),
       ],
+    );
+  }
+
+  Widget _debtUsageSummary(BuildContext context) {
+    final usage = _agentLimitUsage!;
+    final limit = usage.minusBallanceLimit;
+    final debt = usage.currentDebt;
+    final hasLimit = limit != null && limit > 0;
+
+    return Padding(
+      padding: EdgeInsets.only(top: AppStyle.defaultPadding / 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasLimit)
+            Text(
+              'بدهی فعلی: ${thousandSeperatorFormatter(debt.toStringAsFixed(0))} از ${thousandSeperatorFormatter(limit!.toStringAsFixed(0))} تومان (${usage.debtUsagePercent.toStringAsFixed(1)}%)',
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: usage.debtUsagePercent >= 100
+                        ? Colors.redAccent
+                        : usage.debtUsagePercent >= 80
+                            ? Colors.orangeAccent
+                            : Colors.greenAccent,
+                  ),
+            )
+          else
+            Text(
+              debt > 0
+                  ? 'بدهی فعلی: ${thousandSeperatorFormatter(debt.toStringAsFixed(0))} تومان (بدون سقف)'
+                  : 'بدهی فعلی: بدون بدهی',
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          if (usage.currentBalance != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'موجودی فعلی: ${thousandSeperatorFormatter(usage.currentBalance!.toStringAsFixed(0))} تومان',
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white70,
+                  ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -751,6 +801,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         }
 
         _agentProfile = detail?.user ?? agent;
+        _agentLimitUsage = detail?.user.agentLimitUsage;
       }
     } catch (e) {
       debugPrint("Error loading agent form: $e");
