@@ -7,7 +7,9 @@ import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/models/marzban_config_model.dart';
 import 'package:powerps/models/sanaei_config_model.dart';
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/product_category_model.dart';
 
 Future createAndEditBatchOfUserAgentProduct(
@@ -462,16 +464,19 @@ Future<dynamic> fetchBoughtProductStatus({
 
 dynamic parseBoughtProductStatusJson(Map<String, dynamic> json) {
   final panelType = json['panel_type']?.toString() ?? '';
+  if (isMarzbanCompatiblePanel(panelType) ||
+      (json.containsKey('used_traffic') &&
+          json.containsKey('username') &&
+          !json.containsKey('uuid'))) {
+    return MarzbanConfig.fromJson(json);
+  }
   if (panelType == 'hiddify' ||
-      json.containsKey('uuid') && json.containsKey('current_usage_GB')) {
+      (json.containsKey('uuid') && json.containsKey('current_usage_GB'))) {
     return HiddifyConfig.fromJson(json);
   }
   if (panelType == 'sanaei' ||
       json.containsKey('client') ||
       json.containsKey('inbound')) {
-    return SanaeiConfig.fromJson(json);
-  }
-  if (json.containsKey('used_traffic') && json.containsKey('username')) {
     return SanaeiConfig.fromJson(json);
   }
   return HiddifyConfig.fromJson(json);

@@ -1,7 +1,8 @@
 import 'package:powerps/helper/public.dart';
-import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/helpers/bought_product_status_helper.dart';
 import 'package:powerps/models/sanaei_config_model.dart';
 import 'package:powerps/models/product_details_model.dart';
+import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/screens/admin_screen/user/bot_user_bougth_product_details.dart';
 
@@ -25,15 +26,35 @@ class _ConfigDetailsWithCatInfoItemWidgetState
     super.initState();
   }
 
-  HiddifyConfig? _hiddifyConfig;
-  SanaeiConfig? _sanaeiConfig;
+  dynamic _panelConfig;
+  String? get _panelType => widget.item.productCategory?.pannel?.type;
 
   bool _showdata = false;
   @override
   void dispose() {
     _showdata = false;
-    // _hiddifyConfig = null;
     super.dispose();
+  }
+
+  bool get _isActive {
+    if (!_showdata || _panelConfig == null) {
+      return false;
+    }
+    if (_panelType == 'sanaei' && _panelConfig is SanaeiConfig) {
+      return (_panelConfig as SanaeiConfig).enable;
+    }
+    return boughtProductStatusIsActive(_panelConfig);
+  }
+
+  String? get _usageLabel {
+    if (!_showdata || _panelConfig == null) {
+      return null;
+    }
+    if (_panelType == 'sanaei' && _panelConfig is SanaeiConfig) {
+      final config = _panelConfig as SanaeiConfig;
+      return '${config.currentUsageGB.toStringAsFixed(2)} / ${config.usageLimitGB.toStringAsFixed(2)} GB';
+    }
+    return boughtProductStatusUsageLabel(_panelConfig);
   }
 
   @override
@@ -75,19 +96,14 @@ class _ConfigDetailsWithCatInfoItemWidgetState
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: (_showdata &&
-                        !(widget.item.productCategory?.pannel?.type == "sanaei"
-                            ? (_sanaeiConfig?.enable ?? false)
-                            : (_hiddifyConfig?.isActive ?? false)))
+                color: (_showdata && !_isActive)
                     ? Colors.red.withValues(alpha: 0.1)
                     : AppStyle.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: _showdata == false
                   ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
-                  : (widget.item.productCategory?.pannel?.type == "sanaei"
-                          ? (_sanaeiConfig?.enable ?? false)
-                          : (_hiddifyConfig?.isActive ?? false))
+                  : _isActive
                       ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
                       : const Icon(Icons.code_off, color: Colors.red, size: 24),
             ),
@@ -111,7 +127,6 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                             fontSize: 13,
                           ),
                         ),
-                        // maxLines: 1,
                         Text(
                           widget.item.updatedAt.length > 10
                               ? widget.item.updatedAt.substring(0, 10)
@@ -128,12 +143,9 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (_showdata)
+                        if (_showdata && _usageLabel != null)
                           Text(
-                            widget.item.productCategory?.pannel?.type ==
-                                    "sanaei"
-                                ? "${_sanaeiConfig?.currentUsageGB.toStringAsFixed(2)} / ${_sanaeiConfig?.usageLimitGB.toStringAsFixed(2)} GB"
-                                : "${_hiddifyConfig?.currentUsageGB.toStringAsFixed(2)} / ${_hiddifyConfig?.usageLimitGB.toStringAsFixed(2)} GB",
+                            _usageLabel!,
                             maxLines: 1,
                             textDirection: TextDirection.ltr,
                             overflow: TextOverflow.ellipsis,
@@ -172,24 +184,11 @@ class _ConfigDetailsWithCatInfoItemWidgetState
   void _fillData() async {
     await getProductBoughtedByProductId(productID: widget.item.id.toInt())
         .then((value) {
-      if (value != null && value != false && value is Map<String, dynamic>) {
+      if (value != null && value != false && value is Map) {
         setStateIfMounted(() {
-          // Check if it's Sanaei or Hiddify based on the keys in the response
-          // Sanaei has 'client' or 'inbound' keys which Hiddify doesn't
-          if (value.containsKey('client') || value.containsKey('inbound')) {
-            _sanaeiConfig = SanaeiConfig.fromJson(value);
-            // Also set hiddify config for compatibility if needed
-            _hiddifyConfig = HiddifyConfig(
-              uuid: "",
-              currentUsageGB: _sanaeiConfig!.currentUsageGB,
-              usageLimitGB: _sanaeiConfig!.usageLimitGB,
-              name: "",
-              packageDays: _sanaeiConfig!.packageDays,
-              isActive: _sanaeiConfig!.enable,
-            );
-          } else {
-            _hiddifyConfig = HiddifyConfig.fromJson(value);
-          }
+          _panelConfig = parseBoughtProductStatusJson(
+            Map<String, dynamic>.from(value),
+          );
           _showdata = true;
         });
       }
