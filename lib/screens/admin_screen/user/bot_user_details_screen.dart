@@ -503,11 +503,19 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         label: 'تاریخچه امتیاز',
         icon: Icons.history,
         onPressed: () {
+          final displayName =
+              '${_botUser!.firstName ?? ''} ${_botUser!.lastName ?? ''}'.trim();
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => LoyaltyReportScreen(
                 accountId: _botUser!.accountId,
+                userName: displayName.isNotEmpty
+                    ? displayName
+                    : (_botUser!.username?.isNotEmpty == true
+                        ? _botUser!.username
+                        : null),
+                currentBalance: _botUser!.loyaltyWallet?.balance ?? 0,
               ),
             ),
           );

@@ -57,6 +57,29 @@ class _ConfigDetailsWithCatInfoItemWidgetState
     return boughtProductStatusUsageLabel(_panelConfig);
   }
 
+  String get _categoryLabel {
+    final name = widget.item.productCategory?.categoryName.trim();
+    if (name != null && name.isNotEmpty) {
+      return name.length > 25 ? '${name.substring(0, 25)}...' : name;
+    }
+    return 'کانفیگ ${widget.item.id}';
+  }
+
+  String get _remarkLabel {
+    final remark = widget.item.remark?.trim();
+    if (remark == null || remark.isEmpty) {
+      return '—';
+    }
+    return remark.length > 30 ? '${remark.substring(0, 27)}...' : remark;
+  }
+
+  TextStyle _secondaryTextStyle(BuildContext context) {
+    return Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white70,
+            ) ??
+        const TextStyle(color: Colors.white70, fontSize: 12);
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -119,9 +142,7 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          widget.item.productCategory!.categoryName.length > 25
-                              ? "${widget.item.productCategory!.categoryName.substring(0, 25)}..."
-                              : widget.item.productCategory!.categoryName,
+                          _categoryLabel,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -133,10 +154,7 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                               : widget.item.updatedAt,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white70),
+                          style: _secondaryTextStyle(context),
                         ),
                       ],
                     ),
@@ -149,21 +167,13 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                             maxLines: 1,
                             textDirection: TextDirection.ltr,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall!
-                                .copyWith(color: Colors.white70),
+                            style: _secondaryTextStyle(context),
                           ),
                         Text(
-                          widget.item.remark!.length > 30
-                              ? "${widget.item.remark!.substring(0, 27)}..."
-                              : widget.item.remark!,
+                          _remarkLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white70),
+                          style: _secondaryTextStyle(context),
                         ),
                       ],
                     ),

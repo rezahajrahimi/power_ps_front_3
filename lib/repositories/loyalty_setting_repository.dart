@@ -162,12 +162,18 @@ Future<List<Map<String, dynamic>>?> getTopLoyaltyUsers() async {
   }
 }
 
-Future<List<LoyaltyTransactionModel>?> getLoyaltyLogsByAccountId({
+Future<Map<String, dynamic>?> getLoyaltyLogsByAccountId({
   required int userID,
+  int page = 1,
+  int perPage = 15,
 }) async {
   try {
     final response = await GenaralApi.dio.get(
       '/api/getLoyaltyLogsByAccountId/$userID',
+      queryParameters: {
+        'page': page,
+        'per_page': perPage,
+      },
       options: Options(headers: {
         'Accept': 'application/json',
         'Connection': 'keep-alive',
@@ -177,13 +183,46 @@ Future<List<LoyaltyTransactionModel>?> getLoyaltyLogsByAccountId({
       }),
     );
 
-    if (response.statusCode == 200 && response.data is List) {
-      return (response.data as List)
+    if (response.statusCode == 200 && response.data is Map) {
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final logs = (data['data'] as List? ?? [])
           .map((e) => LoyaltyTransactionModel.fromMap(
-              Map<String, dynamic>.from(e)))
+              Map<String, dynamic>.from(e as Map)))
           .toList();
+      final summaryRaw = data['summary'] as Map? ?? {};
+
+      return {
+        'logs': logs,
+        'current_page':
+            int.tryParse(data['current_page']?.toString() ?? '1') ?? 1,
+        'last_page': int.tryParse(data['last_page']?.toString() ?? '1') ?? 1,
+        'total': int.tryParse(data['total']?.toString() ?? '0') ?? 0,
+        'summary': {
+          'earn_count':
+              int.tryParse(summaryRaw['earn_count']?.toString() ?? '0') ?? 0,
+          'redeem_count':
+              int.tryParse(summaryRaw['redeem_count']?.toString() ?? '0') ??
+                  0,
+          'total_earned':
+              int.tryParse(summaryRaw['total_earned']?.toString() ?? '0') ?? 0,
+          'current_balance': int.tryParse(
+                  summaryRaw['current_balance']?.toString() ?? '0') ??
+              0,
+        },
+      };
     }
-    return [];
+    return {
+      'logs': <LoyaltyTransactionModel>[],
+      'current_page': 1,
+      'last_page': 1,
+      'total': 0,
+      'summary': {
+        'earn_count': 0,
+        'redeem_count': 0,
+        'total_earned': 0,
+        'current_balance': 0,
+      },
+    };
   } on DioException catch (e) {
     debugPrint(e.message.toString());
     return null;
