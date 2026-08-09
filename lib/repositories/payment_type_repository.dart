@@ -416,11 +416,21 @@ Future getCryptomusPaymentDetails() async {
 }
 
 Future<bool> chanegeMerChantIdByPaymentTypeName(
-    {required String name, required String merchantId}) async {
+    {required String name,
+    required String merchantId,
+    String? callbackDomain,
+    String? callbackUrl,
+    bool? isSandbox}) async {
   try {
     Response response =
         await GenaralApi.dio.post("/api/chanegeMerChantIdByPaymentTypeName",
-            data: {"name": name, "merchant_id": merchantId},
+            data: {
+              "name": name,
+              "merchant_id": merchantId,
+              if (callbackDomain != null) "callback_domain": callbackDomain,
+              if (callbackUrl != null) "callback_url": callbackUrl,
+              if (isSandbox != null) "is_sandbox": isSandbox,
+            },
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',

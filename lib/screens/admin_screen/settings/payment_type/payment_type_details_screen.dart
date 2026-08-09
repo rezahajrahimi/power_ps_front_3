@@ -33,6 +33,10 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   CryptoPaymentGateway? _nowPayment;
   CryptoPaymentGateway? _cryptomus;
   final _zarinpalMerchantIdTxtEdit = TextEditingController();
+  final _zarinpalCallbackDomainTxtEdit = TextEditingController();
+  String? _zarinpalResolvedCallbackUrl;
+  String? _zarinpalDefaultCallbackUrl;
+  bool _isZarinPalSandbox = false;
   final _newPaymentMerchantIdTxtEdit = TextEditingController();
   final _newPaymentNameTxtEdit = TextEditingController();
   final _shetabVerifyApiKeyTxtEdit = TextEditingController();
@@ -98,6 +102,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   @override
   void dispose() {
     _zarinpalMerchantIdTxtEdit.dispose();
+    _zarinpalCallbackDomainTxtEdit.dispose();
     _newPaymentMerchantIdTxtEdit.dispose();
     _newPaymentNameTxtEdit.dispose();
     _shetabVerifyApiKeyTxtEdit.dispose();
@@ -539,6 +544,46 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           _helperText(
               'کد درگاه را از پنل زرین‌پال → تنظیمات درگاه کپی کنید.'),
           const SizedBox(height: 12),
+          TextFormField(
+            controller: _zarinpalCallbackDomainTxtEdit,
+            textDirection: TextDirection.ltr,
+            decoration: _fieldDecoration(
+              label: 'دامنه Callback',
+              hint: 'https://pay.example.com',
+              icon: Icons.language_outlined,
+            ),
+          ),
+          _helperText(
+            _zarinpalResolvedCallbackUrl != null
+                ? 'فقط دامنه را وارد کنید؛ مسیر همیشه /order است.\nآدرس نهایی: $_zarinpalResolvedCallbackUrl\nخالی = دامنه پیش‌فرض پنل (${_zarinpalDefaultCallbackUrl ?? '—'}).'
+                : 'فقط دامنه اصلی را وارد کنید (مثل https://pay.example.com). مسیر /order ثابت می‌ماند. خالی = دامنه پیش‌فرض پنل.',
+          ),
+          const SizedBox(height: 12),
+          _toggleTile(
+            title: 'حالت Sandbox (آزمایشی)',
+            subtitle:
+                'فقط برای آزمایش درگاه استفاده می‌شود. پرداخت واقعی انجام نمی‌شود و باید Merchant ID سندباکس زرین‌پال را وارد کنید. برای فروش واقعی خاموش بگذارید.',
+            value: _isZarinPalSandbox,
+            onChanged: (newValue) {
+              setState(() => _isZarinPalSandbox = newValue);
+            },
+          ),
+          if (_isZarinPalSandbox)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
+                ),
+                child: const Text(
+                  'Sandbox فعال است: تراکنش‌ها روی محیط آزمایشی زرین‌پال انجام می‌شوند و برای تست اتصال درگاه است، نه دریافت وجه واقعی.',
+                  style: TextStyle(color: Colors.amber, fontSize: 12, height: 1.5),
+                ),
+              ),
+            ),
           _toggleTile(
             title: 'فعال بودن درگاه',
             subtitle: 'برای فعال‌سازی باید درگاه تأییدشده در زرین‌پال داشته باشید.',
@@ -565,8 +610,10 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
               if (_zarinpalMerchantIdTxtEdit.text.isEmpty) return;
               EasyLoading.show();
               final res = await chanegeMerChantIdByPaymentTypeName(
-                merchantId: _zarinpalMerchantIdTxtEdit.text,
+                merchantId: _zarinpalMerchantIdTxtEdit.text.trim(),
                 name: 'زرین پال',
+                callbackDomain: _zarinpalCallbackDomainTxtEdit.text.trim(),
+                isSandbox: _isZarinPalSandbox,
               );
               EasyLoading.dismiss();
               if (!mounted) return;
@@ -575,6 +622,9 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                 context: context,
                 type: res ? 'success' : 'error',
               );
+              if (res) {
+                await _fillData();
+              }
             },
           ),
         ],
@@ -1006,6 +1056,11 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
 
         _zarinPal = resZarinpal;
         _zarinpalMerchantIdTxtEdit.text = _zarinPal!.merchantId;
+        _zarinpalCallbackDomainTxtEdit.text =
+            _zarinPal!.callbackDomain ?? _zarinPal!.callbackUrl ?? '';
+        _zarinpalResolvedCallbackUrl = _zarinPal!.resolvedCallbackUrl;
+        _zarinpalDefaultCallbackUrl = _zarinPal!.defaultCallbackUrl;
+        _isZarinPalSandbox = _zarinPal!.isSandbox;
         _isZarinPalActive = _zarinPal!.isActive;
 
         _nowPayment = resNowPayment;
