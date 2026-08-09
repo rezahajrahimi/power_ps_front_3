@@ -415,6 +415,41 @@ Future getCryptomusPaymentDetails() async {
   }
 }
 
+Future getSwapPayPaymentDetails() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/getSwapPayData");
+    if (response.statusCode == 200 &&
+        response.data != null &&
+        response.data is Map) {
+      return CryptoPaymentGateway.fromMap(response.data);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future updateSwapPayPaymentDetails(
+    {required CryptoPaymentGateway cryptoPaymentGateway}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.patch("/api/updateSwapPayPayment", data: {
+      "api_key": cryptoPaymentGateway.apiKey,
+      "password": cryptoPaymentGateway.password,
+      "is_active": cryptoPaymentGateway.isActive,
+    });
+
+    if (response.statusCode == 200 && response.data != null) {
+      return CryptoPaymentGateway.fromMap(response.data);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
 Future<bool> chanegeMerChantIdByPaymentTypeName(
     {required String name,
     required String merchantId,

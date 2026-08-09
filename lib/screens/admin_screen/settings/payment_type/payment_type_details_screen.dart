@@ -32,6 +32,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   PaymentType? _zarinPal;
   CryptoPaymentGateway? _nowPayment;
   CryptoPaymentGateway? _cryptomus;
+  CryptoPaymentGateway? _swapPay;
   final _zarinpalMerchantIdTxtEdit = TextEditingController();
   final _zarinpalCallbackDomainTxtEdit = TextEditingController();
   String? _zarinpalResolvedCallbackUrl;
@@ -53,6 +54,10 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
   final _cryptomusApiKeyTxtEdit = TextEditingController();
   final _cryptomusMerchantIdTxtEdit = TextEditingController();
   bool _cryptomusIsActive = true;
+
+  final _swapPayApiKeyTxtEdit = TextEditingController();
+  final _swapPayApplicationTxtEdit = TextEditingController();
+  bool _swapPayIsActive = false;
 
   BoxDecoration get _cardDecoration => BoxDecoration(
         color: AppStyle.secondaryColor,
@@ -111,6 +116,8 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     _nowPaymentPasswordTxtEdit.dispose();
     _cryptomusApiKeyTxtEdit.dispose();
     _cryptomusMerchantIdTxtEdit.dispose();
+    _swapPayApiKeyTxtEdit.dispose();
+    _swapPayApplicationTxtEdit.dispose();
     super.dispose();
   }
 
@@ -185,6 +192,8 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                       _nowPaymentSection(),
                       const SizedBox(height: 12),
                       _cryptomusSection(),
+                      const SizedBox(height: 12),
+                      _swapPaySection(),
                     ],
                   ),
                 ),
@@ -208,6 +217,8 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
         _nowPaymentSection(),
         const SizedBox(height: 16),
         _cryptomusSection(),
+        const SizedBox(height: 16),
+        _swapPaySection(),
       ];
 
   Widget _pageHeader({required bool compact}) {
@@ -985,6 +996,82 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     );
   }
 
+  Widget _swapPaySection() {
+    return _sectionCard(
+      title: 'SwapPay (سواپ‌ولت)',
+      icon: Icons.account_balance_wallet_outlined,
+      subtitle: 'پرداخت رمزارزی دلاری از طریق swapwallet.app',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _swapPayApiKeyTxtEdit,
+            textDirection: TextDirection.ltr,
+            decoration: _fieldDecoration(
+              label: 'API Key',
+              hint: 'Apikey از پنل پذیرنده SwapPay',
+              icon: Icons.vpn_key_outlined,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _swapPayApplicationTxtEdit,
+            textDirection: TextDirection.ltr,
+            decoration: _fieldDecoration(
+              label: 'Application Username',
+              hint: 'نام کاربری اپلیکیشن در SwapPay',
+              icon: Icons.badge_outlined,
+            ),
+          ),
+          _helperText(
+            'مقادیر را از پنل پذیرنده SwapPay در swapwallet.app وارد کنید. شارژ روی موجودی دلاری انجام می‌شود.',
+          ),
+          const SizedBox(height: 12),
+          _toggleTile(
+            title: 'فعال بودن درگاه',
+            subtitle: 'نمایش SwapPay در بات و وب‌اپ برای شارژ دلاری',
+            value: _swapPayIsActive,
+            onChanged: (v) => setState(() => _swapPayIsActive = v),
+          ),
+          _actionButton(
+            label: 'ذخیره SwapPay',
+            icon: Icons.save_outlined,
+            onPressed: () async {
+              if (_swapPayApiKeyTxtEdit.text.isEmpty ||
+                  _swapPayApplicationTxtEdit.text.isEmpty) {
+                showMsg(
+                  msg: 'API Key و Application Username الزامی است.',
+                  context: context,
+                  type: 'error',
+                );
+                return;
+              }
+              EasyLoading.show();
+              await updateSwapPayPaymentDetails(
+                cryptoPaymentGateway: CryptoPaymentGateway(
+                  id: 0,
+                  name: 'swappay',
+                  apiKey: _swapPayApiKeyTxtEdit.text.trim(),
+                  email: '',
+                  password: _swapPayApplicationTxtEdit.text.trim(),
+                  isActive: _swapPayIsActive,
+                  isFeePaidByUser: false,
+                ),
+              ).then((value) {
+                if (value != null && mounted) {
+                  setState(() => _swapPay = value);
+                }
+              }).whenComplete(() {
+                EasyLoading.dismiss();
+                if (mounted) showMsg(msg: 'ذخیره شد.', context: context);
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _rebuildOfflinePayment() async {
     await getAllOfflinePayments().then((res) {
       if (res != null && res != false) {
@@ -1016,6 +1103,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
     var resZarinpal = await getZarinpalPaymentDetails();
     var resNowPayment = await getNovPaymentDetails();
     var resCryptomus = await getCryptomusPaymentDetails();
+    var resSwapPay = await getSwapPayPaymentDetails();
     await getShetabVerifySetting().then((val) {
       if (mounted) {
         setState(() {
@@ -1080,6 +1168,18 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
           _cryptomusApiKeyTxtEdit.clear();
           _cryptomusMerchantIdTxtEdit.clear();
           _cryptomusIsActive = false;
+        }
+
+        if (resSwapPay != null) {
+          _swapPay = resSwapPay;
+          _swapPayApiKeyTxtEdit.text = _swapPay!.apiKey;
+          _swapPayApplicationTxtEdit.text = _swapPay!.password;
+          _swapPayIsActive = _swapPay!.isActive;
+        } else {
+          _swapPay = null;
+          _swapPayApiKeyTxtEdit.clear();
+          _swapPayApplicationTxtEdit.clear();
+          _swapPayIsActive = false;
         }
       });
     }

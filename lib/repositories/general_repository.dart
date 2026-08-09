@@ -334,6 +334,10 @@ Future getAgentPaymentWays() async {
       "name": "crypto_payment_status",
       "status": response.data["crypto_payment_status"]
     });
+    res.add({
+      "name": "swappay_payment_status",
+      "status": response.data["swappay_payment_status"] ?? false
+    });
 
     return res;
   }
@@ -371,6 +375,27 @@ Future createNewAgentDollarBillUrl({required int amount}) async {
   try {
     Response response =
         await GenaralApi.dio.get("/api/createNewAgentDollarBillUrl/$amount",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*',
+            }));
+    if (response.statusCode == 200 && response.data != null) {
+      return response.data;
+    }
+    return null;
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future createNewAgentSwapPayBillUrl({required int amount}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.get("/api/createNewAgentSwapPayBillUrl/$amount",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
