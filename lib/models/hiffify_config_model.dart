@@ -42,13 +42,24 @@ class HiddifyConfig {
       lastOnline: json['last_online']?.toString(),
       mode: json['mode']?.toString(),
       name: json['name']?.toString() ?? json['uuid']?.toString() ?? '',
-      packageDays:
-          int.tryParse(json['package_days']?.toString() ?? '0') ?? 0,
+      packageDays: _parsePackageDays(json['package_days']),
       startDate: json['start_date']?.toString(),
       usageLimitGB:
           double.tryParse(json['usage_limit_GB']?.toString() ?? '0') ?? 0,
       isActive: isActive,
     );
+  }
+
+  /// Carbon may emit float days (e.g. 30.00000015); int.tryParse then fails → 0.
+  static int _parsePackageDays(dynamic raw) {
+    if (raw == null) return 0;
+    if (raw is int) return raw < 0 ? 0 : raw;
+    if (raw is num) return raw <= 0 ? 0 : raw.ceil().toInt();
+    final asInt = int.tryParse(raw.toString().trim());
+    if (asInt != null) return asInt < 0 ? 0 : asInt;
+    final asDouble = double.tryParse(raw.toString().trim());
+    if (asDouble == null || asDouble <= 0) return 0;
+    return asDouble.ceil().toInt();
   }
 
   HiddifyConfig copyWith({

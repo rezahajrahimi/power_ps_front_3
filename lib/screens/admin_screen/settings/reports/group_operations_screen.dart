@@ -50,6 +50,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   bool _noSupportedPanels = false;
   String? _loadErrorMessage;
   final List<String> _pannelNameList = [];
+  final List<Pannel> _panels = [];
   String _selectedPannelName = "";
   List<HiddifyConfig> _usersList = [];
   Map<String, dynamic>? _trackingJob;
@@ -58,6 +59,11 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   String _licenseType = '';
 
   bool get _isSilverOrAbove => LicenseHelper.isSilverOrAbove(_licenseType);
+
+  bool get _zeroMeansUnlimited {
+    final type = _selectedPanelType();
+    return type != null && isMarzbanCompatiblePanel(type);
+  }
 
   BoxDecoration get _cardDecoration => BoxDecoration(
         color: AppStyle.secondaryColor,
@@ -76,6 +82,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
     _pollTimer?.cancel();
     _usersList.clear();
     _pannelNameList.clear();
+    _panels.clear();
     _selectedPannelName = "";
     super.dispose();
   }
@@ -559,8 +566,10 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               initialList: _usersList,
               shrinkWrap: false,
               textStyle: const TextStyle(fontSize: 16),
-              itemBuilder: (config) =>
-                  HiddifyConfigDetailsWithCheckBoxWidget(item: config),
+              itemBuilder: (config) => HiddifyConfigDetailsWithCheckBoxWidget(
+                item: config,
+                zeroMeansUnlimited: _zeroMeansUnlimited,
+              ),
               loadingWidget: const Center(child: CircularProgressIndicator()),
               errorWidget: const Center(
                 child: Column(
@@ -672,7 +681,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                           ),
                         ),
                         Text(
-                          '${item.packageDays}روز / ${item.usageLimitGB}GB',
+                          '${_formatUsedGb(item.currentUsageGB)} / ${formatConfigVolumeLabel(item.usageLimitGB, zeroMeansUnlimited: _zeroMeansUnlimited)} · ${formatConfigDaysLabel(item.packageDays, zeroMeansUnlimited: _zeroMeansUnlimited)}',
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.white54,
@@ -710,7 +719,7 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
             icon: Icons.delete_sweep_outlined,
             title: 'پاکسازی منقضی‌ها',
             subtitle:
-                'اکانت‌هایی که بیش از ۱۰ روز از انقضا گذشته‌اند (نقره‌ای/طلایی)',
+                'ابتدا پنل را انتخاب کنید؛ اکانت‌های منقضی همان پنل لیست می‌شوند',
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -746,17 +755,28 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       return;
     }
 
-    EasyLoading.show(status: 'در حال اسکن پنل‌ها...');
+    final panelId = _selectedPanelId();
+    if (panelId <= 0) {
+      showMsg(
+        context: context,
+        msg: 'ابتدا یک پنل را از بالای صفحه انتخاب کنید.',
+        type: 'error',
+      );
+      return;
+    }
+
+    EasyLoading.show(status: 'در حال اسکن پنل انتخاب‌شده...');
     final result =
-        await GroupOperationRepository.previewExpiredConfigsForDeletion();
+        await GroupOperationRepository.previewExpiredConfigsForDeletion(
+      panelId: panelId,
+    );
     EasyLoading.dismiss();
     if (!mounted) return;
 
     if (result == null || result['success'] != true) {
       final msg = result?['message']?.toString() ??
           'خطا در دریافت لیست اکانت‌های منقضی';
-      if (result?['message']?.toString().contains('نقره') == true ||
-          result?['message']?.toString().contains('طلایی') == true) {
+      if (msg.contains('نقره') || msg.contains('طلایی')) {
         await showLicenseGateDialog(
           context: context,
           title: 'حذف اکانت‌های منقضی',
@@ -1366,7 +1386,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                     runSpacing: 8,
                     children: dayGroup.map((days) {
                       return ActionChip(
-                        label: Text('$days روز'),
+                        label: Text(formatConfigDaysLabel(days,
+                            zeroMeansUnlimited: _zeroMeansUnlimited)),
                         onPressed: () {
                           Navigator.pop(ctx);
                           _selectWhere((c) => c.packageDays == days);
@@ -1385,7 +1406,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
                     runSpacing: 8,
                     children: capacityGroup.map((gb) {
                       return ActionChip(
-                        label: Text('$gb GB'),
+                        label: Text(formatConfigVolumeLabel(gb,
+                            zeroMeansUnlimited: _zeroMeansUnlimited)),
                         onPressed: () {
                           Navigator.pop(ctx);
                           _selectWhere((c) => c.usageLimitGB == gb);
@@ -1485,6 +1507,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
       }
 
       setState(() {
+        _panels
+          ..clear()
+          ..addAll(supportedPanels);
         _pannelNameList
           ..clear()
           ..addAll(supportedPanels.map(_panelDropdownLabel));
@@ -1509,6 +1534,21 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   int _selectedPanelId() {
     if (_selectedPannelName.isEmpty) return 0;
     return int.parse(_selectedPannelName.split(':')[0]);
+  }
+
+  String? _selectedPanelType() {
+    final id = _selectedPanelId();
+    if (id <= 0) return null;
+    final idStr = id.toString();
+    for (final panel in _panels) {
+      if (panel.id == idStr) return panel.type;
+    }
+    return null;
+  }
+
+  String _formatUsedGb(num gb) {
+    if (gb == gb.roundToDouble()) return '${gb.toInt()} GB';
+    return '${gb.toStringAsFixed(2)} GB';
   }
 
   String _panelDropdownLabel(Pannel panel) {

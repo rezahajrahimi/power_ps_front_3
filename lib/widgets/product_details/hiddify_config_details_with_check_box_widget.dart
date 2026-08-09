@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
 import 'package:powerps/provider/panel_controller.dart';
 import 'package:powerps/styles/app_theme.dart';
 
 class HiddifyConfigDetailsWithCheckBoxWidget extends StatefulWidget {
-  const HiddifyConfigDetailsWithCheckBoxWidget({super.key, required this.item});
+  const HiddifyConfigDetailsWithCheckBoxWidget({
+    super.key,
+    required this.item,
+    this.zeroMeansUnlimited = false,
+  });
   final HiddifyConfig item;
+
+  /// Marzban / PasarGuard: 0 days or 0 GB means unlimited.
+  final bool zeroMeansUnlimited;
 
   @override
   State<HiddifyConfigDetailsWithCheckBoxWidget> createState() =>
@@ -87,17 +95,23 @@ class _HiddifyConfigDetailsWithCheckBoxWidgetState
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "${widget.item.usageLimitGB} GB",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall!
-                            .copyWith(color: Colors.white70),
+                      Flexible(
+                        child: Text(
+                          _volumeUsageLabel(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall!
+                              .copyWith(color: Colors.white70),
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
-                        "${widget.item.packageDays}روزه",
+                        formatConfigDaysLabel(
+                          widget.item.packageDays,
+                          zeroMeansUnlimited: widget.zeroMeansUnlimited,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context)
@@ -114,6 +128,20 @@ class _HiddifyConfigDetailsWithCheckBoxWidgetState
         ],
       ),
     );
+  }
+
+  String _volumeUsageLabel() {
+    final used = _formatGb(widget.item.currentUsageGB);
+    final limit = formatConfigVolumeLabel(
+      widget.item.usageLimitGB,
+      zeroMeansUnlimited: widget.zeroMeansUnlimited,
+    );
+    return '$used / $limit';
+  }
+
+  String _formatGb(num gb) {
+    if (gb == gb.roundToDouble()) return '${gb.toInt()} GB';
+    return '${gb.toStringAsFixed(2)} GB';
   }
 
   void _fillData() async {

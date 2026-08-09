@@ -118,6 +118,21 @@ bool isMarzbanCompatiblePanel(String type) {
   return type == 'marzban' || type == 'pasarguard';
 }
 
+/// For Marzban/PasarGuard, 0 days means unlimited.
+String formatConfigDaysLabel(int days, {required bool zeroMeansUnlimited}) {
+  if (zeroMeansUnlimited && days <= 0) return 'نامحدود';
+  return '$days روز';
+}
+
+/// For Marzban/PasarGuard, 0 GB means unlimited.
+String formatConfigVolumeLabel(num gb, {required bool zeroMeansUnlimited}) {
+  if (zeroMeansUnlimited && gb <= 0) return 'نامحدود';
+  final text = gb is int || gb == gb.roundToDouble()
+      ? gb.toInt().toString()
+      : gb.toString();
+  return '$text GB';
+}
+
 bool isMarzbanPanel(String type) {
   return type == 'marzban';
 }

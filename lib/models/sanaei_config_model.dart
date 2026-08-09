@@ -30,10 +30,18 @@ class SanaeiConfig {
       currentUsageGB: double.parse(json['current_usage_GB'].toString()),
       usageLimitGB: double.parse(json['usage_limit_GB'].toString()),
       startDate: json['start_date']?.toString(),
-      packageDays: json['package_days'] ?? 0,
+      packageDays: _toIntDays(json['package_days']),
       inbound: json['inbound'],
       client: json['client'],
     );
+  }
+
+  static int _toIntDays(dynamic raw) {
+    if (raw == null) return 0;
+    if (raw is int) return raw < 0 ? 0 : raw;
+    if (raw is num) return raw <= 0 ? 0 : raw.round();
+    return int.tryParse(raw.toString()) ??
+        (double.tryParse(raw.toString())?.round() ?? 0);
   }
 
   Map<String, dynamic> toJson() {
