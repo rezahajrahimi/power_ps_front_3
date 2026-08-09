@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:persian_datetimepickers/persian_datetimepickers.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -367,6 +368,22 @@ class _TestAccountManagementScreenState
     );
   }
 
+  String _formatCreatedAtJalali(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw == 'null') {
+      return '—';
+    }
+
+    final parsed = DateTime.tryParse(raw.trim());
+    if (parsed == null) {
+      return raw.trim();
+    }
+
+    final local = parsed.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '${local.toPersianDate()} $hour:$minute';
+  }
+
   Widget _buildMobileList() {
     return ListView.builder(
       shrinkWrap: true,
@@ -379,7 +396,7 @@ class _TestAccountManagementScreenState
           child: ListTile(
             title: Text(user.user?.name ?? "نامشخص"),
             subtitle: Text(
-                "Account ID: ${user.accountId} - تاریخ: ${user.createdAt ?? ''}"),
+                "Account ID: ${user.accountId} - تاریخ: ${_formatCreatedAtJalali(user.createdAt)}"),
             leading: const Icon(Icons.person),
             trailing: IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
@@ -427,7 +444,7 @@ class _TestAccountManagementScreenState
           return DataRow(cells: [
             DataCell(Text(user.user?.name ?? "نامشخص")),
             DataCell(Text(user.accountId.toString())),
-            DataCell(Text(user.createdAt ?? '')),
+            DataCell(Text(_formatCreatedAtJalali(user.createdAt))),
             DataCell(IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _deleteUser(user.id),
