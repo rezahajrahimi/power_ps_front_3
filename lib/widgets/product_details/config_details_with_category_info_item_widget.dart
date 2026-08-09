@@ -1,9 +1,5 @@
 import 'package:powerps/helper/public.dart';
-import 'package:powerps/helpers/bought_product_status_helper.dart';
-import 'package:powerps/models/sanaei_config_model.dart';
 import 'package:powerps/models/product_details_model.dart';
-import 'package:powerps/repositories/agent_product_repository.dart';
-import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/screens/admin_screen/user/bot_user_bougth_product_details.dart';
 
 import 'package:powerps/styles/app_theme.dart';
@@ -20,43 +16,6 @@ class ConfigDetailsWithCatInfoItemWidget extends StatefulWidget {
 
 class _ConfigDetailsWithCatInfoItemWidgetState
     extends State<ConfigDetailsWithCatInfoItemWidget> {
-  @override
-  void initState() {
-    _fillData();
-    super.initState();
-  }
-
-  dynamic _panelConfig;
-  String? get _panelType => widget.item.productCategory?.pannel?.type;
-
-  bool _showdata = false;
-  @override
-  void dispose() {
-    _showdata = false;
-    super.dispose();
-  }
-
-  bool get _isActive {
-    if (!_showdata || _panelConfig == null) {
-      return false;
-    }
-    if (_panelType == 'sanaei' && _panelConfig is SanaeiConfig) {
-      return (_panelConfig as SanaeiConfig).enable;
-    }
-    return boughtProductStatusIsActive(_panelConfig);
-  }
-
-  String? get _usageLabel {
-    if (!_showdata || _panelConfig == null) {
-      return null;
-    }
-    if (_panelType == 'sanaei' && _panelConfig is SanaeiConfig) {
-      final config = _panelConfig as SanaeiConfig;
-      return '${config.currentUsageGB.toStringAsFixed(2)} / ${config.usageLimitGB.toStringAsFixed(2)} GB';
-    }
-    return boughtProductStatusUsageLabel(_panelConfig);
-  }
-
   String get _categoryLabel {
     final name = widget.item.productCategory?.categoryName.trim();
     if (name != null && name.isNotEmpty) {
@@ -119,16 +78,10 @@ class _ConfigDetailsWithCatInfoItemWidgetState
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: (_showdata && !_isActive)
-                    ? Colors.red.withValues(alpha: 0.1)
-                    : AppStyle.primaryColor.withValues(alpha: 0.1),
+                color: AppStyle.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: _showdata == false
-                  ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
-                  : _isActive
-                      ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
-                      : const Icon(Icons.code_off, color: Colors.red, size: 24),
+              child: Icon(Icons.code, color: AppStyle.primaryColor, size: 24),
             ),
             Expanded(
               child: Padding(
@@ -161,14 +114,6 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (_showdata && _usageLabel != null)
-                          Text(
-                            _usageLabel!,
-                            maxLines: 1,
-                            textDirection: TextDirection.ltr,
-                            overflow: TextOverflow.ellipsis,
-                            style: _secondaryTextStyle(context),
-                          ),
                         Text(
                           _remarkLabel,
                           maxLines: 1,
@@ -185,25 +130,5 @@ class _ConfigDetailsWithCatInfoItemWidgetState
         ),
       ),
     );
-  }
-
-  void setStateIfMounted(f) {
-    if (mounted) setState(f);
-  }
-
-  void _fillData() async {
-    await getProductBoughtedByProductId(productID: widget.item.id.toInt())
-        .then((value) {
-      if (value != null && value != false && value is Map) {
-        setStateIfMounted(() {
-          _panelConfig = parseBoughtProductStatusJson(
-            Map<String, dynamic>.from(value),
-          );
-          _showdata = true;
-        });
-      }
-    }).onError((e, s) {
-      debugPrint(e.toString());
-    });
   }
 }

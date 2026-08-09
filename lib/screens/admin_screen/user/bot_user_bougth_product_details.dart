@@ -1230,7 +1230,7 @@ class _BotUserBoughtProductDetailsScreenState
     ];
 
     if (_pannel != null && isMarzbanCompatiblePanel(_pannel!.type)) {
-      operationWidgetList.addAll([
+      operationWidgetList.add(
         _buildActionButton(
           context: context,
           label: _isMarzbanUserActive ? "غیر فعال سازی" : "فعال سازی",
@@ -1255,15 +1255,19 @@ class _BotUserBoughtProductDetailsScreenState
             });
           },
         ),
-        _buildActionButton(
-          context: context,
-          label: "حذف بسته",
-          icon: Icons.delete_forever,
-          color: Colors.red,
-          onPressed: () => _showDeleteDialog(context: context),
-        ),
-      ]);
+      );
     }
+
+    // Delete must be available for all panel types, including inventory («دیگر»).
+    operationWidgetList.add(
+      _buildActionButton(
+        context: context,
+        label: "حذف بسته",
+        icon: Icons.delete_forever,
+        color: Colors.red,
+        onPressed: () => _showDeleteDialog(context: context),
+      ),
+    );
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),

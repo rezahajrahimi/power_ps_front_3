@@ -100,34 +100,48 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   }
 
   void _fillData() async {
-    await getBotUserByID(id: widget.id.toInt()).then((value) {
+    // Load user profile first so the page can render without waiting on product list.
+    if (mounted) {
+      setState(() {
+        _showBoughtProduct = false;
+      });
+    }
+
+    final productsFuture =
+        getUserProductsHistoryByAccountIDWithPagination(userID: widget.id.toInt());
+
+    try {
+      final value = await getBotUserByID(id: widget.id.toInt());
+      if (!mounted) return;
       if (value != null && value != false) {
         setStateIfMounted(() {
           _botUser = value;
           _showBlockedUser = _botUser!.blockedUser != null;
           _showData = true;
         });
+      } else {
+        showMsg(msg: "خطا", context: context, type: "error");
+        Navigator.of(context).pop();
+        return;
       }
-    }).onError((e, s) {
+    } catch (e) {
       if (!mounted) return;
       showMsg(msg: "خطا", context: context, type: "error");
       Navigator.of(context).pop();
-    });
-    await getUserProductsHistoryByAccountIDWithPagination(
-            userID: widget.id.toInt())
-        .then((value) {
-      if (!mounted) return;
-      if (value != false && value != null) {
-        setState(() {
-          _lastPageOfUserBought = lastPageOfUserBought;
+      return;
+    }
 
-          _showBoughtProduct = true;
-        });
-      } else {
-        showMsg(msg: "خطا", context: context, type: "error");
-        debugPrint("error on dashboard biding $value");
-      }
-    });
+    final productsValue = await productsFuture;
+    if (!mounted) return;
+    if (productsValue != false && productsValue != null) {
+      setState(() {
+        _lastPageOfUserBought = lastPageOfUserBought;
+        _showBoughtProduct = true;
+      });
+    } else {
+      showMsg(msg: "خطا", context: context, type: "error");
+      debugPrint("error on dashboard biding $productsValue");
+    }
   }
 
   void setStateIfMounted(f) {
@@ -989,65 +1003,224 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     );
   }
 
-  _showSyncDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: AppStyle.secondaryColor,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              const Icon(Icons.sync, color: Colors.orangeAccent),
-              const SizedBox(width: 10),
-              const Text("همگام‌سازی کاربر",
-                  style: TextStyle(color: Colors.white, fontSize: 18)),
+  Future<void> _showSyncDialog(BuildContext context) async {
+    EasyLoading.show(status: 'در حال بررسی پنل‌ها...');
+    final missing = await previewMissingUserProductsOnPanels(
+      botUserId: widget.id.toInt(),
+    );
+    EasyLoading.dismiss();
+    if (!context.mounted) return;
+
+    if (missing == null) {
+      showMsg(context: context, msg: "خطا در همگام‌سازی", type: "error");
+      return;
+    }
+
+    if (missing.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: AppStyle.secondaryColor,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.tealAccent),
+                SizedBox(width: 10),
+                Text("همگام‌سازی",
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
+              ],
+            ),
+            content: const Text(
+              "همه اکانت‌های این کاربر روی پنل موجود هستند. موردی برای حذف یافت نشد.",
+              style: TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("باشه",
+                    style: TextStyle(color: Colors.white70)),
+              ),
             ],
           ),
-          content: const Text(
-            "آیا از همگام‌سازی اطلاعات کاربر با ربات اطمینان دارید؟",
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child:
-                  const Text("انصراف", style: TextStyle(color: Colors.white70)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        ),
+      );
+      return;
+    }
+
+    final selectedIds = <int>{
+      for (final item in missing)
+        if (item['id'] != null) int.parse(item['id'].toString()),
+    };
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.sync, color: Colors.orangeAccent),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "اکانت‌های حذف‌شده از پنل",
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () async {
-                EasyLoading.show();
-                await syncUserProductsHistoryByAccountIDwithPanels(
-                        id: _botUser!.accountId.toInt())
-                    .then((value) {
-                  if (!context.mounted) return;
-                  EasyLoading.dismiss();
-                  if (value != null && value != false) {
-                    showMsg(
-                        context: context, msg: "همگام‌سازی با موفقیت انجام شد");
-                    _fillData();
-                    Navigator.pop(context);
-                  } else {
-                    showMsg(
-                        context: context,
-                        msg: "خطا در همگام‌سازی",
-                        type: "error");
-                  }
-                });
-              },
-              child: const Text("تایید همگام‌سازی"),
-            ),
-          ],
+              content: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${missing.length} اکانت روی سرور پیدا نشد. موارد انتخاب‌شده از دیتابیس حذف می‌شوند.",
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              selectedIds
+                                ..clear()
+                                ..addAll(missing
+                                    .where((e) => e['id'] != null)
+                                    .map((e) =>
+                                        int.parse(e['id'].toString())));
+                            });
+                          },
+                          child: const Text("انتخاب همه",
+                              style: TextStyle(color: Colors.orangeAccent)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() => selectedIds.clear());
+                          },
+                          child: const Text("لغو انتخاب",
+                              style: TextStyle(color: Colors.white54)),
+                        ),
+                      ],
+                    ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 360),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: missing.length,
+                        separatorBuilder: (_, __) =>
+                            const Divider(color: Colors.white10, height: 1),
+                        itemBuilder: (context, index) {
+                          final item = missing[index];
+                          final id = int.parse(item['id'].toString());
+                          final remark =
+                              (item['remark']?.toString().trim().isNotEmpty ==
+                                      true)
+                                  ? item['remark'].toString()
+                                  : 'بدون نام';
+                          final category =
+                              item['category_name']?.toString() ?? '—';
+                          final panelType =
+                              item['panel_type']?.toString() ?? '—';
+                          final reason = item['reason']?.toString();
+                          final reasonLabel = reason == 'panel_unreachable'
+                              ? 'پنل در دسترس نیست'
+                              : 'روی سرور نیست';
+                          final checked = selectedIds.contains(id);
+
+                          return CheckboxListTile(
+                            value: checked,
+                            activeColor: Colors.orange,
+                            checkColor: Colors.white,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              remark,
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              "$category · $panelType · $reasonLabel · #$id",
+                              style: TextStyle(
+                                color: reason == 'panel_unreachable'
+                                    ? Colors.orangeAccent
+                                    : Colors.white54,
+                                fontSize: 12,
+                              ),
+                            ),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                if (value == true) {
+                                  selectedIds.add(id);
+                                } else {
+                                  selectedIds.remove(id);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text("انصراف",
+                      style: TextStyle(color: Colors.white70)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
+                  onPressed: selectedIds.isEmpty
+                      ? null
+                      : () async {
+                          EasyLoading.show(status: 'در حال حذف...');
+                          final result =
+                              await deleteSelectedMissingUserProducts(
+                            botUserId: widget.id.toInt(),
+                            productIds: selectedIds.toList(),
+                          );
+                          EasyLoading.dismiss();
+                          if (!dialogContext.mounted) return;
+                          if (result != null) {
+                            final deleted = result['deleted'] ?? 0;
+                            Navigator.pop(dialogContext);
+                            showMsg(
+                              context: this.context,
+                              msg: "$deleted اکانت با موفقیت حذف شد",
+                            );
+                            _fillData();
+                          } else {
+                            showMsg(
+                              context: dialogContext,
+                              msg: "خطا در حذف اکانت‌ها",
+                              type: "error",
+                            );
+                          }
+                        },
+                  child: Text("حذف ${selectedIds.length} مورد"),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

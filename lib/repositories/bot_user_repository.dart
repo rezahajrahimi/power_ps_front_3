@@ -518,6 +518,69 @@ Future syncUserProductsHistoryByAccountIDwithPanels({required int id}) async {
   }
 }
 
+Future<List<Map<String, dynamic>>?> previewMissingUserProductsOnPanels({
+  required int botUserId,
+}) async {
+  try {
+    Response response = await GenaralApi.dio.get(
+      "/api/previewMissingUserProductsOnPanels/$botUserId",
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        "Content-Type": "application/json;charset=UTF-8",
+        "Charset": "utf-8",
+        'Access-Control-Allow-Origin': '*'
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      final data = response.data;
+      final missing = data is Map ? data['missing'] : null;
+      if (missing is List) {
+        return missing
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      return [];
+    }
+    return null;
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future<Map<String, dynamic>?> deleteSelectedMissingUserProducts({
+  required int botUserId,
+  required List<int> productIds,
+}) async {
+  try {
+    Response response = await GenaralApi.dio.post(
+      "/api/deleteSelectedMissingUserProducts",
+      data: {
+        "bot_user_id": botUserId,
+        "product_ids": productIds,
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        "Content-Type": "application/json;charset=UTF-8",
+        "Charset": "utf-8",
+        'Access-Control-Allow-Origin': '*'
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+    return null;
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
 Future getProductBoughtedByProductId({required int productID}) async {
   try {
     Response response = await GenaralApi.dio
