@@ -301,8 +301,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           SizedBox(height: AppStyle.defaultPadding / 2),
           CustomTextFromFieldWidget(
             controller: _minusBallanceLimitTxtController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: false),
+            keyboardType: const TextInputType.numberWithOptions(decimal: false),
             textHint: 'سقف بدهی (تومان) — خالی = بدون محدودیت',
             validationError: 'سقف بدهی باید عددی بزرگتر از صفر باشد',
           ),
@@ -382,7 +381,7 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
         children: [
           if (hasLimit)
             Text(
-              'بدهی فعلی: ${thousandSeperatorFormatter(debt.toStringAsFixed(0))} از ${thousandSeperatorFormatter(limit!.toStringAsFixed(0))} تومان (${usage.debtUsagePercent.toStringAsFixed(1)}%)',
+              'بدهی فعلی: ${thousandSeperatorFormatter(debt.toStringAsFixed(0))} از ${thousandSeperatorFormatter(limit.toStringAsFixed(0))} تومان (${usage.debtUsagePercent.toStringAsFixed(1)}%)',
               textAlign: TextAlign.right,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: usage.debtUsagePercent >= 100
@@ -714,21 +713,22 @@ class _AgentFormScreenState extends State<AgentFormScreen> {
           _panels = panelsResult;
         }
 
-        final List<AgentAddCategoriyModel> list = categories is List<ProductCategory>
-            ? categories
-                .map(
-                  (i) => AgentAddCategoriyModel(
-                    id: i.id,
-                    productCategoriesId: i.id,
-                    productCategories: i,
-                    price: i.price,
-                    newPrice: null,
-                    priceInDollar: i.priceInDollar,
-                    newPriceInDollar: null,
-                  ),
-                )
-                .toList()
-            : <AgentAddCategoriyModel>[];
+        final List<AgentAddCategoriyModel> list =
+            categories is List<ProductCategory>
+                ? categories
+                    .map(
+                      (i) => AgentAddCategoriyModel(
+                        id: i.id,
+                        productCategoriesId: i.id,
+                        productCategories: i,
+                        price: i.price,
+                        newPrice: null,
+                        priceInDollar: i.priceInDollar,
+                        newPriceInDollar: null,
+                      ),
+                    )
+                    .toList()
+                : <AgentAddCategoriyModel>[];
         provider.setFormCategories(available: list, added: const []);
 
         if (users != null && users.isNotEmpty) {

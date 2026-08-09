@@ -68,51 +68,84 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final url = await createBackup();
+      final result = await createBackup();
       if (!mounted) return;
 
-      if (url == null) {
-        showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+      if (result == null) {
+        showMsg(
+          msg: "ایجاد فایل پشتیبان ناموفق بود",
+          context: context,
+          type: "error",
+        );
         return;
       }
 
-      final fileName = url.split('/').last;
+      final fileName = result.filename;
+      final url = result.url;
 
-      if (kIsWeb) {
-        final bytes = await downloadBackupBytes(url);
-        if (!mounted) return;
+      // Prefer authenticated byte download (required for web; safer for mobile).
+      final bytes = await downloadBackupBytes(
+        backupUrl: url,
+        filename: fileName,
+      );
+      if (!mounted) return;
 
-        if (bytes == null) {
-          showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
-          return;
-        }
-
-        final saved = await saveBytesToDevice(bytes: bytes, fileName: fileName);
+      if (bytes != null && bytes.isNotEmpty) {
+        final saved = await saveBytesToDevice(
+          bytes: bytes,
+          fileName: fileName,
+          mimeType: 'application/sql',
+        );
         if (!mounted) return;
 
         if (saved != null) {
           showMsg(
-            msg: "فایل پشتیبان دانلود شد",
+            msg: kIsWeb
+                ? "فایل پشتیبان دانلود شد"
+                : "فایل پشتیبان ذخیره شد",
             context: context,
             type: "success",
           );
-        } else {
-          showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+          return;
         }
-      } else {
-        final launched = await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.externalApplication,
-        );
-        if (!mounted) return;
+      }
 
-        if (!launched) {
-          showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
-        }
+      if (kIsWeb) {
+        showMsg(
+          msg: "دانلود فایل پشتیبان در وب ناموفق بود",
+          context: context,
+          type: "error",
+        );
+        return;
+      }
+
+      // Mobile/desktop fallback: open public storage URL.
+      final launched = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!mounted) return;
+
+      if (!launched) {
+        showMsg(
+          msg: "باز کردن لینک دانلود ناموفق بود",
+          context: context,
+          type: "error",
+        );
+      } else {
+        showMsg(
+          msg: "لینک دانلود باز شد",
+          context: context,
+          type: "success",
+        );
       }
     } catch (_) {
       if (!mounted) return;
-      showMsg(msg: "خطایی رخ داده است", context: context, type: "error");
+      showMsg(
+        msg: "خطا در پشتیبان‌گیری",
+        context: context,
+        type: "error",
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -180,7 +213,7 @@ class _BackupScreenState extends State<BackupScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'بازیابی اطلاعات از آخرین نسخه پشتیبان',
+              'بازیابی از فایل .sql یا بکاپ روزانه .sql.zip',
               style: TextStyle(color: Colors.grey),
             ),
             if (_fileName != null) ...[
@@ -231,7 +264,7 @@ class _BackupScreenState extends State<BackupScreen> {
   _selectBackupFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['sql'],
+      allowedExtensions: ['sql', 'zip'],
       withData: true,
     );
     if (result != null && result.files.single.bytes != null) {

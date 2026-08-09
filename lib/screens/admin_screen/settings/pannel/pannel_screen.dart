@@ -301,7 +301,7 @@ class _PannelScreenState extends State<PannelScreen> {
                     const ObtainExistPanelUsersToAgentsScreen(),
               )).then((value) => {_fillData()});
         },
-        icon: const Icon(FontAwesomeIcons.indent),
+        icon: const FaIcon(FontAwesomeIcons.indent),
         label: const Text("ورود کانفیگهای موجود به اپلیکیشن"),
       ));
     }

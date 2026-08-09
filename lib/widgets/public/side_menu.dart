@@ -177,7 +177,7 @@ class _SideMenuState extends State<SideMenu> {
                                 launchUrl(Uri.parse(
                                     "https://t.me/powerproxysellerchat"));
                               },
-                              icon: const Icon(FontAwesomeIcons.telegram)),
+                              icon: const FaIcon(FontAwesomeIcons.telegram)),
                           IconButton.filled(
                               color: AppStyle.webBackgroundColor,
                               onPressed: () {
@@ -191,7 +191,7 @@ class _SideMenuState extends State<SideMenu> {
                                 launchUrl(Uri.parse(
                                     "https://www.youtube.com/@powerproxyseller"));
                               },
-                              icon: const Icon(FontAwesomeIcons.youtube)),
+                              icon: const FaIcon(FontAwesomeIcons.youtube)),
                         ],
                       ),
                     ),
@@ -323,7 +323,7 @@ class _SideMenuState extends State<SideMenu> {
                                 launchUrl(Uri.parse(
                                     "https://t.me/powerproxysellerchat"));
                               },
-                              icon: const Icon(FontAwesomeIcons.telegram)),
+                              icon: const FaIcon(FontAwesomeIcons.telegram)),
                           IconButton.filled(
                               color: AppStyle.webBackgroundColor,
                               onPressed: () {
@@ -337,7 +337,7 @@ class _SideMenuState extends State<SideMenu> {
                                 launchUrl(Uri.parse(
                                     "https://www.youtube.com/@powerproxyseller"));
                               },
-                              icon: const Icon(FontAwesomeIcons.youtube)),
+                              icon: const FaIcon(FontAwesomeIcons.youtube)),
                         ],
                       ),
                     ),

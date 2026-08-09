@@ -8,8 +8,15 @@ Future<String?> saveBytesToDevice({
   required String fileName,
   String mimeType = 'application/octet-stream',
 }) async {
-  final directory = await getTemporaryDirectory();
+  Directory directory;
+  try {
+    directory = await getDownloadsDirectory() ??
+        await getApplicationDocumentsDirectory();
+  } catch (_) {
+    directory = await getTemporaryDirectory();
+  }
+
   final savePath = '${directory.path}/$fileName';
-  await File(savePath).writeAsBytes(bytes);
+  await File(savePath).writeAsBytes(bytes, flush: true);
   return savePath;
 }
