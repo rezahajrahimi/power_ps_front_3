@@ -5,17 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/provider/panel_controller.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/repositories/group_operation_repository.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/product_details/hiddify_config_details_with_check_box_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/license_gate_dialog.dart';
 import 'package:searchable_listview/searchable_listview.dart';
 
 class GroupOperationsScreen extends StatefulWidget {
@@ -52,6 +55,9 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   Map<String, dynamic>? _trackingJob;
   List<dynamic> _recentJobs = [];
   Timer? _pollTimer;
+  String _licenseType = '';
+
+  bool get _isSilverOrAbove => LicenseHelper.isSilverOrAbove(_licenseType);
 
   BoxDecoration get _cardDecoration => BoxDecoration(
         color: AppStyle.secondaryColor,
@@ -77,8 +83,15 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
   @override
   void initState() {
     super.initState();
+    _loadLicense();
     _fillData();
     _loadRecentJobs();
+  }
+
+  Future<void> _loadLicense() async {
+    final type = await getLicenseType();
+    if (!mounted) return;
+    setState(() => _licenseType = type);
   }
 
   @override
@@ -141,6 +154,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
           child: Column(
             children: [
               _buildPanelSelector(context, compact: true),
+              const SizedBox(height: 10),
+              _buildExpiredCleanupCard(compact: true),
               if (_recentJobs.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 _buildRecentJobsCard(compact: true),
@@ -197,6 +212,8 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildSelectedConfigsCard(context, selectedCount),
+                const SizedBox(height: 12),
+                _buildExpiredCleanupCard(compact: false),
                 const SizedBox(height: 12),
                 Expanded(child: _buildOperationsCard(context)),
                 if (_recentJobs.isNotEmpty) ...[
@@ -680,6 +697,367 @@ class _GroupOperationsScreenState extends State<GroupOperationsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildExpiredCleanupCard({required bool compact}) {
+    return Container(
+      padding: EdgeInsets.all(compact ? 12 : 14),
+      decoration: _cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            icon: Icons.delete_sweep_outlined,
+            title: 'پاکسازی منقضی‌ها',
+            subtitle:
+                'اکانت‌هایی که بیش از ۱۰ روز از انقضا گذشته‌اند (نقره‌ای/طلایی)',
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _showExpiredCleanupFlow,
+              icon: const Icon(Icons.playlist_add_check_outlined, size: 18),
+              label: const Text('بررسی و حذف دستی'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.deepOrange.shade400,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showExpiredCleanupFlow() async {
+    if (!_isSilverOrAbove) {
+      await showLicenseGateDialog(
+        context: context,
+        title: 'حذف اکانت‌های منقضی',
+        message:
+            'حذف دستی اکانت‌های منقضی‌شده فقط در لایسنس نقره‌ای و طلایی فعال است.',
+        requiredTier: 'نقره‌ای',
+      );
+      return;
+    }
+
+    EasyLoading.show(status: 'در حال اسکن پنل‌ها...');
+    final result =
+        await GroupOperationRepository.previewExpiredConfigsForDeletion();
+    EasyLoading.dismiss();
+    if (!mounted) return;
+
+    if (result == null || result['success'] != true) {
+      final msg = result?['message']?.toString() ??
+          'خطا در دریافت لیست اکانت‌های منقضی';
+      if (result?['message']?.toString().contains('نقره') == true ||
+          result?['message']?.toString().contains('طلایی') == true) {
+        await showLicenseGateDialog(
+          context: context,
+          title: 'حذف اکانت‌های منقضی',
+          message: msg,
+          requiredTier: 'نقره‌ای',
+        );
+        return;
+      }
+      showMsg(context: context, msg: msg, type: 'error');
+      return;
+    }
+
+    final rawItems = result['items'];
+    final items = rawItems is List
+        ? rawItems
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList()
+        : <Map<String, dynamic>>[];
+    final warnings = (result['warnings'] is List)
+        ? (result['warnings'] as List).map((e) => e.toString()).toList()
+        : <String>[];
+
+    if (items.isEmpty) {
+      await showDialog(
+        context: context,
+        builder: (context) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: AppStyle.secondaryColor,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('پاکسازی منقضی‌ها'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'اکانت منقضی‌شده‌ای برای حذف یافت نشد.',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                if (warnings.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ...warnings.map(
+                    (w) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(w,
+                          style: const TextStyle(
+                              color: Colors.orangeAccent, fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('باشه'),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+
+    final selectedKeys = <String>{
+      for (final item in items) _expiredItemKey(item),
+    };
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrange.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.delete_sweep_outlined,
+                        color: Colors.deepOrangeAccent, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'اکانت‌های منقضی برای حذف',
+                      style: TextStyle(fontSize: 17),
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 460,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${items.length} مورد واجد شرایط حذف هستند. حذف در پس‌زمینه اجرا می‌شود و پیشرفت در بالای صفحه نمایش داده می‌شود.',
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    if (warnings.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ...warnings.take(3).map(
+                            (w) => Text(w,
+                                style: const TextStyle(
+                                    color: Colors.orangeAccent, fontSize: 12)),
+                          ),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              selectedKeys
+                                ..clear()
+                                ..addAll(items.map(_expiredItemKey));
+                            });
+                          },
+                          child: Text('انتخاب همه',
+                              style: TextStyle(color: AppStyle.primaryColor)),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              setDialogState(() => selectedKeys.clear()),
+                          child: const Text('لغو انتخاب',
+                              style: TextStyle(color: Colors.white54)),
+                        ),
+                      ],
+                    ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 340),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) =>
+                            const Divider(color: Colors.white10, height: 1),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          final key = _expiredItemKey(item);
+                          final remark =
+                              (item['remark']?.toString().trim().isNotEmpty ==
+                                      true)
+                                  ? item['remark'].toString()
+                                  : 'بدون نام';
+                          final category =
+                              item['category_name']?.toString() ?? '—';
+                          final panelName =
+                              item['panel_name']?.toString() ?? '—';
+                          final panelType =
+                              item['panel_type']?.toString() ?? '—';
+                          final reasonLabel =
+                              item['reason']?.toString() == 'usage_exceeded'
+                                  ? 'اتمام حجم'
+                                  : 'منقضی‌شده';
+                          final checked = selectedKeys.contains(key);
+
+                          return CheckboxListTile(
+                            value: checked,
+                            activeColor: Colors.deepOrange,
+                            checkColor: Colors.white,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(remark,
+                                style: const TextStyle(fontSize: 14)),
+                            subtitle: Text(
+                              '$category · $panelName ($panelType) · $reasonLabel',
+                              style: const TextStyle(
+                                  color: Colors.white54, fontSize: 12),
+                            ),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                if (value == true) {
+                                  selectedKeys.add(key);
+                                } else {
+                                  selectedKeys.remove(key);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('انصراف'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.deepOrange.shade400,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: selectedKeys.isEmpty
+                      ? null
+                      : () async {
+                          final selectedItems = items
+                              .where((e) =>
+                                  selectedKeys.contains(_expiredItemKey(e)))
+                              .map((e) => {
+                                    'product_id': e['product_id'],
+                                    'panel_id': e['panel_id'],
+                                    'uuid': e['uuid'],
+                                    'remark': e['remark'],
+                                  })
+                              .toList();
+
+                          final confirmed = await showDialog<bool>(
+                            context: dialogContext,
+                            builder: (ctx) => Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: AlertDialog(
+                                backgroundColor: AppStyle.secondaryColor,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                                title: const Text('تایید حذف'),
+                                content: Text(
+                                  'آیا از حذف ${selectedItems.length} اکانت منقضی اطمینان دارید؟ این عمل قابل بازگشت نیست.',
+                                  style:
+                                      const TextStyle(color: Colors.white70),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('خیر'),
+                                  ),
+                                  FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('بله، حذف شود'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+
+                          if (confirmed != true) return;
+                          if (!dialogContext.mounted) return;
+
+                          EasyLoading.show(status: 'ثبت درخواست...');
+                          final deleteResult = await GroupOperationRepository
+                              .deleteSelectedExpiredConfigs(
+                            items: selectedItems,
+                          );
+                          EasyLoading.dismiss();
+                          if (!dialogContext.mounted) return;
+                          Navigator.pop(dialogContext);
+
+                          if (!mounted) return;
+                          if (deleteResult != null &&
+                              (deleteResult['success'] == true ||
+                                  deleteResult['status'] == 'success')) {
+                            final jobId = int.tryParse(
+                                deleteResult['job_id']?.toString() ?? '');
+                            if (jobId != null) {
+                              _startPolling(jobId);
+                            }
+                            showMsg(
+                              context: this.context,
+                              msg: deleteResult['message']?.toString() ??
+                                  'درخواست حذف ثبت شد.',
+                            );
+                            await _loadRecentJobs();
+                          } else {
+                            showMsg(
+                              context: this.context,
+                              msg: deleteResult?['message']?.toString() ??
+                                  'خطا در ثبت درخواست حذف',
+                              type: 'error',
+                            );
+                          }
+                        },
+                  child: Text('حذف (${selectedKeys.length})'),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  String _expiredItemKey(Map<String, dynamic> item) {
+    return '${item['panel_id']}:${item['uuid']}:${item['product_id']}';
   }
 
   Widget _buildOperationsCard(BuildContext context) {
