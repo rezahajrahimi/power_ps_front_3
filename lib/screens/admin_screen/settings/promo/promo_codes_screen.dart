@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:persian_datetimepickers/persian_datetimepickers.dart';
 import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
@@ -30,6 +31,15 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
 
   bool get _isGold => LicenseHelper.isGold(_licenseType);
   bool get _isSilverOrAbove => LicenseHelper.isSilverOrAbove(_licenseType);
+
+  String _pad2(int n) => n.toString().padLeft(2, '0');
+
+  /// Backend expects `YYYY-MM-DD HH:MM:SS` and timezone is configured as `Asia/Tehran`.
+  /// We format the selected date using the local DateTime values from the picker.
+  String _formatDateTimeForBackend(DateTime dt) {
+    return '${dt.year}-${_pad2(dt.month)}-${_pad2(dt.day)} '
+        '${_pad2(dt.hour)}:${_pad2(dt.minute)}:${_pad2(dt.second)}';
+  }
 
   @override
   void initState() {
@@ -175,6 +185,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
   }
 
   Widget _buildFormFields({
+    required BuildContext dialogContext,
     required bool isWide,
     required bool isGold,
     required TextEditingController codeCtrl,
@@ -192,6 +203,32 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
     required Set<int> selectedGroups,
     required void Function(void Function()) setDialogState,
   }) {
+    Future<void> _pickStartDate() async {
+      final date = await showPersianDatePicker(
+        context: dialogContext,
+      );
+      if (!mounted || date == null) return;
+
+      // Set fixed start time: 00:00
+      final dt = DateTime(date.year, date.month, date.day, 0, 0, 0);
+      setDialogState(() {
+        startsCtrl.text = _formatDateTimeForBackend(dt);
+      });
+    }
+
+    Future<void> _pickExpiresDate() async {
+      final date = await showPersianDatePicker(
+        context: dialogContext,
+      );
+      if (!mounted || date == null) return;
+
+      // Set fixed end time: 23:59:59
+      final dt = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      setDialogState(() {
+        expiresCtrl.text = _formatDateTimeForBackend(dt);
+      });
+    }
+
     final basicFields = <Widget>[
       TextField(
         controller: codeCtrl,
@@ -235,14 +272,20 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
       ),
       TextField(
         controller: startsCtrl,
+        readOnly: true,
+        enableInteractiveSelection: false,
+        onTap: _pickStartDate,
         decoration: const InputDecoration(
-          labelText: 'شروع (YYYY-MM-DD HH:MM، اختیاری)',
+          labelText: 'شروع (شمسی، ساعت 00:00)',
         ),
       ),
       TextField(
         controller: expiresCtrl,
+        readOnly: true,
+        enableInteractiveSelection: false,
+        onTap: _pickExpiresDate,
         decoration: const InputDecoration(
-          labelText: 'انقضا (YYYY-MM-DD HH:MM، اختیاری)',
+          labelText: 'انقضا (شمسی، ساعت 23:59:59)',
         ),
       ),
     ];
@@ -393,6 +436,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
               width: isWide ? 720 : null,
               child: SingleChildScrollView(
                 child: _buildFormFields(
+                  dialogContext: ctx,
                   isWide: isWide,
                   isGold: _isGold,
                   codeCtrl: codeCtrl,
