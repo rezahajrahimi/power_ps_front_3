@@ -446,7 +446,7 @@ Future updateSwapPayPaymentDetails(
     return null;
   } on DioException catch (e) {
     debugPrint(e.message.toString());
-    return null;
+    rethrow;
   }
 }
 

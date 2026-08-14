@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -1009,7 +1010,7 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
             textDirection: TextDirection.ltr,
             decoration: _fieldDecoration(
               label: 'API Key',
-              hint: 'Apikey از پنل پذیرنده SwapPay',
+              hint: 'از اپ سواپ‌ولت: پروفایل ← کلید API',
               icon: Icons.vpn_key_outlined,
             ),
           ),
@@ -1019,12 +1020,12 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
             textDirection: TextDirection.ltr,
             decoration: _fieldDecoration(
               label: 'Application Username',
-              hint: 'نام کاربری اپلیکیشن در SwapPay',
+              hint: 'نام اپلیکیشن از pay.swapwallet.app',
               icon: Icons.badge_outlined,
             ),
           ),
           _helperText(
-            'مقادیر را از پنل پذیرنده SwapPay در swapwallet.app وارد کنید. شارژ روی موجودی دلاری انجام می‌شود.',
+            'API Key را از اپ سواپ‌ولت (پروفایل ← کلید API) بگیرید. Application Username یوزرنیم حساب یا آیدی عددی نیست. در https://pay.swapwallet.app با تلگرام وارد شوید، یک Application بسازید و همان نام را اینجا بگذارید.',
           ),
           const SizedBox(height: 12),
           _toggleTile(
@@ -1047,24 +1048,41 @@ class _PaymentTypeScreenState extends State<PaymentTypeScreen> {
                 return;
               }
               EasyLoading.show();
-              await updateSwapPayPaymentDetails(
-                cryptoPaymentGateway: CryptoPaymentGateway(
-                  id: 0,
-                  name: 'swappay',
-                  apiKey: _swapPayApiKeyTxtEdit.text.trim(),
-                  email: '',
-                  password: _swapPayApplicationTxtEdit.text.trim(),
-                  isActive: _swapPayIsActive,
-                  isFeePaidByUser: false,
-                ),
-              ).then((value) {
-                if (value != null && mounted) {
+              try {
+                final value = await updateSwapPayPaymentDetails(
+                  cryptoPaymentGateway: CryptoPaymentGateway(
+                    id: 0,
+                    name: 'swappay',
+                    apiKey: _swapPayApiKeyTxtEdit.text.trim(),
+                    email: '',
+                    password: _swapPayApplicationTxtEdit.text.trim(),
+                    isActive: _swapPayIsActive,
+                    isFeePaidByUser: false,
+                  ),
+                );
+                if (!mounted) return;
+                if (value != null) {
                   setState(() => _swapPay = value);
+                  showMsg(msg: 'ذخیره شد.', context: context);
+                } else {
+                  showMsg(
+                    msg: 'ذخیره SwapPay ناموفق بود. Application Username را از پنل pay.swapwallet.app وارد کنید.',
+                    context: context,
+                    type: 'error',
+                  );
                 }
-              }).whenComplete(() {
+              } on DioException catch (e) {
+                if (!mounted) return;
+                final data = e.response?.data;
+                String message =
+                    'ذخیره SwapPay ناموفق بود. Application Username را از پنل pay.swapwallet.app وارد کنید.';
+                if (data is Map && data['message'] is String && (data['message'] as String).isNotEmpty) {
+                  message = data['message'] as String;
+                }
+                showMsg(msg: message, context: context, type: 'error');
+              } finally {
                 EasyLoading.dismiss();
-                if (mounted) showMsg(msg: 'ذخیره شد.', context: context);
-              });
+              }
             },
           ),
         ],
