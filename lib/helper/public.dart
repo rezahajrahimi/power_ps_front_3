@@ -18,6 +18,39 @@ removeZeroChars(String number) {
   }
 }
 
+String toEnglishDigits(String input) {
+  const persian = '۰۱۲۳۴۵۶۷۸۹';
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  final buffer = StringBuffer();
+  for (final rune in input.runes) {
+    final char = String.fromCharCode(rune);
+    final persianIndex = persian.indexOf(char);
+    if (persianIndex >= 0) {
+      buffer.write(persianIndex);
+      continue;
+    }
+    final arabicIndex = arabic.indexOf(char);
+    if (arabicIndex >= 0) {
+      buffer.write(arabicIndex);
+      continue;
+    }
+    buffer.write(char);
+  }
+  return buffer.toString();
+}
+
+double? parseLocalizedNumber(String input) {
+  final normalized = toEnglishDigits(input.trim()).replaceAll(',', '.');
+  if (normalized.isEmpty) return null;
+  return double.tryParse(normalized);
+}
+
+int? parseLocalizedInt(String input) {
+  final value = parseLocalizedNumber(input);
+  if (value == null) return null;
+  return value.round();
+}
+
 String thousandSeperatorFormatter(String price) {
   if (price != "0.00" && price != "null" && price.isNotEmpty) {
     // String price = "1000000000";

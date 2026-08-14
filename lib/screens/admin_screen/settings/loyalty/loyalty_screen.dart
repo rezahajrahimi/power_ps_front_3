@@ -665,7 +665,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
       referralSignupPoints: int.tryParse(_referralPointsController.text) ?? 0,
       tomanPerPoint: int.tryParse(_tomanPerPointController.text) ?? 1,
       minRedeemPoints: int.tryParse(_minRedeemController.text) ?? 0,
-      maxRedeemPercent: int.tryParse(_maxRedeemPercentController.text) ?? 0,
+      maxRedeemPercent:
+          parseLocalizedInt(_maxRedeemPercentController.text) ?? 0,
     );
     final error = await updateLoyaltySetting(model);
     EasyLoading.dismiss();

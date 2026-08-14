@@ -472,11 +472,21 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
 
     if (ok != true || !mounted) return;
 
+    final parsedValue = parseLocalizedNumber(valueCtrl.text) ?? 0;
+    if (type == 'percent' && (parsedValue < 0 || parsedValue > 100)) {
+      showMsg(
+        msg: 'درصد تخفیف باید بین ۰ تا ۱۰۰ باشد',
+        context: context,
+        type: 'error',
+      );
+      return;
+    }
+
     EasyLoading.show();
     final payload = <String, dynamic>{
       'code': codeCtrl.text.trim().toUpperCase(),
       'type': type,
-      'value': double.tryParse(valueCtrl.text) ?? 0,
+      'value': parsedValue,
       'is_active': isActive,
       'max_uses_per_user': int.tryParse(maxPerUserCtrl.text) ?? 1,
     };

@@ -288,6 +288,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   const TextInputType.numberWithOptions(decimal: true),
               textHint: 'درصد بازاریابی (۰ تا ۱۰۰)',
               textDirection: TextDirection.ltr,
+              textAlign: TextAlign.left,
               validationError: 'میزان درصد بازاریابی',
             ),
           ] else
@@ -302,6 +303,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         const TextInputType.numberWithOptions(decimal: true),
                     textHint: 'درصد',
                     textDirection: TextDirection.ltr,
+                    textAlign: TextAlign.left,
                     validationError: 'میزان درصد بازاریابی',
                   ),
                 ),
@@ -444,7 +446,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
       setState(() {
         _descriptionTxtEdit.text = value.description;
         _visitCardTxtEdit.text = value.visitCardText;
-        _referralPercentTxtEdit.text = value.referralPercent.toString();
+        _referralPercentTxtEdit.text =
+            removeZeroChars(value.referralPercent.toString())?.toString() ??
+                value.referralPercent.toString();
         _isActive = value.isActive;
         _showData = true;
       });
@@ -470,7 +474,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
       return;
     }
 
-    final percent = double.tryParse(_referralPercentTxtEdit.text.trim());
+    final percent = parseLocalizedNumber(_referralPercentTxtEdit.text);
     if (percent == null || percent < 0 || percent > 100) {
       showMsg(
         msg: 'درصد بازاریابی باید عددی بین ۰ تا ۱۰۰ باشد',
