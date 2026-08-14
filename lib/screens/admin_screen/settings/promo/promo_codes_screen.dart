@@ -118,40 +118,9 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
   }
 
   Future<void> _showUsages(int id, String code) async {
-    EasyLoading.show();
-    final usages = await PromoCodeRepository.getUsages(id);
-    EasyLoading.dismiss();
-    if (!mounted) return;
-    final isWide = !Responsive.isMobile(context);
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('استفاده‌های $code'),
-        content: SizedBox(
-          width: isWide ? 520 : double.maxFinite,
-          height: isWide ? 360 : null,
-          child: usages.isEmpty
-              ? const Center(child: Text('هنوز استفاده‌ای ثبت نشده.'))
-              : ListView.separated(
-                  itemCount: usages.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, i) {
-                    final u = usages[i];
-                    return ListTile(
-                      dense: !isWide,
-                      title: Text(u['account_id']?.toString() ?? ''),
-                      subtitle: Text(
-                        'تخفیف: ${u['discount_amount'] ?? 0} | ${u['applied_at'] ?? ''}',
-                      ),
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('بستن')),
-        ],
-      ),
+      builder: (ctx) => PromoUsagesDialog(promoId: id, code: code),
     );
   }
 
@@ -795,6 +764,168 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
                   : _body(context),
         ),
       ),
+    );
+  }
+}
+
+class PromoUsagesDialog extends StatefulWidget {
+  const PromoUsagesDialog({
+    super.key,
+    required this.promoId,
+    required this.code,
+  });
+
+  final int promoId;
+  final String code;
+
+  @override
+  State<PromoUsagesDialog> createState() => _PromoUsagesDialogState();
+}
+
+class _PromoUsagesDialogState extends State<PromoUsagesDialog> {
+  static const int _perPage = 15;
+
+  List<dynamic> _usages = [];
+  int _page = 1;
+  int _lastPage = 1;
+  int _total = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPage(1);
+  }
+
+  Future<void> _loadPage(int page) async {
+    setState(() => _loading = true);
+    try {
+      final result = await PromoCodeRepository.getUsages(
+        widget.promoId,
+        page: page,
+        perPage: _perPage,
+      );
+      if (!mounted) return;
+      setState(() {
+        _usages = List<dynamic>.from(result['data'] ?? const []);
+        _page = result['current_page'] as int? ?? 1;
+        _lastPage = result['last_page'] as int? ?? 1;
+        _total = result['total'] as int? ?? 0;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  String _formatJalaliDateTime(dynamic raw) {
+    if (raw == null) return '—';
+    final text = raw.toString().trim();
+    if (text.isEmpty || text == 'null') return '—';
+
+    final parsed = DateTime.tryParse(text);
+    if (parsed == null) return text;
+
+    final local = parsed.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '${local.toPersianDate()} $hour:$minute';
+  }
+
+  String _formatDiscount(dynamic raw) {
+    final amount = parseLocalizedNumber(raw?.toString() ?? '0') ?? 0;
+    final formatted = thousandSeperatorFormatter(amount.toStringAsFixed(0));
+    return '$formatted تومان';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final maxWidth = size.width > 600 ? 520.0 : size.width - 32;
+    final maxHeight = (size.height * 0.65).clamp(280.0, 520.0);
+
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      title: Text('استفاده‌های ${widget.code}'),
+      content: SizedBox(
+        width: maxWidth,
+        height: maxHeight,
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                _total == 0 ? 'هنوز استفاده‌ای ثبت نشده.' : 'مجموع $_total مورد',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white54,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _usages.isEmpty
+                      ? const Center(child: Text('موردی در این صفحه نیست.'))
+                      : ListView.separated(
+                          itemCount: _usages.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (_, i) {
+                            final u = _usages[i] as Map? ?? {};
+                            return ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                'کاربر ${u['account_id'] ?? '—'}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                '${_formatJalaliDateTime(u['applied_at'])}\n'
+                                'تخفیف: ${_formatDiscount(u['discount_amount'])}',
+                              ),
+                              isThreeLine: true,
+                            );
+                          },
+                        ),
+            ),
+            if (_lastPage > 1) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'صفحه قبل',
+                    onPressed: !_loading && _page > 1
+                        ? () => _loadPage(_page - 1)
+                        : null,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'صفحه $_page از $_lastPage',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'صفحه بعد',
+                    onPressed: !_loading && _page < _lastPage
+                        ? () => _loadPage(_page + 1)
+                        : null,
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('بستن'),
+        ),
+      ],
     );
   }
 }

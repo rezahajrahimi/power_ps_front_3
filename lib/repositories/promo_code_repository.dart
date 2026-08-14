@@ -25,11 +25,42 @@ class PromoCodeRepository {
     return response.statusCode == 200;
   }
 
-  static Future<List<dynamic>> getUsages(int id) async {
-    final response = await GenaralApi.dio.get('/api/promo-codes/$id/usages');
-    if (response.statusCode == 200 && response.data is List) {
-      return response.data;
+  static Future<Map<String, dynamic>> getUsages(
+    int id, {
+    int page = 1,
+    int perPage = 15,
+  }) async {
+    final response = await GenaralApi.dio.get(
+      '/api/promo-codes/$id/usages',
+      queryParameters: {
+        'page': page,
+        'per_page': perPage,
+      },
+    );
+    if (response.statusCode == 200 && response.data is Map) {
+      final data = Map<String, dynamic>.from(response.data as Map);
+      return {
+        'data': List<dynamic>.from(data['data'] ?? const []),
+        'current_page':
+            int.tryParse('${data['current_page'] ?? 1}') ?? 1,
+        'last_page': int.tryParse('${data['last_page'] ?? 1}') ?? 1,
+        'total': int.tryParse('${data['total'] ?? 0}') ?? 0,
+      };
     }
-    return [];
+    if (response.statusCode == 200 && response.data is List) {
+      final list = List<dynamic>.from(response.data as List);
+      return {
+        'data': list,
+        'current_page': 1,
+        'last_page': 1,
+        'total': list.length,
+      };
+    }
+    return {
+      'data': <dynamic>[],
+      'current_page': 1,
+      'last_page': 1,
+      'total': 0,
+    };
   }
 }
