@@ -8,7 +8,6 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/backup_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class BackupScreen extends StatefulWidget {
   const BackupScreen({super.key});
@@ -110,35 +109,14 @@ class _BackupScreenState extends State<BackupScreen> {
         }
       }
 
-      if (kIsWeb) {
-        showMsg(
-          msg: "دانلود فایل پشتیبان در وب ناموفق بود",
-          context: context,
-          type: "error",
-        );
-        return;
-      }
-
-      // Mobile/desktop fallback: open public storage URL.
-      final launched = await launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
-      );
       if (!mounted) return;
-
-      if (!launched) {
-        showMsg(
-          msg: "باز کردن لینک دانلود ناموفق بود",
-          context: context,
-          type: "error",
-        );
-      } else {
-        showMsg(
-          msg: "لینک دانلود باز شد",
-          context: context,
-          type: "success",
-        );
-      }
+      showMsg(
+        msg: kIsWeb
+            ? "دانلود فایل پشتیبان در وب ناموفق بود"
+            : "دانلود فایل پشتیبان ناموفق بود",
+        context: context,
+        type: "error",
+      );
     } catch (_) {
       if (!mounted) return;
       showMsg(

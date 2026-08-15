@@ -172,7 +172,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
     required Set<int> selectedGroups,
     required void Function(void Function()) setDialogState,
   }) {
-    Future<void> _pickStartDate() async {
+    Future<void> pickStartDate() async {
       final date = await showPersianDatePicker(
         context: dialogContext,
       );
@@ -185,7 +185,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
       });
     }
 
-    Future<void> _pickExpiresDate() async {
+    Future<void> pickExpiresDate() async {
       final date = await showPersianDatePicker(
         context: dialogContext,
       );
@@ -243,7 +243,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
         controller: startsCtrl,
         readOnly: true,
         enableInteractiveSelection: false,
-        onTap: _pickStartDate,
+        onTap: pickStartDate,
         decoration: const InputDecoration(
           labelText: 'شروع (شمسی، ساعت 00:00)',
         ),
@@ -252,7 +252,7 @@ class _PromoCodesScreenState extends State<PromoCodesScreen> {
         controller: expiresCtrl,
         readOnly: true,
         enableInteractiveSelection: false,
-        onTap: _pickExpiresDate,
+        onTap: pickExpiresDate,
         decoration: const InputDecoration(
           labelText: 'انقضا (شمسی، ساعت 23:59:59)',
         ),
@@ -856,7 +856,9 @@ class _PromoUsagesDialogState extends State<PromoUsagesDialog> {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                _total == 0 ? 'هنوز استفاده‌ای ثبت نشده.' : 'مجموع $_total مورد',
+                _total == 0
+                    ? 'هنوز استفاده‌ای ثبت نشده.'
+                    : 'مجموع $_total مورد',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white54,
                     ),

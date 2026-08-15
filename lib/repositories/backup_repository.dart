@@ -23,7 +23,6 @@ Future<BackupCreateResult?> createBackup() async {
         'Connection': 'keep-alive',
         "Content-Type": "application/json;charset=UTF-8",
         "Charset": "utf-8",
-        'Access-Control-Allow-Origin': '*'
       }),
     );
     debugPrint("response=>${response.data}");
@@ -35,7 +34,7 @@ Future<BackupCreateResult?> createBackup() async {
       }
       final filename = (data['filename']?.toString().isNotEmpty == true)
           ? data['filename'].toString()
-          : url.split('/').last;
+          : url.split('/').last.split('?').first;
       return BackupCreateResult(url: url, filename: filename);
     }
     debugPrint(response.data.toString());
@@ -46,45 +45,74 @@ Future<BackupCreateResult?> createBackup() async {
   }
 }
 
-/// Authenticated download used by Flutter Web (blob save).
-/// Falls back to the public storage URL if the dedicated API is unavailable.
+/// Authenticated download used by Flutter Web (blob save) and mobile.
+/// Public `/storage/backups/...` is not fetched from the browser because Apache
+/// serves it without CORS headers.
 Future<Uint8List?> downloadBackupBytes({
   required String backupUrl,
   required String filename,
 }) async {
   try {
     final response = await GenaralApi.dio.get(
-      "/api/downloadBackup/$filename",
+      "/api/downloadBackup",
+      queryParameters: {'filename': filename},
       options: Options(
         responseType: ResponseType.bytes,
         validateStatus: (status) => status != null && status < 500,
       ),
     );
     if (response.statusCode == 200 && response.data != null) {
-      return Uint8List.fromList(List<int>.from(response.data));
+      final bytes = Uint8List.fromList(List<int>.from(response.data));
+      if (bytes.isNotEmpty) {
+        return bytes;
+      }
     }
-    debugPrint(
-      'downloadBackup API failed (${response.statusCode}), trying public URL',
-    );
+    debugPrint('downloadBackup API failed (${response.statusCode})');
   } catch (e) {
     debugPrint('downloadBackup API error: $e');
   }
 
+  final apiUrl = _asApiDownloadUrl(backupUrl, filename);
+  if (apiUrl == null) {
+    return null;
+  }
+
   try {
     final response = await GenaralApi.dio.get(
-      backupUrl,
+      apiUrl,
       options: Options(
         responseType: ResponseType.bytes,
         validateStatus: (status) => status != null && status < 500,
       ),
     );
     if (response.statusCode == 200 && response.data != null) {
-      return Uint8List.fromList(List<int>.from(response.data));
+      final bytes = Uint8List.fromList(List<int>.from(response.data));
+      if (bytes.isNotEmpty) {
+        return bytes;
+      }
     }
   } catch (e) {
-    debugPrint('public backup URL download error: $e');
+    debugPrint('downloadBackup fallback URL error: $e');
   }
 
+  return null;
+}
+
+String? _asApiDownloadUrl(String backupUrl, String filename) {
+  final uri = Uri.tryParse(backupUrl);
+  if (uri == null || uri.host.isEmpty) {
+    return null;
+  }
+  if (uri.path.contains('/api/downloadBackup')) {
+    return backupUrl;
+  }
+  // Legacy public storage URL — rewrite to the authenticated API so CORS applies.
+  if (uri.path.contains('/storage/backups/')) {
+    return uri.replace(
+      path: '/api/downloadBackup',
+      queryParameters: {'filename': filename},
+    ).toString();
+  }
   return null;
 }
 
