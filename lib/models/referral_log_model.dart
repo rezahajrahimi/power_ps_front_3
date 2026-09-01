@@ -4,7 +4,7 @@ import 'package:powerps/models/user_model.dart';
 
 class ReferralLogModel {
   int id;
-  int amount;
+  double amount;
   String createdAt;
   String updatedAt;
   User? referralUser;
@@ -22,19 +22,19 @@ class ReferralLogModel {
     return {
       'id': id,
       'amount': amount,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      'referral_user_id': referralUser?.toMap(),
-      'referral_to_id': referralToUser?.toMap(),
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'referral_user': referralUser?.toMap(),
+      'referral_to': referralToUser?.toMap(),
     };
   }
 
   factory ReferralLogModel.fromMap(Map<String, dynamic> map) {
     return ReferralLogModel(
       id: map['id']?.toInt() ?? 0,
-      amount: map['amount']?.toInt() ?? 0,
-      createdAt: map['createdAt'] ?? '',
-      updatedAt: map['updatedAt'] ?? '',
+      amount: map['amount']?.toDouble() ?? 0.0,
+      createdAt: map['created_at'] ?? '',
+      updatedAt: map['updated_at'] ?? '',
       referralUser: map['referral_user'] != null
           ? User.fromMap(map['referral_user'])
           : null,

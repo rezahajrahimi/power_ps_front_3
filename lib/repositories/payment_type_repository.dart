@@ -64,10 +64,12 @@ Future<bool> getDollorTransactionSetting() async {
             }));
 
     if (response.statusCode == 200 && response.data != null) {
-      if (response.data.toString() == "1" || response.data == true) {
-        return true;
+      if (response.data is Map) {
+        return PaymentSettingModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        ).status;
       }
-      return false;
+      return PaymentSettingModel.parseStatus(response.data);
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -88,7 +90,13 @@ Future<PaymentSettingModel> getShetabVerifySetting() async {
     Response response = await GenaralApi.dio
         .get("/api/get-payment-setting-by-key/shetab_verify");
     if (response.statusCode == 200 && response.data != null) {
-      return PaymentSettingModel.fromJson(response.data);
+      if (response.data is Map) {
+        return PaymentSettingModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        );
+      }
+      return PaymentSettingModel(
+          key: "", value: "", description: "", status: false);
     } else {
       return PaymentSettingModel(
           key: "", value: "", description: "", status: false);
@@ -160,10 +168,13 @@ Future<bool> setDollorTransactionSetting(
         }));
 
     if (response.statusCode == 200 && response.data != null) {
-      if (response.data == 1 || response.data == true) {
-        return true;
+      if (response.data is Map) {
+        final savedStatus = PaymentSettingModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        ).status;
+        return savedStatus == dollarTransaction;
       }
-      return false;
+      return true;
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -404,12 +415,57 @@ Future getCryptomusPaymentDetails() async {
   }
 }
 
+Future getSwapPayPaymentDetails() async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/getSwapPayData");
+    if (response.statusCode == 200 &&
+        response.data != null &&
+        response.data is Map) {
+      return CryptoPaymentGateway.fromMap(response.data);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
+Future updateSwapPayPaymentDetails(
+    {required CryptoPaymentGateway cryptoPaymentGateway}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.patch("/api/updateSwapPayPayment", data: {
+      "api_key": cryptoPaymentGateway.apiKey,
+      "password": cryptoPaymentGateway.password,
+      "is_active": cryptoPaymentGateway.isActive,
+    });
+
+    if (response.statusCode == 200 && response.data != null) {
+      return CryptoPaymentGateway.fromMap(response.data);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    rethrow;
+  }
+}
+
 Future<bool> chanegeMerChantIdByPaymentTypeName(
-    {required String name, required String merchantId}) async {
+    {required String name,
+    required String merchantId,
+    String? callbackDomain,
+    String? callbackUrl,
+    bool? isSandbox}) async {
   try {
     Response response =
         await GenaralApi.dio.post("/api/chanegeMerChantIdByPaymentTypeName",
-            data: {"name": name, "merchant_id": merchantId},
+            data: {
+              "name": name,
+              "merchant_id": merchantId,
+              if (callbackDomain != null) "callback_domain": callbackDomain,
+              if (callbackUrl != null) "callback_url": callbackUrl,
+              if (isSandbox != null) "is_sandbox": isSandbox,
+            },
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',

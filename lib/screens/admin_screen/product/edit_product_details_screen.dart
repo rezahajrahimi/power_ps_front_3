@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
+import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/marzban_inbound_sync.dart';
+import 'package:powerps/helpers/pasarguard_group_sync.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/models/product_category_model.dart';
+import 'package:powerps/models/user_group_model.dart';
 import 'package:powerps/provider/product_category_provider.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
+import 'package:powerps/repositories/user_group_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
@@ -35,18 +42,34 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   final _expireDayEditText = TextEditingController();
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
+  final _marzbanInboundsEditText = TextEditingController();
+  final _pasarguardGroupIdsEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
   final _sampleInboundEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
   bool _showPannelLink = true;
+  bool _sendConfigToUser = true;
   bool _isActive = true;
+  List<UserGroup> _userGroups = [];
+  final Set<int> _allowedGroupIds = {};
+  List<ProductCategory> _allCategories = [];
+  int? _upsellCategoryId;
+  bool _isGoldLicense = false;
 
   @override
   void initState() {
+    _loadLicense();
     _fillData();
     super.initState();
+  }
+
+  Future<void> _loadLicense() async {
+    final license = await getLicenseType();
+    if (mounted) {
+      setState(() => _isGoldLicense = LicenseHelper.isGold(license));
+    }
   }
 
   @override
@@ -57,6 +80,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     _expireDayEditText.dispose();
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
+    _marzbanInboundsEditText.dispose();
+    _pasarguardGroupIdsEditText.dispose();
     _ipLimitEditText.dispose();
     _sampleInboundEditText.dispose();
     super.dispose();
@@ -106,6 +131,65 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     if (mounted) setState(f);
   }
 
+  String? _resolvePanelDropdownValue() {
+    if (_pannelNameList.isEmpty) return null;
+    if (_selectedPannelName.isNotEmpty &&
+        _pannelNameList.contains(_selectedPannelName)) {
+      return _selectedPannelName;
+    }
+    final panelId = widget.selectedProductCategory.pannelId;
+    for (final name in _pannelNameList) {
+      if (name.startsWith('$panelId:')) return name;
+    }
+    return _pannelNameList.first;
+  }
+
+  int? _resolveUpsellCategoryId(int? upsellId) {
+    if (upsellId == null) return null;
+    final exists = _allCategories.any((c) => c.id == upsellId);
+    return exists ? upsellId : null;
+  }
+
+  List<ProductCategory> _upsellDropdownOptions() {
+    final currentPannelId = int.tryParse(
+          _selectedPannelName.isNotEmpty
+              ? _selectedPannelName.split(':')[0]
+              : '${widget.selectedProductCategory.pannelId}',
+        ) ??
+        widget.selectedProductCategory.pannelId;
+
+    final options = _allCategories
+        .where((c) =>
+            c.id != widget.selectedProductCategory.id &&
+            c.pannelId == currentPannelId &&
+            c.isActive)
+        .toList();
+
+    if (_upsellCategoryId != null &&
+        !options.any((c) => c.id == _upsellCategoryId)) {
+      ProductCategory? selected;
+      for (final c in _allCategories) {
+        if (c.id == _upsellCategoryId) {
+          selected = c;
+          break;
+        }
+      }
+      if (selected != null) {
+        options.add(selected);
+      }
+    }
+
+    return options;
+  }
+
+  int? _resolveUpsellDropdownValue(List<ProductCategory> options) {
+    if (_upsellCategoryId == null) return null;
+    if (options.any((c) => c.id == _upsellCategoryId)) {
+      return _upsellCategoryId;
+    }
+    return null;
+  }
+
   _buildBottomNavigationBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -140,6 +224,8 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
   void _fillData() async {
     try {
       List<Pannel>? resPannel = await getPannels();
+      final groupsData = await getUserGroups(roleType: 'user');
+      final categories = await getAllProdctCategory();
 
       setStateIfMounted(() {
         _nameEditText.text = widget.selectedProductCategory.categoryName;
@@ -149,8 +235,12 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         _expireDayEditText.text =
             widget.selectedProductCategory.expireDay.toString();
         _volumeEditText.text = widget.selectedProductCategory.volume.toString();
-        _inboundIdEditText.text =
-            widget.selectedProductCategory.inboundId?.toString() ?? "";
+        _inboundIdEditText.text = formatInboundIdsText(
+            widget.selectedProductCategory.resolvedInboundIds);
+        _marzbanInboundsEditText.text = formatMarzbanInboundsText(
+            widget.selectedProductCategory.marzbanInbounds ?? {});
+        _pasarguardGroupIdsEditText.text = formatPasarguardGroupIdsText(
+            widget.selectedProductCategory.pasarguardGroupIds ?? []);
         _ipLimitEditText.text =
             widget.selectedProductCategory.ipLimit?.toString() ?? "0";
         _sampleInboundEditText.text =
@@ -159,7 +249,15 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
         _showSubscriptionLink =
             widget.selectedProductCategory.showSubscriptionLink;
         _showPannelLink = widget.selectedProductCategory.showPannelLink;
+        _sendConfigToUser = widget.selectedProductCategory.sendConfigToUser;
         _isActive = widget.selectedProductCategory.isActive;
+        _userGroups = (groupsData?['groups'] as List<UserGroup>?) ?? [];
+        _allowedGroupIds
+          ..clear()
+          ..addAll(
+              widget.selectedProductCategory.allowedUserGroupIds ?? const []);
+        _upsellCategoryId = widget.selectedProductCategory.upsellCategoryId;
+        _allCategories = categories is List<ProductCategory> ? categories : [];
 
         if (resPannel != null && resPannel.isNotEmpty) {
           _pannelNameList.clear();
@@ -170,9 +268,23 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
 
           _selectedPannelName =
               "${widget.selectedProductCategory.pannel!.id}: ${getPannelName(name: widget.selectedProductCategory.pannel!.type)} - ${widget.selectedProductCategory.pannel!.location}";
+
+          if (!_pannelNameList.contains(_selectedPannelName)) {
+            final panelId = widget.selectedProductCategory.pannelId;
+            final matches = _pannelNameList
+                .where((name) => name.startsWith('$panelId:'))
+                .toList();
+            if (matches.isNotEmpty) {
+              _selectedPannelName = matches.first;
+            } else {
+              _pannelNameList.insert(0, _selectedPannelName);
+            }
+          }
         } else {
           _selectedPannelName = "";
         }
+
+        _upsellCategoryId = _resolveUpsellCategoryId(_upsellCategoryId);
 
         _showData = true;
       });
@@ -272,8 +384,15 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
 
   _productInfoTabCard(BuildContext context) {
     _productDetailsWidgetLIst.clear();
-    bool isSanaei = _selectedPannelName.contains("Sanaei");
+    bool isSanaei =
+        getPanelTypeFromDropdownLabel(_selectedPannelName) == 'sanaei';
+    bool isMarzban = isMarzbanPanel(
+        getPanelTypeFromDropdownLabel(_selectedPannelName));
+    bool isPasarguard = isPasarguardPanel(
+        getPanelTypeFromDropdownLabel(_selectedPannelName));
     bool isHiddify = _selectedPannelName.contains("Hiddify");
+    bool supportsConfigToggle =
+        panelDropdownSupportsConfigToggle(_selectedPannelName);
 
     _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
       controller: _nameEditText,
@@ -309,9 +428,9 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     if (isSanaei) {
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _inboundIdEditText,
-        textHint: "Inbound ID",
-        validationError: "Inbound ID را وارد کنید.",
-        keyboardType: TextInputType.number,
+        textHint: "Inbound IDs (با کاما جدا کنید)",
+        validationError: "حداقل یک Inbound ID وارد کنید.",
+        keyboardType: TextInputType.text,
       ));
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _ipLimitEditText,
@@ -321,11 +440,86 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       ));
       _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
         controller: _sampleInboundEditText,
-        textHint: "کانفیگ نمونه",
-        validationError: "کانفیگ نمونه را وارد کنید.",
+        textHint: "کانفیگ نمونه (اختیاری)",
+        validationError: "",
         keyboardType: TextInputType.text,
       ));
+      _productDetailsWidgetLIst.add(
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              final id = int.tryParse(_selectedPannelName.split(':')[0]);
+              if (id == null) return;
+              runSanaeiInboundSync(
+                context,
+                pannelId: id,
+                inboundIdController: _inboundIdEditText,
+              );
+            },
+            icon: const Icon(Icons.sync, size: 18),
+            label: const Text('انتخاب Inboundها از پنل'),
+          ),
+        ),
+      );
     }
+
+    if (isMarzban) {
+      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+        controller: _marzbanInboundsEditText,
+        textHint: "Inboundهای Marzban (JSON)",
+        validationError: "حداقل یک Inbound انتخاب کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _productDetailsWidgetLIst.add(
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              final id = int.tryParse(_selectedPannelName.split(':')[0]);
+              if (id == null) return;
+              runMarzbanInboundSync(
+                context,
+                pannelId: id,
+                inboundsController: _marzbanInboundsEditText,
+                panelType: 'marzban',
+              );
+            },
+            icon: const Icon(Icons.sync, size: 18),
+            label: const Text('انتخاب Inboundها از پنل'),
+          ),
+        ),
+      );
+    }
+
+    if (isPasarguard) {
+      _productDetailsWidgetLIst.add(CustomTextFromFieldWidget(
+        controller: _pasarguardGroupIdsEditText,
+        textHint: "گروه‌های PasarGuard ([1,2] یا 1,2)",
+        validationError: "حداقل یک گروه انتخاب کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _productDetailsWidgetLIst.add(
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              final id = int.tryParse(_selectedPannelName.split(':')[0]);
+              if (id == null) return;
+              runPasarguardGroupSync(
+                context,
+                pannelId: id,
+                groupIdsController: _pasarguardGroupIdsEditText,
+              );
+            },
+            icon: const Icon(Icons.sync, size: 18),
+            label: const Text('انتخاب گروه‌ها از پنل'),
+          ),
+        ),
+      );
+    }
+
+    // همیشه sampleInbound را نمایش بده
 
     _productDetailsWidgetLIst.add(Container(
       margin: EdgeInsets.only(top: AppStyle.defaultPadding),
@@ -338,8 +532,7 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButtonFormField<String>(
           isExpanded: true,
-          initialValue:
-              _selectedPannelName.isNotEmpty ? _selectedPannelName : null,
+          initialValue: _resolvePanelDropdownValue(),
           decoration: const InputDecoration(
             labelText: "انتخاب پنل",
             border: InputBorder.none,
@@ -367,11 +560,21 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           : (val) => setStateIfMounted(() => _showSubscriptionLink = val),
     ));
 
-    _productDetailsWidgetLIst.add(_buildSwitchTile(
-      title: "نمایش لینک پنل",
-      value: _showPannelLink,
-      onChanged: (val) => setStateIfMounted(() => _showPannelLink = val),
-    ));
+    if (isHiddify) {
+      _productDetailsWidgetLIst.add(_buildSwitchTile(
+        title: "نمایش لینک پنل",
+        value: _showPannelLink,
+        onChanged: (val) => setStateIfMounted(() => _showPannelLink = val),
+      ));
+    }
+
+    if (supportsConfigToggle) {
+      _productDetailsWidgetLIst.add(_buildSwitchTile(
+        title: "ارسال کانفیگ به کاربر",
+        value: _sendConfigToUser,
+        onChanged: (val) => setStateIfMounted(() => _sendConfigToUser = val),
+      ));
+    }
 
     _productDetailsWidgetLIst.add(_buildSwitchTile(
       title: "قابلیت شارژ مجدد",
@@ -386,6 +589,9 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       value: _isActive,
       onChanged: (val) => setStateIfMounted(() => _isActive = val),
     ));
+
+    _productDetailsWidgetLIst.add(_allowedGroupsWidget(context));
+    _productDetailsWidgetLIst.add(_upsellCategoryWidget(context));
 
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -465,8 +671,164 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
     );
   }
 
+  Widget _allowedGroupsWidget(BuildContext context) {
+    final groups = _userGroups.where((g) => !g.isDefault).toList();
+    final theme = Theme.of(context);
+
+    String helper;
+    if (_allowedGroupIds.isEmpty) {
+      helper = 'همه گروه‌ها می‌توانند ببینند/بخرند';
+    } else {
+      helper = 'فقط گروه‌های انتخاب‌شده نمایش داده می‌شود';
+    }
+
+    return Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppStyle.primaryColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('محدودیت گروه کاربری (اختیاری)',
+              style: theme.textTheme.bodyLarge),
+          const SizedBox(height: 4),
+          Text(helper,
+              style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('بدون گروه'),
+                selected: _allowedGroupIds.contains(0),
+                onSelected: (v) => setStateIfMounted(() {
+                  if (v) {
+                    _allowedGroupIds.add(0);
+                  } else {
+                    _allowedGroupIds.remove(0);
+                  }
+                }),
+              ),
+              ...groups.map((g) {
+                final selected = _allowedGroupIds.contains(g.id);
+                return FilterChip(
+                  label: Text(g.name),
+                  selected: selected,
+                  onSelected: (v) => setStateIfMounted(() {
+                    if (v) {
+                      _allowedGroupIds.add(g.id);
+                    } else {
+                      _allowedGroupIds.remove(g.id);
+                    }
+                  }),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _allowedGroupIds.isEmpty
+                  ? null
+                  : () => setStateIfMounted(() => _allowedGroupIds.clear()),
+              child: const Text('حذف محدودیت (همه)'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _upsellCategoryWidget(BuildContext context) {
+    if (!_isGoldLicense) {
+      return Container(
+        margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+        padding: EdgeInsets.all(AppStyle.defaultPadding),
+        decoration: BoxDecoration(
+          color: AppStyle.bgColor.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.workspace_premium,
+                color: Colors.amber.shade400, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'پیشنهاد ارتقا (Upsell) در لایسنس طلایی فعال می‌شود.',
+                style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final options = _upsellDropdownOptions();
+    final upsellDropdownValue = _resolveUpsellDropdownValue(options);
+
+    return Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppStyle.primaryColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('پیشنهاد ارتقا (Upsell)',
+              style: Theme.of(context).textTheme.bodyLarge),
+          const SizedBox(height: 4),
+          Text(
+            'بسته پیشنهادی هنگام خرید این بسته در ربات نمایش داده می‌شود',
+            style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<int?>(
+            initialValue: upsellDropdownValue,
+            decoration: const InputDecoration(
+              labelText: 'بسته پیشنهادی',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('بدون پیشنهاد ارتقا'),
+              ),
+              ...options.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.id,
+                  child: Text('${c.categoryName} (${c.price} تومان)'),
+                ),
+              ),
+            ],
+            onChanged: (v) => setStateIfMounted(() => _upsellCategoryId = v),
+          ),
+        ],
+      ),
+    );
+  }
+
   _submitData(BuildContext context) async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      if (context.mounted) {
+        showMsg(
+          msg: "لطفاً فیلدهای اجباری را تکمیل کنید.",
+          context: context,
+          type: "error",
+        );
+      }
+      return;
+    }
 
     EasyLoading.show(status: 'در حال بروزرسانی...');
     try {
@@ -474,6 +836,16 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
       if (_selectedPannelName != "") {
         pannelID = int.parse(_selectedPannelName.split(":")[0]);
       }
+
+      final isHiddify = _selectedPannelName.contains("Hiddify");
+      final supportsConfigToggle =
+          panelDropdownSupportsConfigToggle(_selectedPannelName);
+
+      final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
+      final marzbanInbounds =
+          parseMarzbanInboundsFromText(_marzbanInboundsEditText.text);
+      final pasarguardGroupIds =
+          parsePasarguardGroupIdsFromText(_pasarguardGroupIdsEditText.text);
 
       var res = await editProductCategory(
           name: _nameEditText.text,
@@ -483,17 +855,24 @@ class _EditProductDetailsScreenState extends State<EditProductDetailsScreen> {
           expDay: int.parse(_expireDayEditText.text),
           volume: int.parse(_volumeEditText.text),
           rechargable: _rechargable,
-          showPannelLink: _showPannelLink,
+          showPannelLink: isHiddify ? _showPannelLink : false,
           showSubscriptionLink: _showSubscriptionLink,
+          sendConfigToUser: supportsConfigToggle ? _sendConfigToUser : false,
           isActive: _isActive,
+          allowedUserGroupIds:
+              _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),
           id: widget.selectedProductCategory.id.toInt(),
-          inboundId: _inboundIdEditText.text.isNotEmpty
-              ? int.tryParse(_inboundIdEditText.text)
-              : null,
+          inboundId: inboundIds.isNotEmpty ? inboundIds.first : null,
+          inboundIds: inboundIds.isEmpty ? null : inboundIds,
+          marzbanInbounds:
+              marzbanInbounds.isEmpty ? null : marzbanInbounds,
+          pasarguardGroupIds:
+              pasarguardGroupIds.isEmpty ? null : pasarguardGroupIds,
           ipLimit: _ipLimitEditText.text.isNotEmpty
               ? int.tryParse(_ipLimitEditText.text)
               : 0,
-          sampleInbound: _sampleInboundEditText.text);
+          sampleInbound: _sampleInboundEditText.text,
+          upsellCategoryId: _upsellCategoryId);
 
       if (res) {
         if (context.mounted) {

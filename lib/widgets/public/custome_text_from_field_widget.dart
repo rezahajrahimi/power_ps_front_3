@@ -60,8 +60,11 @@ class _CustomTextFromFieldWidgetState extends State<CustomTextFromFieldWidget> {
         textDirection: widget.textDirection != null
             ? widget.textDirection!
             : TextDirection.rtl,
-        textAlign:
-            widget.textAlign != null ? widget.textAlign! : TextAlign.right,
+        textAlign: widget.textAlign != null
+            ? widget.textAlign!
+            : (widget.textDirection == TextDirection.ltr
+                ? TextAlign.left
+                : TextAlign.right),
         obscureText: widget.obscureText != null ? widget.obscureText! : false,
         decoration: InputDecoration(
           alignLabelWithHint: true,
@@ -108,7 +111,11 @@ class _CustomTextFromFieldWidgetState extends State<CustomTextFromFieldWidget> {
               return null;
             }
           } else {
-            return (value!.isEmpty) ? widget.validationError : null;
+            if (value == null || value.isEmpty) {
+              if (widget.validationError.isEmpty) return null;
+              return widget.validationError;
+            }
+            return null;
           }
         },
         textInputAction: widget.textInputAction,

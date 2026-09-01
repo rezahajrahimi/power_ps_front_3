@@ -43,11 +43,6 @@ class _AddNewHiddifyPanelScreenState extends State<AddNewHiddifyPanelScreen> {
   final List<String> _pannelTypes = [
     "Hiddify",
   ];
-  // final List<String> _pannelTypes = [
-  //   "MarzBan",
-  //   "Hiddify",
-  //   "دیگر",
-  // ];
   String _selectedPannelType = "Hiddify";
   String _marzbanToken = "";
   final List<Widget> _selectPannelTypesWidgetList = [];
@@ -960,16 +955,7 @@ class _AddNewHiddifyPanelScreenState extends State<AddNewHiddifyPanelScreen> {
           token: _marzbanToken,
           capacity: int.parse(_capacityEditTxt.text),
         ),
-        vmess: _vmessProxy,
-        vless: _vlessProxy,
-        trojan: _trojanProxy,
-        shadowsocks: _shadowsocksProxy,
-        vmessTCP: _vmessInboundTCP,
-        shadowsocksTCP: _shadowsocksIboundTCP,
-        trojanWebsocketTLS: _trojanInboundWebsocketTLS,
-        vlessGprcReality: _vlessInboundGprcReality,
-        vlessTcpReality: _vlessInboundTcpReality,
-        vmessWebSocket: _vmessinboundWebSocket);
+        dynamicInbounds: []);
     if (res) {
       if (context.mounted) {
         showMsg(msg: "با موفقیت ثبت شد.", context: context);

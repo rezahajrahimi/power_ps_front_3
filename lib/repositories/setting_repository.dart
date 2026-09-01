@@ -89,6 +89,9 @@ Future<bool> updateBotSetting({required Setting setting}) async {
           "admin_id": int.parse(setting.adminId),
           "bot_token": setting.botToken,
           "panel_address": setting.panelAddress,
+          "config_name_prefix": setting.configNamePrefix,
+          "config_name_format": setting.configNameFormat,
+          "use_admin_alias_in_config_name": setting.useAdminAliasInConfigName,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -185,10 +188,17 @@ Future<bool> changeAdvancedSetting({
   required String name,
   required bool value,
 }) async {
+  return changeAdvancedSettingValue(name: name, value: value.toString());
+}
+
+Future<bool> changeAdvancedSettingValue({
+  required String name,
+  required String value,
+}) async {
   try {
     Response response =
         await GenaralApi.dio.post("/api/advanceSettingLookupUpdateByName",
-            data: {"name": name, "value": value.toString()},
+            data: {"name": name, "value": value},
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -199,6 +209,8 @@ Future<bool> changeAdvancedSetting({
 
     if (response.statusCode == 200 && response.data != null) {
       return true;
+    } else if (response.statusCode == 403) {
+      return false;
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -209,6 +221,9 @@ Future<bool> changeAdvancedSetting({
       return false;
     }
   } on DioException catch (e) {
+    if (e.response?.statusCode == 403) {
+      return false;
+    }
     debugPrint(e.message.toString());
     return false;
   } catch (e) {

@@ -28,22 +28,38 @@ class HiddifyConfig {
   });
 
   factory HiddifyConfig.fromJson(Map<String, dynamic> json) {
+    final isActiveRaw = json['is_active'] ?? json['isActive'];
+    final isActive = isActiveRaw == true ||
+        isActiveRaw.toString() == '1' ||
+        isActiveRaw.toString() == 'true';
+
     return HiddifyConfig(
-      uuid: json['uuid'].toString(),
-      addedByUuid: json['added_by_uuid'].toString(),
-      comment: json['comment'].toString(),
-      currentUsageGB: double.parse(json['current_usage_GB'].toString()),
-      lastOnline: json['last_online'].toString(),
-      mode: json['mode'].toString(),
-      name: json['name'].toString(),
-      packageDays: json['package_days'],
-      startDate: json['start_date'].toString(),
-      usageLimitGB: double.parse(json['usage_limit_GB'].toString()),
-      isActive: json['is_active'].toString() == "1" ||
-              json['is_active'].toString() == "true"
-          ? true
-          : false,
+      uuid: json['uuid']?.toString() ?? '',
+      addedByUuid: json['added_by_uuid']?.toString(),
+      comment: json['comment']?.toString(),
+      currentUsageGB:
+          double.tryParse(json['current_usage_GB']?.toString() ?? '0') ?? 0,
+      lastOnline: json['last_online']?.toString(),
+      mode: json['mode']?.toString(),
+      name: json['name']?.toString() ?? json['uuid']?.toString() ?? '',
+      packageDays: _parsePackageDays(json['package_days']),
+      startDate: json['start_date']?.toString(),
+      usageLimitGB:
+          double.tryParse(json['usage_limit_GB']?.toString() ?? '0') ?? 0,
+      isActive: isActive,
     );
+  }
+
+  /// Carbon may emit float days (e.g. 30.00000015); int.tryParse then fails → 0.
+  static int _parsePackageDays(dynamic raw) {
+    if (raw == null) return 0;
+    if (raw is int) return raw < 0 ? 0 : raw;
+    if (raw is num) return raw <= 0 ? 0 : raw.ceil().toInt();
+    final asInt = int.tryParse(raw.toString().trim());
+    if (asInt != null) return asInt < 0 ? 0 : asInt;
+    final asDouble = double.tryParse(raw.toString().trim());
+    if (asDouble == null || asDouble <= 0) return 0;
+    return asDouble.ceil().toInt();
   }
 
   HiddifyConfig copyWith({

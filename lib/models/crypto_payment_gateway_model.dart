@@ -57,8 +57,8 @@ class CryptoPaymentGateway {
       apiKey: map['api_key'] ?? '',
       email: map['email'] ?? '',
       password: map['password'] ?? '',
-      isActive: map['is_active'] == 1 ? true : false,
-      isFeePaidByUser: map['is_fee_paid_by_user'] == 1 ? true : false,
+      isActive: map['is_active'] == 1 || map['is_active'] == true,
+      isFeePaidByUser: map['is_fee_paid_by_user'] == 1 || map['is_fee_paid_by_user'] == true,
     );
   }
 

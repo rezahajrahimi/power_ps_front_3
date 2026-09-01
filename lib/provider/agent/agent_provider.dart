@@ -1,107 +1,229 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_dashboard_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
 
 class AgentProvider extends ChangeNotifier {
+  bool _notifyPending = false;
+
+  /// همیشه اعلان را به microtask بعد از build فعلی موکول می‌کند.
+  void _notify() {
+    if (_notifyPending) return;
+    _notifyPending = true;
+    Future.microtask(() {
+      _notifyPending = false;
+      if (hasListeners) super.notifyListeners();
+    });
+  }
+
   bool _changed = false;
   bool get changed => _changed;
 
   List<AgentAddCategoriyModel> _agentCategories = [];
-  List<AgentAddCategoriyModel> get agentCategories => _agentCategories;
+  List<AgentAddCategoriyModel> get agentCategories =>
+      List.unmodifiable(_agentCategories);
 
   List<AgentAddCategoriyModel> _agentCategoriesAdded = [];
   List<AgentAddCategoriyModel> get agentCategoriesAdded =>
-      _agentCategoriesAdded;
+      List.unmodifiable(_agentCategoriesAdded);
+
   AgentDashboard _agentDashboard = AgentDashboard(
-      ballance: null, agentProducts: null, boughtProducts: null, logs: null);
+    ballance: null,
+    agentProducts: null,
+    boughtProducts: null,
+    logs: null,
+    permission: null,
+  );
   AgentDashboard get agentDashboard => _agentDashboard;
+
   void setChanged(bool change) {
     _changed = change;
-    notifyListeners();
+    _notify();
   }
 
-  setAgentCategories(List<AgentAddCategoriyModel> agentCategories) {
-    _agentCategories = agentCategories;
-    _changed = true;
-    notifyListeners();
+  /// بارگذاری یک‌جای فرم بدون چند notify پشت‌سرهم
+  void setFormCategories({
+    required List<AgentAddCategoriyModel> available,
+    required List<AgentAddCategoriyModel> added,
+  }) {
+    _agentCategories = List<AgentAddCategoriyModel>.from(available);
+    _agentCategoriesAdded = List<AgentAddCategoriyModel>.from(added);
+    _notify();
   }
 
-  getAgentCategories() {
-    return _agentCategories;
+  List<AgentAddCategoriyModel> _parseCategoryList(dynamic source) {
+    if (source is! List) return [];
+    return source
+        .map((item) {
+          if (item is AgentAddCategoriyModel) return item;
+          if (item is Map) {
+            return AgentAddCategoriyModel.fromMap(
+              Map<String, dynamic>.from(item),
+            );
+          }
+          throw ArgumentError('Invalid agent category item: $item');
+        })
+        .toList();
   }
 
-  clearAgentCategories() {
+  void setFormCategoriesFromDynamic({
+    required dynamic available,
+    required dynamic added,
+  }) {
+    _agentCategories = _parseCategoryList(available);
+    _agentCategoriesAdded = _parseCategoryList(added);
+    _notify();
+  }
+
+  void resetFormCategories() {
     _agentCategories = [];
-    _changed = true;
-    notifyListeners();
-  }
-
-  addNewProductAgent(AgentAddCategoriyModel productCategory) {
-    _agentCategories.add(productCategory);
-    _changed = true;
-    notifyListeners();
-  }
-
-  removeProductAgent(AgentAddCategoriyModel productCategory) {
-    final index = _agentCategories.indexOf(productCategory);
-    _agentCategories.removeAt(index);
-
-    _changed = true;
-    notifyListeners();
-  }
-
-  updateProductAgent(AgentAddCategoriyModel productCategory) {
-    _agentCategories[_agentCategories.indexOf(productCategory)] =
-        productCategory;
-    _changed = true;
-    notifyListeners();
-  }
-
-  setAgentCategoriesAdded(List<AgentAddCategoriyModel> agentCategoriesAdded) {
-    _agentCategoriesAdded = agentCategoriesAdded;
-    _changed = true;
-    notifyListeners();
-  }
-
-  getAgentCategoriesAdded() {
-    return _agentCategoriesAdded;
-  }
-
-  clearAgentCategoriesAdded() {
     _agentCategoriesAdded = [];
-    _changed = true;
-    notifyListeners();
+    _notify();
   }
 
-  addNewProductAgentAded(AgentAddCategoriyModel productCategory) {
-    _agentCategoriesAdded.add(productCategory);
-    _changed = true;
-    notifyListeners();
+  List<AgentAddCategoriyModel> getAgentCategories() => _agentCategories;
+
+  List<AgentAddCategoriyModel> getAgentCategoriesAdded() =>
+      _agentCategoriesAdded;
+
+  void moveCategoryToAdded(AgentAddCategoriyModel item) {
+    final availableIndex = _indexByCategoryId(_agentCategories, item);
+    if (availableIndex != -1) {
+      _agentCategories.removeAt(availableIndex);
+    }
+
+    final addedIndex = _indexByCategoryId(_agentCategoriesAdded, item);
+    if (addedIndex != -1) {
+      _agentCategoriesAdded[addedIndex] = item;
+    } else {
+      _agentCategoriesAdded.add(item);
+    }
+    _notify();
   }
 
-  removeProductAgentAded(AgentAddCategoriyModel productCategory) {
-    final index = _agentCategoriesAdded.indexOf(productCategory);
-    _agentCategoriesAdded.removeAt(index);
+  void moveCategoryToAvailable(AgentAddCategoriyModel item) {
+    final addedIndex = _indexByCategoryId(_agentCategoriesAdded, item);
+    if (addedIndex != -1) {
+      _agentCategoriesAdded.removeAt(addedIndex);
+    }
 
-    _changed = true;
-    notifyListeners();
+    final availableIndex = _indexByCategoryId(_agentCategories, item);
+    if (availableIndex == -1) {
+      _agentCategories.add(item.removeNewPricesValus());
+    }
+    _notify();
   }
 
-  updateProductAgentAded(AgentAddCategoriyModel productCategory) {
-    _agentCategoriesAdded[_agentCategoriesAdded.indexOf(productCategory)] =
-        productCategory;
-    _changed = true;
-    notifyListeners();
+  int _indexByCategoryId(
+    List<AgentAddCategoriyModel> list,
+    AgentAddCategoriyModel item,
+  ) {
+    return list.indexWhere((entry) => entry.categoryId == item.categoryId);
   }
 
-  setNewAgentDashboardData(AgentDashboard agentDashboard) {
-    _agentDashboard = agentDashboard;
-    notifyListeners();
+  void selectAllCategoriesWithDefaultPrice() {
+    selectCategoriesWithDefaultPrice(_agentCategories);
   }
 
-  setBougthProductsToAgent(List<BoughtProductDetailsModel> boughtProducts) {
+  void selectCategoriesWithDefaultPrice(
+    Iterable<AgentAddCategoriyModel> items,
+  ) {
+    for (final item in List<AgentAddCategoriyModel>.from(items)) {
+      final index = _indexByCategoryId(_agentCategories, item);
+      if (index == -1) continue;
+      _agentCategories.removeAt(index);
+      final pricedItem = item.setNewPricesValus(
+        newPrice: item.price,
+        newPriceInDollar: item.priceInDollar,
+      );
+      final addedIndex = _indexByCategoryId(_agentCategoriesAdded, pricedItem);
+      if (addedIndex != -1) {
+        _agentCategoriesAdded[addedIndex] = pricedItem;
+      } else {
+        _agentCategoriesAdded.add(pricedItem);
+      }
+    }
+    _notify();
+  }
+
+  /// به‌روزرسانی یک‌جای داشبورد
+  void updateDashboard({
+    required AgentDashboard dashboard,
+    bool clearChanged = true,
+  }) {
+    _agentDashboard = dashboard;
+    if (clearChanged) _changed = false;
+    _notify();
+  }
+
+  void setBougthProductsToAgent(List<BoughtProductDetailsModel> boughtProducts) {
     _agentDashboard.boughtProducts = boughtProducts;
-    notifyListeners();
+    _notify();
+  }
+
+  // --- متدهای قدیمی برای سازگاری؛ همه از _notify استفاده می‌کنند ---
+
+  void setAgentCategories(List<AgentAddCategoriyModel> agentCategories) {
+    _agentCategories = List<AgentAddCategoriyModel>.from(agentCategories);
+    _notify();
+  }
+
+  void clearAgentCategories() {
+    _agentCategories = [];
+    _notify();
+  }
+
+  void addNewProductAgent(AgentAddCategoriyModel productCategory) {
+    _agentCategories.add(productCategory);
+    _notify();
+  }
+
+  void removeProductAgent(AgentAddCategoriyModel productCategory) {
+    final index = _agentCategories.indexOf(productCategory);
+    if (index == -1) return;
+    _agentCategories.removeAt(index);
+    _notify();
+  }
+
+  void updateProductAgent(AgentAddCategoriyModel productCategory) {
+    final index = _agentCategories.indexOf(productCategory);
+    if (index == -1) return;
+    _agentCategories[index] = productCategory;
+    _notify();
+  }
+
+  void setAgentCategoriesAdded(List<AgentAddCategoriyModel> agentCategoriesAdded) {
+    _agentCategoriesAdded =
+        List<AgentAddCategoriyModel>.from(agentCategoriesAdded);
+    _notify();
+  }
+
+  void clearAgentCategoriesAdded() {
+    _agentCategoriesAdded = [];
+    _notify();
+  }
+
+  void addNewProductAgentAded(AgentAddCategoriyModel productCategory) {
+    _agentCategoriesAdded.add(productCategory);
+    _notify();
+  }
+
+  void removeProductAgentAded(AgentAddCategoriyModel productCategory) {
+    final index = _agentCategoriesAdded.indexOf(productCategory);
+    if (index == -1) return;
+    _agentCategoriesAdded.removeAt(index);
+    _notify();
+  }
+
+  void updateProductAgentAded(AgentAddCategoriyModel productCategory) {
+    final index = _agentCategoriesAdded.indexOf(productCategory);
+    if (index == -1) return;
+    _agentCategoriesAdded[index] = productCategory;
+    _notify();
+  }
+
+  @Deprecated('Use updateDashboard instead')
+  void setNewAgentDashboardData(AgentDashboard agentDashboard) {
+    updateDashboard(dashboard: agentDashboard, clearChanged: false);
   }
 }

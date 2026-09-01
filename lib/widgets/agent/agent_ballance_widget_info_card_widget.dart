@@ -25,6 +25,7 @@ class _AgentBallanceInfoItemCardWidgetState
   String _walletAddress = "";
   bool _zarinPal = false;
   bool _cryptoPay = false;
+  bool _swapPay = false;
   @override
   void initState() {
     super.initState();
@@ -74,12 +75,19 @@ class _AgentBallanceInfoItemCardWidgetState
 
   void _fillData() async {
     botUserWidgetLIst.clear();
+    final tomanBalance = context.read<AgentBallanceProvider>().ballanceInToman;
+    final isNegative = tomanBalance < 0;
+
     botUserWidgetLIst.add(DetailsInfoItemWidget(
       item: DetailsInfoItem(
-          icon: const Icon(Icons.money),
-          itemName: "موجودی",
-          itemValue:
-              "${thousandSeperatorFormatter(context.read<AgentBallanceProvider>().ballanceInToman.toString())} تومان"),
+          icon: Icon(
+            isNegative ? Icons.warning_amber_rounded : Icons.money,
+            color: isNegative ? Colors.orangeAccent : null,
+          ),
+          itemName: isNegative ? "موجودی (بدهکار)" : "موجودی",
+          itemValue: isNegative
+              ? "${thousandSeperatorFormatter((-tomanBalance).toString())} تومان بدهی"
+              : "${thousandSeperatorFormatter(tomanBalance.toString())} تومان"),
     ));
 
     botUserWidgetLIst.add(DetailsInfoItemWidget(
@@ -122,7 +130,10 @@ class _AgentBallanceInfoItemCardWidgetState
         _zarinPal = true;
       }
       if (element['name'] == "crypto_payment_status") {
-        _cryptoPay = element['status'];
+        _cryptoPay = element['status'] == true || element['status'] == 1;
+      }
+      if (element['name'] == "swappay_payment_status") {
+        _swapPay = element['status'] == true || element['status'] == 1;
       }
     }
 
@@ -191,6 +202,18 @@ class _AgentBallanceInfoItemCardWidgetState
                         },
                         icon: const Icon(Icons.book_online),
                         label: const Text("واریز رمز ارز از طریق درگاه پرداخت"),
+                      ),
+                    if (_cryptoPay)
+                      SizedBox(
+                        height: AppStyle.defaultPadding,
+                      ),
+                    if (_swapPay)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _showAddBallanceSwapPayDialog(context);
+                        },
+                        icon: const Icon(Icons.currency_exchange),
+                        label: const Text("واریز با SwapPay (سواپ‌ولت)"),
                       ),
                   ],
                 ),
@@ -342,7 +365,7 @@ _showAddBallanceDollarDialog(BuildContext context) {
                   createNewAgentDollarBillUrl(amount: amount).then((value) {
                     if (value != null) {
                       // open browser
-                      launchUrl(Uri.parse(value),
+                      launchUrl(Uri.parse(value.toString()),
                           mode: LaunchMode.externalApplication);
                     }
                     debugPrint(value.toString());
@@ -350,6 +373,67 @@ _showAddBallanceDollarDialog(BuildContext context) {
                   Navigator.of(context).pop();
                 },
                 child: const Text("افزودن")),
+          ],
+        );
+      });
+}
+
+_showAddBallanceSwapPayDialog(BuildContext context) {
+  int amount = 0;
+  return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("افزایش موجودی با SwapPay"),
+          content: SizedBox(
+            width: 500,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  onChanged: (value) {
+                    amount = int.tryParse(value) ?? 0;
+                  },
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'مبلغ (حداقل واریزی 1 دلار)',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("لغو")),
+            TextButton(
+                onPressed: () {
+                  if (amount < 1) {
+                    showMsg(
+                        msg: "حداقل واریزی 1 دلار می باشد.",
+                        context: context,
+                        type: "error");
+                    return;
+                  }
+                  createNewAgentSwapPayBillUrl(amount: amount).then((value) {
+                    if (value != null && value.toString().startsWith('http')) {
+                      launchUrl(Uri.parse(value.toString()),
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      showMsg(
+                          msg: "خطا در ایجاد لینک پرداخت SwapPay",
+                          context: context,
+                          type: "error");
+                    }
+                    debugPrint(value.toString());
+                  });
+                  Navigator.of(context).pop();
+                },
+                child: const Text("پرداخت")),
           ],
         );
       });

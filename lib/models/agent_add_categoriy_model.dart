@@ -67,7 +67,7 @@ class AgentAddCategoriyModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'productCategoriesId': productCategoriesId,
+      'productCategoriesId': productCategoriesId ?? id,
       'userId': userId,
       'isActive': isActive,
       'price': price,
@@ -78,23 +78,35 @@ class AgentAddCategoriyModel {
     };
   }
 
+  static int _parsePrice(dynamic value) {
+    return double.tryParse(value?.toString() ?? '0')?.toInt() ?? 0;
+  }
+
+  static double _parsePriceDouble(dynamic value) {
+    return double.tryParse(value?.toString() ?? '0') ?? 0;
+  }
+
   factory AgentAddCategoriyModel.fromMap(Map<String, dynamic> map) {
+    final categoryId = map['product_categories_id']?.toInt() ?? map['id']?.toInt() ?? 0;
+
     return AgentAddCategoriyModel(
       id: map['id']?.toInt() ?? 0,
-      productCategoriesId: map['product_categories_id']?.toInt(),
+      productCategoriesId: categoryId,
       userId: map['user_id']?.toInt(),
       isActive: map['is_active'] == 1 ? true : false,
-      price: double.parse(map['price'].toString()).toInt(),
-      newPrice: double.parse(map['price'].toString()).toInt(),
-      priceInDollar: double.parse(map['price_in_dollar'].toString()),
-      newPriceInDollar: double.parse(map['price_in_dollar'].toString()),
+      price: _parsePrice(map['price']),
+      newPrice: _parsePrice(map['price']),
+      priceInDollar: _parsePriceDouble(map['price_in_dollar']),
+      newPriceInDollar: _parsePriceDouble(map['price_in_dollar']),
       productCategories: map['product_categories'] != null
-          ? ProductCategory.fromMap(map['product_categories'])
+          ? ProductCategory.fromMap(
+              Map<String, dynamic>.from(map['product_categories'] as Map),
+            )
           : null,
     );
   }
 
-  String toJson() => json.encode(toMap());
+  Object toJson() => toMap();
 
   factory AgentAddCategoriyModel.fromJson(String source) =>
       AgentAddCategoriyModel.fromMap(json.decode(source));
@@ -104,32 +116,15 @@ class AgentAddCategoriyModel {
     return 'AgentAddCategoriyModel(id: $id, productCategoriesId: $productCategoriesId, userId: $userId, isActive: $isActive, price: $price, newPrice: $newPrice, priceInDollar: $priceInDollar, newPriceInDollar: $newPriceInDollar, productCategories: $productCategories)';
   }
 
+  int get categoryId => productCategoriesId ?? id;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is AgentAddCategoriyModel &&
-        other.id == id &&
-        other.productCategoriesId == productCategoriesId &&
-        other.userId == userId &&
-        other.isActive == isActive &&
-        other.price == price &&
-        other.newPrice == newPrice &&
-        other.priceInDollar == priceInDollar &&
-        other.newPriceInDollar == newPriceInDollar &&
-        other.productCategories == productCategories;
+    return other is AgentAddCategoriyModel && other.categoryId == categoryId;
   }
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        productCategoriesId.hashCode ^
-        userId.hashCode ^
-        isActive.hashCode ^
-        price.hashCode ^
-        newPrice.hashCode ^
-        priceInDollar.hashCode ^
-        newPriceInDollar.hashCode ^
-        productCategories.hashCode;
-  }
+  int get hashCode => categoryId.hashCode;
 }

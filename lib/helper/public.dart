@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'dart:math' as math;
+import 'dart:convert';
 
 removeZeroChars(String number) {
   try {
@@ -15,6 +16,39 @@ removeZeroChars(String number) {
   } catch (e) {
     return;
   }
+}
+
+String toEnglishDigits(String input) {
+  const persian = '۰۱۲۳۴۵۶۷۸۹';
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  final buffer = StringBuffer();
+  for (final rune in input.runes) {
+    final char = String.fromCharCode(rune);
+    final persianIndex = persian.indexOf(char);
+    if (persianIndex >= 0) {
+      buffer.write(persianIndex);
+      continue;
+    }
+    final arabicIndex = arabic.indexOf(char);
+    if (arabicIndex >= 0) {
+      buffer.write(arabicIndex);
+      continue;
+    }
+    buffer.write(char);
+  }
+  return buffer.toString();
+}
+
+double? parseLocalizedNumber(String input) {
+  final normalized = toEnglishDigits(input.trim()).replaceAll(',', '.');
+  if (normalized.isEmpty) return null;
+  return double.tryParse(normalized);
+}
+
+int? parseLocalizedInt(String input) {
+  final value = parseLocalizedNumber(input);
+  if (value == null) return null;
+  return value.round();
 }
 
 String thousandSeperatorFormatter(String price) {
@@ -83,6 +117,9 @@ String getPannelName({required String name, String type = "main"}) {
       case "marzban":
         str = "Marzban";
         break;
+      case "pasarguard":
+        str = "PasarGuard";
+        break;
       default:
         str = "دیگر";
     }
@@ -100,11 +137,78 @@ String getPannelName({required String name, String type = "main"}) {
       case "Marzban":
         str = "marzban";
         break;
+      case "PasarGuard":
+        str = "pasarguard";
+        break;
       default:
         str = "custome";
     }
   }
   return str;
+}
+
+bool isMarzbanCompatiblePanel(String type) {
+  return type == 'marzban' || type == 'pasarguard';
+}
+
+/// For Marzban/PasarGuard, 0 days means unlimited.
+String formatConfigDaysLabel(int days, {required bool zeroMeansUnlimited}) {
+  if (zeroMeansUnlimited && days <= 0) return 'نامحدود';
+  return '$days روز';
+}
+
+/// For Marzban/PasarGuard, 0 GB means unlimited.
+String formatConfigVolumeLabel(num gb, {required bool zeroMeansUnlimited}) {
+  if (zeroMeansUnlimited && gb <= 0) return 'نامحدود';
+  final text = gb is int || gb == gb.roundToDouble()
+      ? gb.toInt().toString()
+      : gb.toString();
+  return '$text GB';
+}
+
+bool isMarzbanPanel(String type) {
+  return type == 'marzban';
+}
+
+bool isPasarguardPanel(String type) {
+  return type == 'pasarguard';
+}
+
+bool isInventoryPanelType(String type) {
+  return type == 'custome';
+}
+
+bool panelSupportsGroupOperations(String type) {
+  return type == 'hiddify' ||
+      type == 'sanaei' ||
+      isMarzbanCompatiblePanel(type);
+}
+
+bool panelSupportsRemarkRename(String type) {
+  return type == 'hiddify' || type == 'sanaei';
+}
+
+String getPanelTypeFromDropdownLabel(String panelDropdownValue) {
+  if (panelDropdownValue.isEmpty) {
+    return '';
+  }
+
+  final parts = panelDropdownValue.split(':');
+  if (parts.length < 2) {
+    return '';
+  }
+
+  final label = parts[1].trim().split(' - ').first.trim();
+  return getPannelName(name: label, type: 'reverse');
+}
+
+bool panelDropdownSupportsConfigToggle(String panelDropdownValue) {
+  final panelType = getPanelTypeFromDropdownLabel(panelDropdownValue);
+  return panelType == 'sanaei' || isMarzbanCompatiblePanel(panelType);
+}
+
+String getMarzbanCompatiblePanelLabel(String type) {
+  return type == 'pasarguard' ? 'PasarGuard' : 'Marzban';
 }
 
 String getHiddifyUserUUIDbySubscriptionLInk({required String pannelLink}) {
@@ -118,8 +222,115 @@ String getHiddifyConfigApiUrl({required String adminUrl}) {
 }
 
 String getMarzbanConfigApiUrl({required String adminUrl}) {
-  Uri ur = Uri.parse(adminUrl);
-  return ur.origin;
+  return getMarzbanPanelBaseUrl(urlPort: adminUrl) ?? adminUrl;
+}
+
+String? getMarzbanPanelBaseUrl({String? urlPort, String? adminUrl}) {
+  var url = urlPort?.trim();
+  if (url == null || url.isEmpty || url.toLowerCase() == 'null') {
+    url = adminUrl?.trim();
+  }
+  if (url == null || url.isEmpty || url.toLowerCase() == 'null') {
+    return null;
+  }
+
+  url = url
+      .replaceAll('/dashboard/', '/')
+      .replaceAll('/dashboard', '')
+      .replaceAll(RegExp(r'/+$'), '');
+
+  final uri = Uri.tryParse(url);
+  if (uri != null && uri.hasScheme) {
+    if (uri.path.isEmpty || uri.path == '/') {
+      return uri.origin;
+    }
+    return url;
+  }
+
+  return url;
+}
+
+String? resolveMarzbanUsernameFromProduct({
+  required String configs,
+  String? remark,
+  String? panelLink,
+  String? subscriptionLink,
+}) {
+  final configsRaw = configs.trim();
+  if (configsRaw.isNotEmpty && configsRaw.toLowerCase() != 'null') {
+    try {
+      final decoded = jsonDecode(configsRaw);
+      if (decoded is Map) {
+        final username = decoded['username']?.toString().trim();
+        if (username != null &&
+            username.isNotEmpty &&
+            username.toLowerCase() != 'null') {
+          return username;
+        }
+      }
+    } catch (_) {}
+  }
+
+  for (final candidate in [panelLink, subscriptionLink, remark]) {
+    final extracted = extractUsernameFromPanelUrl(candidate);
+    if (extracted != null) {
+      return extracted;
+    }
+  }
+
+  final normalizedRemark = remark?.trim();
+  if (normalizedRemark != null &&
+      normalizedRemark.isNotEmpty &&
+      normalizedRemark.toLowerCase() != 'null') {
+    return normalizedRemark;
+  }
+
+  return null;
+}
+
+String? extractUsernameFromPanelUrl(String? rawUrl) {
+  final url = rawUrl?.trim();
+  if (url == null || url.isEmpty || url.toLowerCase() == 'null') {
+    return null;
+  }
+
+  final uri = Uri.tryParse(url);
+  if (uri == null) {
+    return null;
+  }
+
+  for (final key in const ['username', 'user', 'email', 'remark', 'client']) {
+    final candidate = uri.queryParameters[key]?.trim();
+    if (candidate != null &&
+        candidate.isNotEmpty &&
+        candidate.toLowerCase() != 'null') {
+      return Uri.decodeComponent(candidate);
+    }
+  }
+
+  const excludedSegments = {
+    'admin',
+    'panel',
+    'user',
+    'users',
+    'client',
+    'clients',
+    'subscription',
+    'subscriptions',
+    'sub',
+    'config',
+    'configs',
+  };
+  for (final segment in uri.pathSegments.reversed) {
+    final candidate = Uri.decodeComponent(segment).trim();
+    if (candidate.isNotEmpty &&
+        candidate.toLowerCase() != 'null' &&
+        !excludedSegments.contains(candidate.toLowerCase())) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 Color randomColorGenerator() {

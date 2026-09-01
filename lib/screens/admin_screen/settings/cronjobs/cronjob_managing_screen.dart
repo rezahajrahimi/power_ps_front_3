@@ -3,6 +3,7 @@ import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/cron_job_model.dart';
 import 'package:powerps/repositories/cron_job_repostory.dart';
+import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/cron_jobs/cronjob_info_item_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
@@ -102,6 +103,57 @@ class _CronjobManagingScreenState extends State<CronjobManagingScreen> {
           Text(
             "گزینه های ارسال پیام خودکار (تنها در اکانت‌های طلایی و نقره ای اجرا می شود.)",
             style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    const TextScreenScreen(initialSearch: 'cron.'),
+              ),
+            ),
+            icon: const Icon(Icons.edit_note_outlined),
+            label: const Text('ویرایش متن پیام‌های خودکار'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppStyle.primaryColor,
+              side: BorderSide(color: AppStyle.primaryColor.withValues(alpha: 0.5)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+          SizedBox(height: AppStyle.defaultPadding / 2),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    const TextScreenScreen(initialSearch: 'recovery.'),
+              ),
+            ),
+            icon: const Icon(Icons.shopping_cart_checkout_outlined),
+            label: const Text('ویرایش متن بازیابی خرید'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppStyle.primaryColor,
+              side: BorderSide(color: AppStyle.primaryColor.withValues(alpha: 0.5)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    const TextScreenScreen(initialSearch: 'recovery.'),
+              ),
+            ),
+            icon: const Icon(Icons.restore_outlined),
+            label: const Text('ویرایش متن بازیابی خرید'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppStyle.primaryColor,
+              side: BorderSide(color: AppStyle.primaryColor.withValues(alpha: 0.5)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
           ),
           SizedBox(height: AppStyle.defaultPadding),
           SizedBox(

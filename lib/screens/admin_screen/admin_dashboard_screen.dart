@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:powerps/widgets/product_details/config_details_with_category_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
 import 'package:powerps/widgets/transaction/transaction_info_item_widget.dart';
+import 'package:powerps/widgets/dashboard/panel_status_tile.dart';
 import 'package:powerps/widgets/users/bot_user_info_item_widget.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -22,12 +23,15 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _showdata = false;
+  bool _isRefreshing = false;
   Timer? _retriveDataTimer;
   Dashboard? _dashboard;
   int _unconfirmedPage = 1;
   bool _isLoadingMoreUnconfirmed = false;
   @override
   void initState() {
+    _dashboard = _emptyDashboard();
+    _showdata = true;
     _bindAdminDashboardScreenData();
 
     _retriveDataTimer = Timer.periodic(const Duration(seconds: 30), ((timer) {
@@ -64,6 +68,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               padding: EdgeInsets.all(AppStyle.defaultPadding),
               child: Column(
                 children: [
+                  if (_isRefreshing)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8),
+                      child: LinearProgressIndicator(minHeight: 2),
+                    ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -129,30 +138,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Dashboard _emptyDashboard() {
+    return Dashboard(
+      users: [],
+      logs: [],
+      conTransactions: [],
+      unConTransactions: [],
+      unConTransactionsLastPage: 1,
+      unConTransactionsCurrentPage: 1,
+      mostSelledProductCategory: [],
+      last10ProductSelled: [],
+      pannelsStatus: [],
+      financialSummary: {'today': 0, 'week': 0, 'month': 0},
+    );
+  }
+
   void _bindAdminDashboardScreenData({int? page}) async {
     if (page != null) {
       if (!mounted) return;
       setState(() {
         _isLoadingMoreUnconfirmed = true;
       });
-    }
-    await getDashboardAnalytics(unconfirmedPage: page ?? _unconfirmedPage)
-        .then((value) {
-      if (null != value) {
-        if (!mounted) return;
-        setState(() {
-          _dashboard = value;
-          _showdata = true;
-          _isLoadingMoreUnconfirmed = false;
-          _unconfirmedPage = value.unConTransactionsCurrentPage;
-        });
-      }
-    }).onError((error, stackTrace) {
+    } else if (_dashboard != null) {
       if (!mounted) return;
       setState(() {
+        _isRefreshing = true;
+      });
+    }
+    try {
+      final value =
+          await getDashboardAnalytics(unconfirmedPage: page ?? _unconfirmedPage);
+      if (!mounted) return;
+      setState(() {
+        if (value != null) {
+          _dashboard = value;
+          _unconfirmedPage = value.unConTransactionsCurrentPage;
+        } else {
+          _dashboard ??= _emptyDashboard();
+        }
+        _showdata = true;
+        _isRefreshing = false;
         _isLoadingMoreUnconfirmed = false;
       });
-    });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _dashboard ??= _emptyDashboard();
+        _showdata = true;
+        _isRefreshing = false;
+        _isLoadingMoreUnconfirmed = false;
+      });
+    }
   }
 
   _financialSummaryCard(BuildContext context) {
@@ -191,7 +227,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: _financialItem(
                   title: "فروش امروز",
-                  value: _dashboard!.financialSummary['today'].toString(),
+                  value: (_dashboard!.financialSummary['today'] ?? 0).toString(),
                   color: Colors.greenAccent,
                 ),
               ),
@@ -199,7 +235,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: _financialItem(
                   title: "فروش هفته",
-                  value: _dashboard!.financialSummary['week'].toString(),
+                  value: (_dashboard!.financialSummary['week'] ?? 0).toString(),
                   color: Colors.blueAccent,
                 ),
               ),
@@ -207,7 +243,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: _financialItem(
                   title: "فروش ماه",
-                  value: _dashboard!.financialSummary['month'].toString(),
+                  value: (_dashboard!.financialSummary['month'] ?? 0).toString(),
                   color: Colors.orangeAccent,
                 ),
               ),
@@ -249,96 +285,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   _pannelsStatusCard(BuildContext context) {
-    List<Widget> pannelWidgets = [];
-    for (var pannel in _dashboard!.pannelsStatus) {
+    final List<Widget> pannelWidgets = [];
+    for (final pannel in _dashboard!.pannelsStatus) {
+      final id = int.tryParse(pannel['id']?.toString() ?? '') ?? 0;
+      if (id == 0) continue;
       pannelWidgets.add(
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(
-              color: (pannel['is_online'] == true ? Colors.green : Colors.red)
-                  .withValues(alpha: 0.2),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        pannel['type'] == 'hiddify'
-                            ? Icons.security
-                            : Icons.settings_input_component,
-                        size: 16,
-                        color: AppStyle.primaryColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        pannel['location'] ?? 'نامشخص',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: pannel['is_online'] == true
-                          ? Colors.green
-                          : Colors.red,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (pannel['is_online'] == true
-                                  ? Colors.green
-                                  : Colors.red)
-                              .withValues(alpha: 0.5),
-                          blurRadius: 4,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("کل کاربران",
-                          style:
-                              TextStyle(color: Colors.white54, fontSize: 10)),
-                      Text("${pannel['total_users']}",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text("آنلاین",
-                          style:
-                              TextStyle(color: Colors.white54, fontSize: 10)),
-                      Text("${pannel['online_users']}",
-                          style: TextStyle(
-                              color: AppStyle.primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14)),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
+        PanelStatusTile(
+          key: ValueKey('panel_$id'),
+          panelId: id,
+          location: pannel['location']?.toString(),
+          type: pannel['type']?.toString(),
+          totalUsers: int.tryParse(pannel['total_users']?.toString() ?? ''),
         ),
       );
     }
@@ -381,29 +338,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
           ),
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                childAspectRatio: 1.8,
-                context: context,
-                importedList: pannelWidgets,
-                crossAxisCount: 2,
+          if (pannelWidgets.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'پنلی ثبت نشده است',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
               ),
-              tablet: widgetsGridview(
-                childAspectRatio: 2.2,
-                context: context,
-                importedList: pannelWidgets,
-                crossAxisCount: 3,
-              ),
-              desktop: widgetsGridview(
-                childAspectRatio: 2.5,
-                context: context,
-                importedList: pannelWidgets,
-                crossAxisCount: 4,
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                  childAspectRatio: 1.8,
+                  context: context,
+                  importedList: pannelWidgets,
+                  crossAxisCount: 2,
+                ),
+                tablet: widgetsGridview(
+                  childAspectRatio: 2.2,
+                  context: context,
+                  importedList: pannelWidgets,
+                  crossAxisCount: 3,
+                ),
+                desktop: widgetsGridview(
+                  childAspectRatio: 2.5,
+                  context: context,
+                  importedList: pannelWidgets,
+                  crossAxisCount: 4,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

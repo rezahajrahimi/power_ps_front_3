@@ -18,7 +18,9 @@ Future getAllProdctCategory() async {
     if (response.statusCode == 200) {
       productCategoryList.clear();
       var data = response.data;
+      debugPrint("API Response: $data");
       for (var i in data) {
+        debugPrint("Product item: $i");
         productCategoryList.add(ProductCategory.fromMap(i));
       }
 
@@ -43,9 +45,15 @@ Future addNewProductCategory({
   required bool rechargable,
   required bool showPannelLink,
   required bool showSubscriptionLink,
+  required bool sendConfigToUser,
+  List<int>? allowedUserGroupIds,
   int? inboundId,
+  List<int>? inboundIds,
+  Map<String, List<String>>? marzbanInbounds,
+  List<int>? pasarguardGroupIds,
   int? ipLimit,
   String? sampleInbound,
+  int? upsellCategoryId,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/addNewProductCategory",
@@ -60,9 +68,18 @@ Future addNewProductCategory({
           "rechargable": rechargable,
           "show_pannel_link": showPannelLink,
           "show_subscription_link": showSubscriptionLink,
+          "send_config_to_user": sendConfigToUser,
+          "allowed_user_group_ids": allowedUserGroupIds ?? [],
           "inbound_id": inboundId,
+          if (inboundIds != null && inboundIds.isNotEmpty)
+            "inbound_ids": inboundIds,
+          if (marzbanInbounds != null && marzbanInbounds.isNotEmpty)
+            "marzban_inbounds": marzbanInbounds,
+          if (pasarguardGroupIds != null && pasarguardGroupIds.isNotEmpty)
+            "pasarguard_group_ids": pasarguardGroupIds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
+          "upsell_category_id": upsellCategoryId,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -72,25 +89,21 @@ Future addNewProductCategory({
           'Access-Control-Allow-Origin': '*'
         }));
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data is List) {
       productCategoryList.clear();
-      var data = response.data;
+      var data = response.data as List;
       for (var i in data) {
         productCategoryList.add(ProductCategory.fromMap(i));
       }
 
       return true;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
     }
+    debugPrint(
+        'addNewProductCategory failed: status=${response.statusCode} data=${response.data}');
+    return false;
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
+    debugPrint('addNewProductCategory DioException: ${e.message}');
+    debugPrint('addNewProductCategory response: ${e.response?.data}');
     return false;
   }
 }
@@ -106,10 +119,16 @@ Future<bool> editProductCategory({
   required bool rechargable,
   required bool showPannelLink,
   required bool showSubscriptionLink,
+  required bool sendConfigToUser,
   required bool isActive,
+  List<int>? allowedUserGroupIds,
   int? inboundId,
+  List<int>? inboundIds,
+  Map<String, List<String>>? marzbanInbounds,
+  List<int>? pasarguardGroupIds,
   int? ipLimit,
   String? sampleInbound,
+  int? upsellCategoryId,
 }) async {
   try {
     Response response = await GenaralApi.dio.post("/api/editProductCategory",
@@ -123,11 +142,20 @@ Future<bool> editProductCategory({
           "rechargable": rechargable,
           "show_pannel_link": showPannelLink,
           "show_subscription_link": showSubscriptionLink,
+          "send_config_to_user": sendConfigToUser,
           'is_active': isActive,
           "id": id,
+          "allowed_user_group_ids": allowedUserGroupIds ?? [],
           "inbound_id": inboundId,
+          if (inboundIds != null && inboundIds.isNotEmpty)
+            "inbound_ids": inboundIds,
+          if (marzbanInbounds != null && marzbanInbounds.isNotEmpty)
+            "marzban_inbounds": marzbanInbounds,
+          if (pasarguardGroupIds != null && pasarguardGroupIds.isNotEmpty)
+            "pasarguard_group_ids": pasarguardGroupIds,
           "ip_limit": ipLimit,
           "sample_inbound": sampleInbound,
+          "upsell_category_id": upsellCategoryId,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -137,24 +165,22 @@ Future<bool> editProductCategory({
           'Access-Control-Allow-Origin': '*'
         }));
 
-    if (response.statusCode == 200 && response.data != null) {
+    if (response.statusCode == 200 && response.data is List) {
+      debugPrint("Edit response: ${response.data}");
       productCategoryList.clear();
-      var data = response.data;
+      var data = response.data as List;
       for (var i in data) {
+        debugPrint("Updated product: $i");
         productCategoryList.add(ProductCategory.fromMap(i));
       }
       return true;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
     }
+    debugPrint(
+        'editProductCategory failed: status=${response.statusCode} data=${response.data}');
+    return false;
   } on DioException catch (e) {
-    debugPrint(e.message.toString());
+    debugPrint('editProductCategory DioException: ${e.message}');
+    debugPrint('editProductCategory response: ${e.response?.data}');
     return false;
   }
 }

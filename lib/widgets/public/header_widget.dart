@@ -10,11 +10,13 @@ import 'package:provider/provider.dart';
 class Header extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final double height;
+  final bool showSearch;
 
   const Header({
     super.key,
     required this.title,
     this.height = kToolbarHeight,
+    this.showSearch = true,
   });
 
   @override
@@ -30,7 +32,7 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
                 icon: const Icon(Icons.menu),
                 onPressed: context.read<MenuAppController>().controlMenu,
               ),
-            if (!Responsive.isMobile(context))
+            if (!Responsive.isMobile(context) || !showSearch)
               Padding(
                 padding: const EdgeInsets.only(right: 20),
                 child: Text(
@@ -38,23 +40,24 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-            // if (!Responsive.isMobile(context))
-            //   Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: SearchField(
-                  autoFocousEnable: false,
-                  callBack: (val) {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SearchScreen(),
-                        ));
-                  },
+            if (showSearch)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: SearchField(
+                    autoFocousEnable: false,
+                    callBack: (val) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SearchScreen(),
+                          ));
+                    },
+                  ),
                 ),
-              ),
-            ),
+              )
+            else
+              const Spacer(),
             SizedBox(
               width: AppStyle.defaultPadding,
             ),

@@ -1,19 +1,21 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:pagination_flutter/pagination.dart';
-import 'package:powerps/widgets/agent/agent_bougth_products_list_info_card_widget.dart';
-import 'package:provider/provider.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/product_category_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
 import 'package:powerps/provider/agent/agent_provider.dart';
 import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
-import 'package:flutter/material.dart';
 import 'package:powerps/widgets/agent/agent_ballance_widget_info_card_widget.dart';
-import 'package:powerps/widgets/agent/agent_product_category_item_widget.dart';
+import 'package:powerps/widgets/agent/agent_limits_info_card_widget.dart';
+import 'package:powerps/widgets/dashboard/dashboard_action_handler.dart';
+import 'package:powerps/widgets/dashboard/dashboard_product_catalog_section.dart';
+import 'package:powerps/widgets/dashboard/dashboard_purchase_history_section.dart';
+import 'package:powerps/widgets/dashboard/dashboard_section_card.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
-import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:provider/provider.dart';
 
 class AgentDashboardScreen extends StatefulWidget {
   const AgentDashboardScreen({super.key});
@@ -24,46 +26,117 @@ class AgentDashboardScreen extends StatefulWidget {
 
 class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   bool _showdata = false;
+  bool _loadError = false;
+  bool _isRefreshing = false;
   Timer? _retriveDataTimer;
+  AgentProvider? _agentProvider;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _productsSectionKey = GlobalKey();
+  final GlobalKey _historySectionKey = GlobalKey();
+  final GlobalKey _walletSectionKey = GlobalKey();
 
   int _lastPageBougthProduct = 1;
   int selectedPageBougthProduct = 1;
   bool _showBougthProductData = false;
-  // AgentDashboard? _dashboard;
+
   @override
   void initState() {
-    _bindAgentDashboardScreenData();
-
-    _retriveDataTimer = Timer.periodic(const Duration(seconds: 20), ((timer) {
-      _bindAgentDashboardScreenData();
-    }));
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _agentProvider = context.read<AgentProvider>();
+      _agentProvider!.addListener(_onAgentProviderChanged);
+      _bindAgentDashboardScreenData();
+    });
+    _retriveDataTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) _bindAgentDashboardScreenData(silent: true);
+    });
+  }
+
+  void _onAgentProviderChanged() {
+    if (!mounted || _agentProvider == null) return;
+    if (!_agentProvider!.changed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _bindAgentDashboardScreenData(silent: true);
+    });
   }
 
   @override
   void dispose() {
-    _retriveDataTimer!.cancel();
+    _retriveDataTimer?.cancel();
+    _agentProvider?.removeListener(_onAgentProviderChanged);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  DashboardActionHandler _actionHandler(BuildContext context) {
+    return DashboardActionHandler(
+      context: context,
+      scrollController: _scrollController,
+      productsSectionKey: _productsSectionKey,
+      historySectionKey: _historySectionKey,
+      walletSectionKey: _walletSectionKey,
+      onBalanceChanged: () => _bindAgentDashboardScreenData(silent: true),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        primary: false,
-        padding: EdgeInsets.all(AppStyle.defaultPadding),
-        child: _showdata == false ? Container() : _content(context),
+      child: _showdata == false && !_loadError
+          ? const Center(child: CircularProgressIndicator())
+          : _loadError
+              ? _buildErrorState()
+              : RefreshIndicator(
+                  onRefresh: () => _bindAgentDashboardScreenData(),
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    primary: false,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.all(AppStyle.defaultPadding),
+                    child: _content(context),
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.cloud_off, size: 48, color: Colors.white38),
+          const SizedBox(height: 12),
+          const Text('خطا در بارگذاری داشبورد'),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _bindAgentDashboardScreenData(),
+            child: const Text('تلاش مجدد'),
+          ),
+        ],
       ),
     );
   }
 
   Widget _content(BuildContext context) {
-    bool changed = context.watch<AgentProvider>().changed;
-    if (changed) {
-      _bindAgentDashboardScreenData();
-    }
+    final dashboard = context.watch<AgentProvider>().agentDashboard;
+    final permission = dashboard.permission;
+    final limitUsage = dashboard.limitUsage;
+    final logs = dashboard.logs ?? [];
+
     return Column(
       children: [
+        if (_isRefreshing)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+        const DashboardWelcomeHeader(),
+        SizedBox(height: AppStyle.defaultPadding),
+        DashboardQuickActionsSection(
+          onAction: (key) => _actionHandler(context).handle(key),
+        ),
+        SizedBox(height: AppStyle.defaultPadding),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -71,188 +144,98 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               flex: 5,
               child: Column(
                 children: [
-                  _agentProductsInfoTabCard(context),
+                  DashboardProductCatalogSection(
+                    sectionKey: _productsSectionKey,
+                    products: _agentProductCategories(context),
+                    userRole: 'agent',
+                    onPurchased: () => _bindAgentDashboardScreenData(silent: true),
+                  ),
                   SizedBox(height: AppStyle.defaultPadding),
-                  _agentBoughtProductsInfoTabCard(context),
-                  SizedBox(height: AppStyle.defaultPadding),
-                  // _confirmedInfoTabCard(context),
-                  SizedBox(height: AppStyle.defaultPadding),
-                  if (Responsive.isMobile(context)) // side bar mobile
-                    const AgentBallanceInfoItemCardWidget(),
-                  if (Responsive.isMobile(context)) // side bar mobile
+                  _agentBoughtProductsSection(context),
+                  if (Responsive.isMobile(context)) ...[
                     SizedBox(height: AppStyle.defaultPadding),
-                  RecentEvents(
-                      type: "dashboard",
-                      events: Provider.of<AgentProvider>(context, listen: false)
-                          .agentDashboard
-                          .logs!),
-                  if (Responsive.isMobile(context))
-                    SizedBox(height: AppStyle.defaultPadding),
-                  if (Responsive.isMobile(context)) // side bar mobile
-                    Column(
-                      children: [
-                        // AgentBallanceInfoItemCardWidget(),
-                        SizedBox(height: AppStyle.defaultPadding),
-                      ],
-                    ),
+                    _sidebarContent(permission, limitUsage),
+                  ],
+                  SizedBox(height: AppStyle.defaultPadding),
+                  DashboardSectionCard(
+                    title: 'آخرین فعالیت‌ها',
+                    icon: Icons.history_toggle_off,
+                    child: RecentEvents(type: 'dashboard', events: logs),
+                  ),
                 ],
               ),
             ),
-            if (!Responsive.isMobile(context))
+            if (!Responsive.isMobile(context)) ...[
               SizedBox(width: AppStyle.defaultPadding),
-            // On Mobile means if the screen is less than 850 we dont want to show it
-            if (!Responsive.isMobile(context)) // side windows
               Expanded(
                 flex: 2,
-                child: Column(
-                  children: [
-                    const AgentBallanceInfoItemCardWidget(),
-                    SizedBox(height: AppStyle.defaultPadding),
-                  ],
-                ),
+                child: _sidebarContent(permission, limitUsage),
               ),
+            ],
           ],
-        )
+        ),
       ],
     );
   }
 
-  void _bindAgentDashboardScreenData() async {
-    // String token = await LoggingPreference().getToken();
-    // print(token);
-
-    await getAgentDashboardData().then((value) {
-      if (null != value) {
-        setState(() {
-          _showdata = false;
-        });
-
-        setState(() {
-          Provider.of<AgentProvider>(context, listen: false)
-              .setNewAgentDashboardData(value);
-
-          Provider.of<AgentBallanceProvider>(context, listen: false)
-              .setAgentBallenceInDollar(
-                  Provider.of<AgentProvider>(context, listen: false)
-                      .agentDashboard
-                      .ballance!
-                      .accountBallanceIndollar);
-          Provider.of<AgentBallanceProvider>(context, listen: false)
-              .setAgentBallenceInToman(
-                  Provider.of<AgentProvider>(context, listen: false)
-                      .agentDashboard
-                      .ballance!
-                      .ballance
-                      .toInt());
-
-          Provider.of<AgentProvider>(context, listen: false).setChanged(false);
-        });
-      }
-    }).whenComplete(() {
-      setState(() {
-        _showdata = true;
-      });
-    }).onError((error, stackTrace) {
-      setState(() {
-        _showdata = true;
-      });
-      debugPrint(error.toString());
-    });
-
-    await getAgentSelledProductsByPagination().then((value) {
-      if (value.isNotEmpty) {
-        setState(() {
-          _lastPageBougthProduct = lastPageBougthProduct;
-        });
-      } else {
-        // showMsg(msg: "خطا", context: context, type: "error");
-        debugPrint("error on dashboard biding $value");
-      }
-    }).whenComplete(() {
-      setState(() {
-        _showBougthProductData = true;
-      });
-    }).onError((error, stackTrace) {
-      setState(() {
-        _showdata = true;
-      });
-      debugPrint(error.toString());
-    });
-  }
-
-  _agentProductsInfoTabCard(BuildContext context) {
-    List<Widget> botUserWidgetLIst = [];
-    // todo
-    // create a specefic widget
-    for (var i in Provider.of<AgentProvider>(context, listen: false)
-        .agentDashboard
-        .agentProducts!) {
-      botUserWidgetLIst.add(AgentProductCategoryItemWidget(
-          item: ProductCategory(
-              isActive: i.productCategories!.isActive,
-              volume: i.productCategories!.volume,
-              rechargable: i.productCategories!.rechargable,
-              showPannelLink: i.productCategories!.showPannelLink,
-              showSubscriptionLink: i.productCategories!.showSubscriptionLink,
-              pannelId: i.productCategories!.pannelId,
-              id: i.productCategories!.id,
-              categoryName: i.productCategories!.categoryName,
-              expireDay: i.productCategories!.expireDay,
-              price: i.price,
-              priceInDollar: i.priceInDollar)));
-    }
-    return Container(
-      padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "بسته‌های کانفیگ",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+  Widget _sidebarContent(permission, limitUsage) {
+    return Column(
+      children: [
+        KeyedSubtree(
+          key: _walletSectionKey,
+          child: const AgentBallanceInfoItemCardWidget(),
+        ),
+        if (permission != null) ...[
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                    childAspectRatio: 2.9,
-                    context: context,
-                    importedList: botUserWidgetLIst),
-                tablet: widgetsGridview(
-                    context: context,
-                    childAspectRatio: 4.5,
-                    importedList: botUserWidgetLIst),
-                desktop: widgetsGridview(
-                    importedList: botUserWidgetLIst,
-                    context: context,
-                    childAspectRatio: 4,
-                    crossAxisCount: 2),
-              )),
+          AgentLimitsInfoCardWidget(
+            permission: permission,
+            usage: limitUsage,
+          ),
         ],
-      ),
+      ],
     );
   }
 
-  _agentBoughtProductsInfoTabCard(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-            flex: 5,
-            child: Column(children: [
-              _showBougthProductData
-                  ? AgentBougthProductsListInfoCardWidget(
-                      title: "خریدهای شما",
-                      products: boughtProducts,
-                      lggedUSerRole: "agent",
-                    )
-                  : const SizedBox(),
-              SizedBox(height: AppStyle.defaultPadding),
-              Pagination(
+  List<ProductCategory> _agentProductCategories(BuildContext context) {
+    final products =
+        Provider.of<AgentProvider>(context, listen: false).agentDashboard.agentProducts ?? [];
+
+    return products.map((i) {
+      final cat = i.productCategories!;
+      return ProductCategory(
+        isActive: cat.isActive,
+        volume: cat.volume,
+        rechargable: cat.rechargable,
+        showPannelLink: cat.showPannelLink,
+        showSubscriptionLink: cat.showSubscriptionLink,
+        sendConfigToUser: cat.sendConfigToUser,
+        pannelId: cat.pannelId,
+        id: cat.id,
+        categoryName: cat.categoryName,
+        expireDay: cat.expireDay,
+        price: i.price,
+        priceInDollar: i.priceInDollar,
+        pannel: cat.pannel,
+      );
+    }).toList();
+  }
+
+  Widget _agentBoughtProductsSection(BuildContext context) {
+    if (!_showBougthProductData) {
+      return KeyedSubtree(
+        key: _historySectionKey,
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    return DashboardPurchaseHistorySection(
+      sectionKey: _historySectionKey,
+      products: boughtProducts,
+      userRole: 'agent',
+      childAfterList: _lastPageBougthProduct > 1
+          ? Padding(
+              padding: EdgeInsets.only(top: AppStyle.defaultPadding),
+              child: Pagination(
                 numOfPages: _lastPageBougthProduct,
                 selectedPage: selectedPageBougthProduct,
                 pagesVisible: 4,
@@ -262,47 +245,80 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     _showBougthProductData = false;
                   });
                   await getAgentSelledProductsByPagination(page: page);
+                  if (!mounted) return;
                   setState(() {
                     _lastPageBougthProduct = lastPageBougthProduct;
-
                     _showBougthProductData = true;
                   });
                 },
-                nextIcon: const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.blue,
-                  size: 14,
-                ),
-                previousIcon: const Icon(
-                  Icons.arrow_back_ios,
-                  color: Colors.blue,
-                  size: 14,
-                ),
-                activeTextStyle: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
+                nextIcon: const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 14),
+                previousIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 14),
+                activeTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
                 activeBtnStyle: ButtonStyle(
                   backgroundColor: WidgetStateProperty.all(Colors.blue),
                   shape: WidgetStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(38),
-                    ),
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
                   ),
                 ),
                 inactiveBtnStyle: ButtonStyle(
-                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(38),
-                  )),
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(38)),
+                  ),
                 ),
-                inactiveTextStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              )
-            ])),
-      ],
+                inactiveTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
+            )
+          : const SizedBox.shrink(),
     );
+  }
+
+  Future<void> _bindAgentDashboardScreenData({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _showdata = false;
+        _loadError = false;
+      });
+    } else {
+      setState(() => _isRefreshing = true);
+    }
+
+    try {
+      final value = await getAgentDashboardData();
+      if (!mounted) return;
+
+      if (value != null) {
+        Provider.of<AgentProvider>(context, listen: false)
+            .updateDashboard(dashboard: value, clearChanged: true);
+        Provider.of<AgentBallanceProvider>(context, listen: false)
+            .setAgentBallenceInDollar(value.ballance!.accountBallanceIndollar);
+        Provider.of<AgentBallanceProvider>(context, listen: false)
+            .setAgentBallenceInToman(value.ballance!.ballance.toInt());
+      } else if (!silent) {
+        setState(() => _loadError = true);
+      }
+
+      final paginationResult = await getAgentSelledProductsByPagination();
+      if (!mounted) return;
+      if (paginationResult.isNotEmpty) {
+        setState(() => _lastPageBougthProduct = lastPageBougthProduct);
+      }
+
+      setState(() {
+        _showBougthProductData = true;
+        _showdata = true;
+        _isRefreshing = false;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+      if (!silent && mounted) {
+        setState(() {
+          _loadError = true;
+          _showdata = true;
+          _isRefreshing = false;
+        });
+      } else if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
   }
 }

@@ -11,6 +11,28 @@ class AppStyle {
   static Color activeStatus = Colors.white10;
   static Color deactiveStatus = Colors.white54;
 
+  static void applyBranding({
+    String? primaryHex,
+    String? secondaryHex,
+    String? backgroundHex,
+  }) {
+    final primary = _colorFromHex(primaryHex);
+    final secondary = _colorFromHex(secondaryHex);
+    final background = _colorFromHex(backgroundHex);
+    if (primary != null) primaryColor = primary;
+    if (secondary != null) secondaryColor = secondary;
+    if (background != null) bgColor = background;
+  }
+
+  static Color? _colorFromHex(String? hex) {
+    if (hex == null || hex.isEmpty) return null;
+    var value = hex.replaceAll('#', '');
+    if (value.length == 6) value = 'FF$value';
+    final intVal = int.tryParse(value, radix: 16);
+    if (intVal == null) return null;
+    return Color(intVal);
+  }
+
   static Color secendColor = const Color(0xFF2A2D3E);
   static Color searchBarColor = const Color.fromARGB(255, 226, 229, 236);
   static TextStyle mainTitleStyle = GoogleFonts.vazirmatn(

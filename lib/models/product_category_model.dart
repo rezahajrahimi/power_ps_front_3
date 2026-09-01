@@ -15,10 +15,18 @@ class ProductCategory {
   bool rechargable = true;
   bool showSubscriptionLink = true;
   bool showPannelLink = true;
+  bool sendConfigToUser = true;
   bool isActive = true;
+  /// If null/empty => visible/buyable for all groups.
+  /// Uses `0` as sentinel for "بدون گروه".
+  List<int>? allowedUserGroupIds;
   int? inboundId;
+  List<int>? inboundIds;
+  Map<String, List<String>>? marzbanInbounds;
+  List<int>? pasarguardGroupIds;
   int? ipLimit;
   String? sampleInbound;
+  int? upsellCategoryId;
   Pannel? pannel;
   AgentAddCategoriyModel? agentAddCategoriyModel;
 
@@ -34,13 +42,26 @@ class ProductCategory {
     required this.rechargable,
     required this.showSubscriptionLink,
     required this.showPannelLink,
+    required this.sendConfigToUser,
     required this.isActive,
+    this.allowedUserGroupIds,
     this.inboundId,
+    this.inboundIds,
+    this.marzbanInbounds,
+    this.pasarguardGroupIds,
     this.ipLimit,
     this.sampleInbound,
+    this.upsellCategoryId,
     this.pannel,
     this.agentAddCategoriyModel,
   });
+
+  bool isAllowedForUserGroup(int? userGroupId) {
+    final allowed = allowedUserGroupIds;
+    if (allowed == null || allowed.isEmpty) return true;
+    final normalized = userGroupId ?? 0;
+    return allowed.contains(normalized);
+  }
 
   ProductCategory copyWith({
     int? id,
@@ -54,10 +75,16 @@ class ProductCategory {
     bool? rechargable,
     bool? showSubscriptionLink,
     bool? showPannelLink,
+    bool? sendConfigToUser,
     bool? isActive,
+    List<int>? allowedUserGroupIds,
     int? inboundId,
+    List<int>? inboundIds,
+    Map<String, List<String>>? marzbanInbounds,
+    List<int>? pasarguardGroupIds,
     int? ipLimit,
     String? sampleInbound,
+    int? upsellCategoryId,
     AgentAddCategoriyModel? agentAddCategoriyModel,
     Pannel? pannel,
   }) {
@@ -73,10 +100,16 @@ class ProductCategory {
       rechargable: rechargable ?? this.rechargable,
       showSubscriptionLink: showSubscriptionLink ?? this.showSubscriptionLink,
       showPannelLink: showPannelLink ?? this.showPannelLink,
+      sendConfigToUser: sendConfigToUser ?? this.sendConfigToUser,
       isActive: isActive ?? this.isActive,
+      allowedUserGroupIds: allowedUserGroupIds ?? this.allowedUserGroupIds,
       inboundId: inboundId ?? this.inboundId,
+      inboundIds: inboundIds ?? this.inboundIds,
+      marzbanInbounds: marzbanInbounds ?? this.marzbanInbounds,
+      pasarguardGroupIds: pasarguardGroupIds ?? this.pasarguardGroupIds,
       ipLimit: ipLimit ?? this.ipLimit,
       sampleInbound: sampleInbound ?? this.sampleInbound,
+      upsellCategoryId: upsellCategoryId ?? this.upsellCategoryId,
       agentAddCategoriyModel:
           agentAddCategoriyModel ?? this.agentAddCategoriyModel,
       pannel: pannel ?? this.pannel,
@@ -96,13 +129,107 @@ class ProductCategory {
       'rechargable': rechargable,
       'showSubscriptionLink': showSubscriptionLink,
       'showPannelLink': showPannelLink,
+      'sendConfigToUser': sendConfigToUser,
       'isActive': isActive,
+      'allowed_user_group_ids': allowedUserGroupIds,
       'inbound_id': inboundId,
+      'inbound_ids': inboundIds,
+      'marzban_inbounds': marzbanInbounds,
+      'pasarguard_group_ids': pasarguardGroupIds,
       'ip_limit': ipLimit,
       'sample_inbound': sampleInbound,
+      'upsell_category_id': upsellCategoryId,
       // 'agentAddCategoriyModel': agentAddCategoriyModel?.toMap(),
       // 'pannel': pannel?,
     };
+  }
+
+  static Map<String, List<String>>? _parseMarzbanInbounds(dynamic raw) {
+    if (raw == null) return null;
+    Map<String, dynamic>? map;
+    if (raw is String) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) map = Map<String, dynamic>.from(decoded);
+      } catch (_) {
+        return null;
+      }
+    } else if (raw is Map) {
+      map = Map<String, dynamic>.from(raw);
+    }
+    if (map == null || map.isEmpty) return null;
+
+    final result = <String, List<String>>{};
+    map.forEach((protocol, tags) {
+      if (tags is! List) return;
+      final normalized = tags
+          .map((t) => t.toString().trim())
+          .where((t) => t.isNotEmpty)
+          .toList();
+      if (normalized.isNotEmpty) {
+        result[protocol.toString().toLowerCase()] = normalized;
+      }
+    });
+    return result.isEmpty ? null : result;
+  }
+
+  static List<int>? _parseInboundIds(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is List) {
+      final out = <int>[];
+      for (final v in raw) {
+        final i = int.tryParse(v.toString());
+        if (i != null) out.add(i);
+      }
+      return out.isEmpty ? null : out;
+    }
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return null;
+      final parts = s.split(RegExp(r'[,; ]+')).where((p) => p.trim().isNotEmpty);
+      final out = <int>[];
+      for (final p in parts) {
+        final i = int.tryParse(p.trim());
+        if (i != null) out.add(i);
+      }
+      return out.isEmpty ? null : out;
+    }
+    return null;
+  }
+
+  /// Resolved inbound IDs (supports legacy single inbound_id).
+  List<int> get resolvedInboundIds {
+    if (inboundIds != null && inboundIds!.isNotEmpty) {
+      return List<int>.from(inboundIds!);
+    }
+    if (inboundId != null) {
+      return [inboundId!];
+    }
+    return [];
+  }
+
+  static List<int>? _parseAllowedGroupIds(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is List) {
+      final out = <int>[];
+      for (final v in raw) {
+        final i = int.tryParse(v.toString());
+        if (i != null) out.add(i);
+      }
+      return out;
+    }
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return null;
+      final parts = s.split(RegExp(r'[,; ]+')).where((p) => p.trim().isNotEmpty);
+      final out = <int>[];
+      for (final p in parts) {
+        final i = int.tryParse(p.trim());
+        if (i != null) out.add(i);
+      }
+      return out;
+    }
+    return null;
   }
 
   factory ProductCategory.fromMap(Map<String, dynamic> map) {
@@ -118,10 +245,18 @@ class ProductCategory {
         rechargable: map['rechargable'] == 1 ? true : false,
         showSubscriptionLink: map['show_subscription_link'] == 1 ? true : false,
         showPannelLink: map['show_pannel_link'] == 1 ? true : false,
+        sendConfigToUser: map['send_config_to_user'] == null
+            ? true
+            : map['send_config_to_user'] == true || map['send_config_to_user'] == 1,
         isActive: map['is_active'] == 1 ? true : false,
+        allowedUserGroupIds: _parseAllowedGroupIds(map['allowed_user_group_ids']),
         inboundId: map['inbound_id']?.toInt(),
+        inboundIds: _parseInboundIds(map['inbound_ids']),
+        marzbanInbounds: _parseMarzbanInbounds(map['marzban_inbounds']),
+        pasarguardGroupIds: _parseInboundIds(map['pasarguard_group_ids']),
         ipLimit: map['ip_limit']?.toInt(),
         sampleInbound: map['sample_inbound']?.toString(),
+        upsellCategoryId: map['upsell_category_id']?.toInt(),
         pannel: map['pannel'] != null ? Pannel.fromJson(map['pannel']) : null,
         agentAddCategoriyModel: map['agentAddCategoriyModel'] != null
             ? AgentAddCategoriyModel.fromMap(map['agentAddCategoriyModel'])
@@ -133,7 +268,7 @@ class ProductCategory {
 
   @override
   String toString() {
-    return 'ProductCategory(id: $id, pannelId: $pannelId, categoryName: $categoryName, price: $price, priceInDollar: $priceInDollar, expireDay: $expireDay, volume: $volume, rechargable: $rechargable, showSubscriptionLink: $showSubscriptionLink, showPannelLink: $showPannelLink, isActive: $isActive, agentAddCategoriyModel: $agentAddCategoriyModel)';
+    return 'ProductCategory(id: $id, pannelId: $pannelId, categoryName: $categoryName, price: $price, priceInDollar: $priceInDollar, expireDay: $expireDay, volume: $volume, rechargable: $rechargable, showSubscriptionLink: $showSubscriptionLink, showPannelLink: $showPannelLink, sendConfigToUser: $sendConfigToUser, isActive: $isActive, sampleInbound: $sampleInbound, agentAddCategoriyModel: $agentAddCategoriyModel)';
   }
 
   @override
@@ -152,7 +287,12 @@ class ProductCategory {
         other.rechargable == rechargable &&
         other.showSubscriptionLink == showSubscriptionLink &&
         other.showPannelLink == showPannelLink &&
+        other.sendConfigToUser == sendConfigToUser &&
         other.isActive == isActive &&
+        other.inboundId == inboundId &&
+        other.inboundIds == inboundIds &&
+        other.ipLimit == ipLimit &&
+        other.sampleInbound == sampleInbound &&
         other.agentAddCategoriyModel == agentAddCategoriyModel;
   }
 
@@ -169,7 +309,12 @@ class ProductCategory {
         rechargable.hashCode ^
         showSubscriptionLink.hashCode ^
         showPannelLink.hashCode ^
+        sendConfigToUser.hashCode ^
         isActive.hashCode ^
+        inboundId.hashCode ^
+        inboundIds.hashCode ^
+        ipLimit.hashCode ^
+        sampleInbound.hashCode ^
         agentAddCategoriyModel.hashCode;
   }
 }

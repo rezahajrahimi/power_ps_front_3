@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/models/advanced_setting_model.dart';
 import 'package:powerps/models/details_info.dart';
 import 'package:powerps/models/setting_model.dart';
 import 'package:powerps/screens/admin_screen/settings/admins/manage_admins_screen.dart';
@@ -14,16 +15,27 @@ import 'package:powerps/screens/admin_screen/settings/gif_card/gif_card_details_
 import 'package:powerps/screens/admin_screen/settings/main_menu_item/main_menu_item_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/pannel_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/payment_type/payment_type_details_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/user_groups/user_groups_manage_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/referral/referral_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/loyalty/loyalty_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/promo/promo_codes_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/marketing/marketing_campaign_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/reports/group_operations_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/support%20and%20faq/support_and_faq_screen.dart';
-import 'package:powerps/screens/admin_screen/settings/test_accounts/edit_test_account_details_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/test_accounts/test_account_management_screen.dart';
 import 'package:powerps/repositories/setting_repository.dart';
+import 'package:powerps/repositories/general_repository.dart';
+import 'package:powerps/helper/license_helper.dart';
+import 'package:powerps/widgets/public/license_gate_dialog.dart';
 import 'package:powerps/screens/admin_screen/settings/text/text_screen_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/appinfo/app_info_manage_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/bot_buttons/bot_button_config_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:powerps/widgets/public/license_tier_badge.dart';
 import 'package:powerps/widgets/setting/advanced_setting_info_widget.dart';
+import 'package:powerps/widgets/setting/advanced_setting_choice_widget.dart';
 
 import 'backup/backup_screen.dart';
 
@@ -37,12 +49,48 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _showData = false;
   bool _showAdvancedSetting = false;
+  String _licenseType = '';
   late Setting _setting;
   final List<Widget> _advancedSettingWidgetList = [];
+  final List<Widget> _advancedSettingChoiceWidgetList = [];
   @override
   void initState() {
-    _fillData();
     super.initState();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _loadLicenseType();
+    await _fillData();
+  }
+
+  bool get _isGoldLicense => LicenseHelper.isGold(_licenseType);
+  bool get _isSilverOrAbove => LicenseHelper.isSilverOrAbove(_licenseType);
+
+  void _navigateGated({
+    required bool allowed,
+    required String title,
+    required String message,
+    required String requiredTier,
+    required Widget screen,
+  }) {
+    if (allowed) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+      return;
+    }
+    showLicenseGateDialog(
+      context: context,
+      title: title,
+      message: message,
+      requiredTier: requiredTier,
+    );
+  }
+
+  Future<void> _loadLicenseType() async {
+    final type = await getLicenseType();
+    if (mounted) {
+      setState(() => _licenseType = type);
+    }
   }
 
   @override
@@ -77,42 +125,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _fillData() async {
-    await getBotSetting().then((value) {
-      if (!mounted) return;
-      if (null != value) {
-        setState(() {
-          _setting = value;
-          _showData = true;
-        });
-      } else {
-        setState(() {
-          _setting = Setting(
-              adminId: "تعریف نشده",
-              botName: "تعریف نشده",
-              botToken: "تعریف نشده",
-              id: "تعریف نشده",
-              panelAddress: "لینک هسته ربات را وارد کنید");
-          _showData = true;
-        });
-      }
-    });
-    await getBotAdvancedSetting().then((value) {
-      if (!mounted) return;
-      if (value.isNotEmpty && value != null) {
-        _advancedSettingWidgetList.clear();
-        for (var item in value) {
-          _advancedSettingWidgetList.add(AdvancedSettingInfoWidget(
-            state: item.value == "true" ? true : false,
-            description: item.description ?? "تعریف نشده",
-            name: item.name ?? "تعریف نشده",
-          ));
+  Future<void> _fillData() async {
+    final setting = await getBotSetting();
+    if (!mounted) return;
+    if (setting != null) {
+      setState(() {
+        _setting = setting;
+        _showData = true;
+      });
+    } else {
+      setState(() {
+        _setting = Setting(
+          adminId: "تعریف نشده",
+          botName: "تعریف نشده",
+          botToken: "تعریف نشده",
+          id: "تعریف نشده",
+          panelAddress: "لینک هسته ربات را وارد کنید",
+        );
+        _showData = true;
+      });
+    }
+
+    final value = await getBotAdvancedSetting();
+    if (!mounted) return;
+    if (value.isNotEmpty && value != null) {
+      _advancedSettingWidgetList.clear();
+      _advancedSettingChoiceWidgetList.clear();
+      for (var item in value) {
+        if (AdvancedSettingModel.isHiddenFromAdvancedSettings(item.name)) {
+          continue;
         }
-        setState(() {
-          _showAdvancedSetting = true;
-        });
+
+        final allowed = AdvancedSettingModel.isAllowedForLicense(
+          item.name,
+          _licenseType,
+        );
+        final requiredTier = AdvancedSettingModel.requiredTierLabel(item.name);
+
+        if (AdvancedSettingModel.isChoiceSetting(item.name)) {
+          _advancedSettingChoiceWidgetList.add(
+            AdvancedSettingChoiceWidget(
+              name: item.name,
+              value: item.value,
+              options: AdvancedSettingModel.packageButtonLayoutOptions,
+              description: AdvancedSettingModel.displayDescription(
+                item.name,
+                item.description,
+              ),
+              locked: !allowed,
+              requiredTier: requiredTier,
+            ),
+          );
+          continue;
+        }
+
+        _advancedSettingWidgetList.add(
+          AdvancedSettingInfoWidget(
+            state: item.value == "true",
+            description: AdvancedSettingModel.displayDescription(
+              item.name,
+              item.description,
+            ),
+            name: item.name,
+            locked: !allowed,
+            requiredTier: requiredTier,
+          ),
+        );
       }
-    });
+      setState(() {
+        _showAdvancedSetting = true;
+      });
+    }
   }
 
   _content(BuildContext context) {
@@ -194,6 +277,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ? "${_setting.panelAddress.substring(0, 30)}..."
             : _setting.panelAddress,
         icon: const Icon(Icons.link_outlined, color: Colors.purple),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "پیشوند نام کانفیگ",
+        itemValue: _setting.configNamePrefix,
+        icon: const Icon(Icons.badge_outlined, color: Colors.teal),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "قالب نام کانفیگ",
+        itemValue: _setting.configNameFormat,
+        icon: const Icon(Icons.text_fields_outlined, color: Colors.cyan),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "نام مستعار در کانفیگ",
+        itemValue: _setting.useAdminAliasInConfigName ? "فعال" : "غیرفعال",
+        icon: const Icon(Icons.person_outline, color: Colors.indigo),
+      )),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+        itemName: "نمونه نام کانفیگ",
+        itemValue: _setting.configNamePreview(),
+        icon: const Icon(Icons.preview_outlined, color: Colors.amber),
       )),
     ];
 
@@ -293,17 +400,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required VoidCallback onPressed,
     Color? color,
+    String? tierBadge,
+    bool locked = false,
   }) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, size: 18, color: color ?? Colors.white),
-      label: Text(
-        label,
-        style: TextStyle(color: color ?? Colors.white, fontSize: 12),
+      icon: Icon(
+        locked ? Icons.lock_outline : icon,
+        size: 18,
+        color: color ?? Colors.white,
+      ),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(color: color ?? Colors.white, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (tierBadge != null) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                tierBadge,
+                style: TextStyle(
+                  color: Colors.amber.shade300,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            (color ?? AppStyle.primaryColor).withValues(alpha: 0.1),
+        backgroundColor: (color ?? AppStyle.primaryColor)
+            .withValues(alpha: locked ? 0.05 : 0.1),
         foregroundColor: color ?? Colors.white,
         side: BorderSide(
             color: (color ?? AppStyle.primaryColor).withValues(alpha: 0.5)),
@@ -315,6 +454,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   _operationInfoCard(BuildContext context) {
     List<Widget> actionsWidgetList = [
+      _buildSettingButton(
+        context: context,
+        label: "شخصی‌سازی دکمه‌ها",
+        icon: Icons.smart_button_outlined,
+        tierBadge: 'نقره‌ای',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'شخصی‌سازی دکمه‌های ربات',
+          message:
+              'رنگ، چیدمان و استایل دکمه‌های ربات را در لایسنس نقره‌ای و طلایی تنظیم کنید.',
+          requiredTier: 'نقره‌ای',
+          screen: const BotButtonConfigScreen(),
+        ),
+      ),
       _buildSettingButton(
         context: context,
         label: "تغییر متن منوها",
@@ -330,6 +484,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: Icons.credit_card_outlined,
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (context) => const PaymentTypeScreen())),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "دسته‌بندی کاربران",
+        icon: Icons.groups_outlined,
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const UserGroupsManageScreen())),
       ),
       _buildSettingButton(
         context: context,
@@ -389,7 +552,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => const EditTestAccountDetailsScreen())),
+                builder: (context) => const TestAccountManagementScreen())),
       ),
       _buildSettingButton(
         context: context,
@@ -425,12 +588,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       _buildSettingButton(
         context: context,
+        label: "برندینگ پنل",
+        icon: Icons.palette_outlined,
+        tierBadge: 'طلایی',
+        locked: !_isGoldLicense,
+        onPressed: () => _navigateGated(
+          allowed: _isGoldLicense,
+          title: 'برندینگ پنل (White-label)',
+          message:
+              'با لایسنس طلایی نام، رنگ، لوگو و فوتر پنل را شخصی‌سازی کنید و برند PowerPS را مخفی کنید.',
+          requiredTier: 'طلایی',
+          screen: const AppInfoManageScreen(),
+        ),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "باشگاه مشتریان",
+        icon: Icons.stars_outlined,
+        tierBadge: 'نقره',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'باشگاه مشتریان',
+          message:
+              'سیستم امتیازدهی و استفاده از امتیاز در خرید برای لایسنس نقره‌ای و طلایی فعال است.',
+          requiredTier: 'نقره‌ای',
+          screen: const LoyaltyScreen(),
+        ),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "کدهای تخفیف",
+        icon: Icons.discount_outlined,
+        tierBadge: 'نقره',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'کدهای تخفیف',
+          message:
+              'در لایسنس نقره‌ای تا ۵ کد تخفیف ساده بسازید. نسخه طلایی محدودیت پیشرفته و تاریخچه استفاده دارد.',
+          requiredTier: 'نقره‌ای',
+          screen: const PromoCodesScreen(),
+        ),
+      ),
+      _buildSettingButton(
+        context: context,
+        label: "کمپین بازاریابی",
+        icon: Icons.campaign_outlined,
+        tierBadge: 'طلایی',
+        locked: !_isGoldLicense,
+        onPressed: () => _navigateGated(
+          allowed: _isGoldLicense,
+          title: 'کمپین بازاریابی',
+          message:
+              'پیام هدفمند به سگمنت‌های مختلف کاربران بفرستید؛ با تصویر، زمان‌بندی و دکمه اقدام.',
+          requiredTier: 'طلایی',
+          screen: const MarketingCampaignScreen(),
+        ),
+      ),
+      _buildSettingButton(
+        context: context,
         label: "عملیات گروهی",
         icon: Icons.layers_outlined,
-        onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const GroupOperationsScreen())),
+        tierBadge: 'نقره‌ای',
+        locked: !_isSilverOrAbove,
+        onPressed: () => _navigateGated(
+          allowed: _isSilverOrAbove,
+          title: 'عملیات گروهی',
+          message:
+              'مقدار زمان و حجم کانفیگ های موجود را بصورت گروهی تغییر بدهید.',
+          requiredTier: 'نقره‌ای',
+          screen: const GroupOperationsScreen(),
+        ),
       ),
     ];
 
@@ -524,34 +753,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               IconButton(
                 tooltip: "بازنشانی تنظیمات پیش فرض",
-                onPressed: () async {
-                  _advancedSettingWidgetList.clear();
-                  _restoreAdvancedSettings();
-                },
+                onPressed: _isSilverOrAbove
+                    ? () async {
+                        _advancedSettingWidgetList.clear();
+                        _advancedSettingChoiceWidgetList.clear();
+                        _restoreAdvancedSettings();
+                      }
+                    : () => showLicenseGateDialog(
+                          context: context,
+                          title: 'بازنشانی تنظیمات پیشرفته',
+                          message:
+                              'بازنشانی تنظیمات پیشرفته در لایسنس نقره‌ای و طلایی فعال است.',
+                          requiredTier: 'نقره‌ای',
+                        ),
                 icon: const Icon(Icons.refresh, color: Colors.white70),
               ),
             ],
           ),
           const Divider(height: 32, color: Colors.white10),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: _advancedSettingWidgetList),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4.5,
-                  importedList: _advancedSettingWidgetList),
-              desktop: widgetsGridview(
-                  importedList: _advancedSettingWidgetList,
-                  context: context,
-                  childAspectRatio: size.width < 1400 ? 4 : 4.5,
-                  crossAxisCount: 2),
+          _advancedSettingsLicenseLegend(),
+          if (!_isSilverOrAbove) ...[
+            SizedBox(height: AppStyle.defaultPadding),
+            _advancedSettingsBronzeBanner(),
+          ],
+          SizedBox(height: AppStyle.defaultPadding),
+          if (_advancedSettingChoiceWidgetList.isNotEmpty) ...[
+            ..._advancedSettingChoiceWidgetList,
+            SizedBox(height: AppStyle.defaultPadding),
+          ],
+          if (_advancedSettingWidgetList.isNotEmpty)
+            SizedBox(
+              width: double.infinity,
+              child: Responsive(
+                mobile: widgetsGridview(
+                    childAspectRatio: 2.9,
+                    context: context,
+                    importedList: _advancedSettingWidgetList),
+                tablet: widgetsGridview(
+                    context: context,
+                    childAspectRatio: 4.5,
+                    importedList: _advancedSettingWidgetList),
+                desktop: widgetsGridview(
+                    importedList: _advancedSettingWidgetList,
+                    context: context,
+                    childAspectRatio: size.width < 1400 ? 4 : 4.5,
+                    crossAxisCount: 2),
+              ),
             ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _advancedSettingsLicenseLegend() {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          'راهنمای برچسب‌ها:',
+          style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+        ),
+        const LicenseTierBadge(tier: LicenseTierBadgeType.silver, compact: true),
+        Text(
+          'نقره‌ای و طلایی',
+          style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+        ),
+        const LicenseTierBadge(tier: LicenseTierBadgeType.gold, compact: true),
+        Text(
+          'فقط طلایی',
+          style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _advancedSettingsBronzeBanner() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: Colors.orangeAccent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        'تنظیمات پیشرفته در لایسنس نقره‌ای و طلایی فعال می‌شود. '
+        'برخی گزینه‌ها (مثل قیمت‌گذاری خودکار دلار) فقط در لایسنس طلایی در دسترس هستند.',
+        style: TextStyle(color: AppStyle.deactiveStatus, height: 1.5, fontSize: 13),
       ),
     );
   }

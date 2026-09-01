@@ -1,8 +1,5 @@
 import 'package:powerps/helper/public.dart';
-import 'package:powerps/models/hiffify_config_model.dart';
-import 'package:powerps/models/sanaei_config_model.dart';
 import 'package:powerps/models/product_details_model.dart';
-import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/screens/admin_screen/user/bot_user_bougth_product_details.dart';
 
 import 'package:powerps/styles/app_theme.dart';
@@ -19,21 +16,27 @@ class ConfigDetailsWithCatInfoItemWidget extends StatefulWidget {
 
 class _ConfigDetailsWithCatInfoItemWidgetState
     extends State<ConfigDetailsWithCatInfoItemWidget> {
-  @override
-  void initState() {
-    _fillData();
-    super.initState();
+  String get _categoryLabel {
+    final name = widget.item.productCategory?.categoryName.trim();
+    if (name != null && name.isNotEmpty) {
+      return name.length > 25 ? '${name.substring(0, 25)}...' : name;
+    }
+    return 'کانفیگ ${widget.item.id}';
   }
 
-  HiddifyConfig? _hiddifyConfig;
-  SanaeiConfig? _sanaeiConfig;
+  String get _remarkLabel {
+    final remark = widget.item.remark?.trim();
+    if (remark == null || remark.isEmpty) {
+      return '—';
+    }
+    return remark.length > 30 ? '${remark.substring(0, 27)}...' : remark;
+  }
 
-  bool _showdata = false;
-  @override
-  void dispose() {
-    _showdata = false;
-    // _hiddifyConfig = null;
-    super.dispose();
+  TextStyle _secondaryTextStyle(BuildContext context) {
+    return Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white70,
+            ) ??
+        const TextStyle(color: Colors.white70, fontSize: 12);
   }
 
   @override
@@ -75,21 +78,10 @@ class _ConfigDetailsWithCatInfoItemWidgetState
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: (_showdata &&
-                        !(widget.item.productCategory?.pannel?.type == "sanaei"
-                            ? (_sanaeiConfig?.enable ?? false)
-                            : (_hiddifyConfig?.isActive ?? false)))
-                    ? Colors.red.withValues(alpha: 0.1)
-                    : AppStyle.primaryColor.withValues(alpha: 0.1),
+                color: AppStyle.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: _showdata == false
-                  ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
-                  : (widget.item.productCategory?.pannel?.type == "sanaei"
-                          ? (_sanaeiConfig?.enable ?? false)
-                          : (_hiddifyConfig?.isActive ?? false))
-                      ? Icon(Icons.code, color: AppStyle.primaryColor, size: 24)
-                      : const Icon(Icons.code_off, color: Colors.red, size: 24),
+              child: Icon(Icons.code, color: AppStyle.primaryColor, size: 24),
             ),
             Expanded(
               child: Padding(
@@ -103,55 +95,30 @@ class _ConfigDetailsWithCatInfoItemWidgetState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          widget.item.productCategory!.categoryName.length > 25
-                              ? "${widget.item.productCategory!.categoryName.substring(0, 25)}..."
-                              : widget.item.productCategory!.categoryName,
+                          _categoryLabel,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
                         ),
-                        // maxLines: 1,
                         Text(
                           widget.item.updatedAt.length > 10
                               ? widget.item.updatedAt.substring(0, 10)
                               : widget.item.updatedAt,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white70),
+                          style: _secondaryTextStyle(context),
                         ),
                       ],
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (_showdata)
-                          Text(
-                            widget.item.productCategory?.pannel?.type ==
-                                    "sanaei"
-                                ? "${_sanaeiConfig?.currentUsageGB.toStringAsFixed(2)} / ${_sanaeiConfig?.usageLimitGB.toStringAsFixed(2)} GB"
-                                : "${_hiddifyConfig?.currentUsageGB.toStringAsFixed(2)} / ${_hiddifyConfig?.usageLimitGB.toStringAsFixed(2)} GB",
-                            maxLines: 1,
-                            textDirection: TextDirection.ltr,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall!
-                                .copyWith(color: Colors.white70),
-                          ),
                         Text(
-                          widget.item.remark!.length > 30
-                              ? "${widget.item.remark!.substring(0, 27)}..."
-                              : widget.item.remark!,
+                          _remarkLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall!
-                              .copyWith(color: Colors.white70),
+                          style: _secondaryTextStyle(context),
                         ),
                       ],
                     ),
@@ -163,38 +130,5 @@ class _ConfigDetailsWithCatInfoItemWidgetState
         ),
       ),
     );
-  }
-
-  void setStateIfMounted(f) {
-    if (mounted) setState(f);
-  }
-
-  void _fillData() async {
-    await getProductBoughtedByProductId(productID: widget.item.id.toInt())
-        .then((value) {
-      if (value != null && value != false && value is Map<String, dynamic>) {
-        setStateIfMounted(() {
-          // Check if it's Sanaei or Hiddify based on the keys in the response
-          // Sanaei has 'client' or 'inbound' keys which Hiddify doesn't
-          if (value.containsKey('client') || value.containsKey('inbound')) {
-            _sanaeiConfig = SanaeiConfig.fromJson(value);
-            // Also set hiddify config for compatibility if needed
-            _hiddifyConfig = HiddifyConfig(
-              uuid: "",
-              currentUsageGB: _sanaeiConfig!.currentUsageGB,
-              usageLimitGB: _sanaeiConfig!.usageLimitGB,
-              name: "",
-              packageDays: _sanaeiConfig!.packageDays,
-              isActive: _sanaeiConfig!.enable,
-            );
-          } else {
-            _hiddifyConfig = HiddifyConfig.fromJson(value);
-          }
-          _showdata = true;
-        });
-      }
-    }).onError((e, s) {
-      debugPrint(e.toString());
-    });
   }
 }

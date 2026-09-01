@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/marzban_inbound_sync.dart';
+import 'package:powerps/helpers/pasarguard_group_sync.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
+import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/models/product_category_model.dart';
+import 'package:powerps/models/user_group_model.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
+import 'package:powerps/repositories/user_group_repository.dart';
 import 'package:powerps/screens/admin_screen/product/fast_edit_product_categories_screen.dart';
+import 'package:powerps/screens/admin_screen/product/inventory_import_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/product_category/product_category_info_item_card_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
@@ -26,6 +34,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final List _selectedPanelIDFiltered = [];
   final List<String> _pannelNameList = [];
   String _selectedPannelName = "";
+  List<UserGroup> _userGroups = [];
 
   // String _selectedCategoryType = "";
   // List<CategoryTypeModel> _fetchedCategoryType = [];
@@ -35,19 +44,33 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   final _expireDayEditText = TextEditingController();
   final _volumeEditText = TextEditingController();
   final _inboundIdEditText = TextEditingController();
+  final _marzbanInboundsEditText = TextEditingController();
+  final _pasarguardGroupIdsEditText = TextEditingController();
   final _ipLimitEditText = TextEditingController();
   final _sampleInboundEditText = TextEditingController();
 
   bool _rechargable = true;
   bool _showSubscriptionLink = true;
   bool _showPannelLink = true;
+  bool _sendConfigToUser = true;
+  final Set<int> _allowedGroupIds = {};
+  int? _upsellCategoryId;
+  bool _isGoldLicense = false;
   // create a form key
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
+    _loadLicense();
     _fillData();
     super.initState();
+  }
+
+  Future<void> _loadLicense() async {
+    final license = await getLicenseType();
+    if (mounted) {
+      setState(() => _isGoldLicense = LicenseHelper.isGold(license));
+    }
   }
 
   @override
@@ -59,6 +82,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _expireDayEditText.dispose();
     _volumeEditText.dispose();
     _inboundIdEditText.dispose();
+    _marzbanInboundsEditText.dispose();
+    _pasarguardGroupIdsEditText.dispose();
     _ipLimitEditText.dispose();
     _sampleInboundEditText.dispose();
     _selectedPannelName = "";
@@ -71,6 +96,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     _rechargable = true;
     _showSubscriptionLink = true;
     _showPannelLink = true;
+    _sendConfigToUser = true;
   }
 
   @override
@@ -140,6 +166,9 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         _selectedPannelName =
             "${resPannel[0].id}: ${getPannelName(name: resPannel[0].type)} - ${resPannel[0].location}";
       }
+
+      final groupsData = await getUserGroups(roleType: 'user');
+      _userGroups = (groupsData?['groups'] as List<UserGroup>?) ?? [];
 
       setStateIfMounted(() {
         _showData = true;
@@ -386,6 +415,25 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         icon: const Icon(Icons.edit),
         label: const Text("ویرایش سریع"),
       ));
+      actionsWidgetList.add(ElevatedButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppStyle.defaultPadding * 1.5,
+            vertical: AppStyle.defaultPadding /
+                (Responsive.isMobile(context) ? 2 : 1),
+          ),
+        ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const InventoryImportScreen(),
+            ),
+          ).whenComplete(_fillData);
+        },
+        icon: const Icon(Icons.table_view),
+        label: const Text("import اکسل"),
+      ));
     });
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
@@ -426,11 +474,14 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     );
   }
 
-  _openAddNewProductCategoryDialog({required BuildContext context}) {
+  Future<void> _openAddNewProductCategoryDialog(
+      {required BuildContext context}) async {
     final theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
     final dialogWidth =
         screenSize.width > 600 ? 550.0 : screenSize.width * 0.95;
+    _allowedGroupIds.clear();
+    _upsellCategoryId = null;
 
     return showDialog(
       context: context,
@@ -555,7 +606,12 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               const SizedBox(height: 16),
                               DropdownButtonFormField<String>(
                                 isExpanded: true,
-                                initialValue: _selectedPannelName,
+                                initialValue:
+                                    _pannelNameList.contains(_selectedPannelName)
+                                        ? _selectedPannelName
+                                        : (_pannelNameList.isNotEmpty
+                                            ? _pannelNameList.first
+                                            : null),
                                 dropdownColor: AppStyle.secondaryColor,
                                 decoration: _inputDecoration(
                                     'انتخاب پنل', Icons.dns_outlined),
@@ -579,9 +635,10 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                     Expanded(
                                       child: _buildTextField(
                                         controller: _inboundIdEditText,
-                                        label: 'Inbound ID',
+                                        label: 'Inbound IDs',
+                                        hint: 'مثال: 1, 2, 3',
                                         icon: Icons.numbers,
-                                        keyboardType: TextInputType.number,
+                                        keyboardType: TextInputType.text,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -595,12 +652,103 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton.icon(
+                                    onPressed: _selectedPannelName.isEmpty
+                                        ? null
+                                        : () {
+                                            final id = int.tryParse(
+                                                _selectedPannelName
+                                                    .split(':')[0]);
+                                            if (id == null) return;
+                                            runSanaeiInboundSync(
+                                              context,
+                                              pannelId: id,
+                                              inboundIdController:
+                                                  _inboundIdEditText,
+                                            );
+                                          },
+                                    icon: const Icon(Icons.sync, size: 18),
+                                    label: const Text('انتخاب Inboundها از پنل'),
+                                  ),
+                                ),
                                 const SizedBox(height: 16),
                                 _buildTextField(
                                   controller: _sampleInboundEditText,
                                   label: 'کانفیگ نمونه',
                                   icon: Icons.text_fields,
                                   keyboardType: TextInputType.text,
+                                ),
+                              ],
+                              if (isMarzbanPanel(
+                                  getPanelTypeFromDropdownLabel(
+                                      _selectedPannelName))) ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _marzbanInboundsEditText,
+                                  label: 'Inboundهای Marzban',
+                                  hint: 'JSON: {"vless":["TAG1"]}',
+                                  icon: Icons.hub_outlined,
+                                  keyboardType: TextInputType.text,
+                                ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton.icon(
+                                    onPressed: _selectedPannelName.isEmpty
+                                        ? null
+                                        : () {
+                                            final id = int.tryParse(
+                                                _selectedPannelName
+                                                    .split(':')[0]);
+                                            if (id == null) return;
+                                            runMarzbanInboundSync(
+                                              context,
+                                              pannelId: id,
+                                              inboundsController:
+                                                  _marzbanInboundsEditText,
+                                              panelType: 'marzban',
+                                            );
+                                          },
+                                    icon: const Icon(Icons.sync, size: 18),
+                                    label: const Text('انتخاب Inboundها از پنل'),
+                                  ),
+                                ),
+                              ],
+                              if (isPasarguardPanel(
+                                  getPanelTypeFromDropdownLabel(
+                                      _selectedPannelName))) ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _pasarguardGroupIdsEditText,
+                                  label: 'گروه‌های PasarGuard',
+                                  hint: '[1,2] یا 1,2',
+                                  icon: Icons.groups_outlined,
+                                  keyboardType: TextInputType.text,
+                                ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton.icon(
+                                    onPressed: _selectedPannelName.isEmpty
+                                        ? null
+                                        : () {
+                                            final id = int.tryParse(
+                                                _selectedPannelName
+                                                    .split(':')[0]);
+                                            if (id == null) return;
+                                            runPasarguardGroupSync(
+                                              context,
+                                              pannelId: id,
+                                              groupIdsController:
+                                                  _pasarguardGroupIdsEditText,
+                                            );
+                                          },
+                                    icon: const Icon(Icons.sync, size: 18),
+                                    label: const Text('انتخاب گروه‌ها از پنل'),
+                                  ),
                                 ),
                               ],
                               const SizedBox(height: 20),
@@ -624,12 +772,21 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                           : (v) => setState(
                                               () => _showSubscriptionLink = v),
                                     ),
-                                    _buildSwitchTile(
-                                      'نمایش لینک پنل',
-                                      _showPannelLink,
-                                      (v) =>
-                                          setState(() => _showPannelLink = v),
-                                    ),
+                                    if (_selectedPannelName.contains("Hiddify"))
+                                      _buildSwitchTile(
+                                        'نمایش لینک پنل',
+                                        _showPannelLink,
+                                        (v) =>
+                                            setState(() => _showPannelLink = v),
+                                      ),
+                                    if (panelDropdownSupportsConfigToggle(
+                                        _selectedPannelName))
+                                      _buildSwitchTile(
+                                        'ارسال کانفیگ به کاربر',
+                                        _sendConfigToUser,
+                                        (v) => setState(
+                                            () => _sendConfigToUser = v),
+                                      ),
                                     _buildSwitchTile(
                                       'قابلیت شارژ مجدد',
                                       _selectedPannelName.contains("دیگر")
@@ -643,6 +800,9 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                   ],
                                 ),
                               ),
+                              const SizedBox(height: 12),
+                              _upsellCategoryWidget(context, setState),
+                              _allowedGroupsWidget(context, setState),
                             ],
                           ),
                         ),
@@ -741,6 +901,153 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
     );
   }
 
+  Widget _upsellCategoryWidget(
+      BuildContext context, void Function(void Function()) setDialogState) {
+    if (!_isGoldLicense) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppStyle.bgColor.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.workspace_premium,
+                color: Colors.amber.shade400, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'پیشنهاد ارتقا (Upsell) در لایسنس طلایی فعال می‌شود.',
+                style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final pannelId = _selectedPannelName.isNotEmpty
+        ? int.tryParse(_selectedPannelName.split(':')[0])
+        : null;
+    final options = _productCategoryList
+        .where((c) => c.pannelId == pannelId && c.isActive)
+        .toList();
+    final upsellDropdownValue = _upsellCategoryId != null &&
+            options.any((c) => c.id == _upsellCategoryId)
+        ? _upsellCategoryId
+        : null;
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('پیشنهاد ارتقا (Upsell)'),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<int?>(
+            initialValue: upsellDropdownValue,
+            decoration: const InputDecoration(
+              labelText: 'بسته پیشنهادی هنگام خرید',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('بدون پیشنهاد ارتقا'),
+              ),
+              ...options.map(
+                (c) => DropdownMenuItem<int?>(
+                  value: c.id,
+                  child: Text('${c.categoryName} (${c.price} تومان)'),
+                ),
+              ),
+            ],
+            onChanged: (v) => setDialogState(() => _upsellCategoryId = v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _allowedGroupsWidget(
+      BuildContext context, void Function(VoidCallback fn) setDialogState) {
+    final theme = Theme.of(context);
+    final groups = _userGroups.where((g) => !g.isDefault).toList();
+
+    String helper;
+    if (_allowedGroupIds.isEmpty) {
+      helper = 'اگر چیزی انتخاب نکنید، برای همه نمایش داده می‌شود';
+    } else {
+      helper = 'فقط گروه‌های انتخاب‌شده نمایش داده می‌شود';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppStyle.bgColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('محدودیت گروه کاربری (اختیاری)',
+              style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 4),
+          Text(helper,
+              style: TextStyle(color: AppStyle.deactiveStatus, fontSize: 12)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('بدون گروه'),
+                selected: _allowedGroupIds.contains(0),
+                onSelected: (v) => setDialogState(() {
+                  if (v) {
+                    _allowedGroupIds.add(0);
+                  } else {
+                    _allowedGroupIds.remove(0);
+                  }
+                }),
+              ),
+              ...groups.map((g) {
+                final selected = _allowedGroupIds.contains(g.id);
+                return FilterChip(
+                  label: Text(g.name),
+                  selected: selected,
+                  onSelected: (v) => setDialogState(() {
+                    if (v) {
+                      _allowedGroupIds.add(g.id);
+                    } else {
+                      _allowedGroupIds.remove(g.id);
+                    }
+                  }),
+                );
+              }),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _allowedGroupIds.isEmpty
+                  ? null
+                  : () => setDialogState(() => _allowedGroupIds.clear()),
+              child: const Text('حذف محدودیت (همه)'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitData(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -751,6 +1058,12 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         pannelID = int.parse(_selectedPannelName.split(":")[0]);
       }
 
+      final inboundIds = parseInboundIdsFromText(_inboundIdEditText.text);
+      final marzbanInbounds =
+          parseMarzbanInboundsFromText(_marzbanInboundsEditText.text);
+      final pasarguardGroupIds =
+          parsePasarguardGroupIdsFromText(_pasarguardGroupIdsEditText.text);
+
       final val = await addNewProductCategory(
         name: _nameEditText.text,
         price: int.parse(_priceEditText.text),
@@ -759,15 +1072,25 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         expDay: int.parse(_expireDayEditText.text),
         volume: int.parse(_volumeEditText.text),
         rechargable: _rechargable,
-        showPannelLink: _showPannelLink,
+        showPannelLink:
+            _selectedPannelName.contains("Hiddify") ? _showPannelLink : false,
         showSubscriptionLink: _showSubscriptionLink,
-        inboundId: _inboundIdEditText.text.isNotEmpty
-            ? int.tryParse(_inboundIdEditText.text)
-            : null,
+        sendConfigToUser: panelDropdownSupportsConfigToggle(_selectedPannelName)
+            ? _sendConfigToUser
+            : false,
+        allowedUserGroupIds:
+            _allowedGroupIds.isEmpty ? null : _allowedGroupIds.toList(),
+        inboundId: inboundIds.isNotEmpty ? inboundIds.first : null,
+        inboundIds: inboundIds.isEmpty ? null : inboundIds,
+        marzbanInbounds:
+            marzbanInbounds.isEmpty ? null : marzbanInbounds,
+        pasarguardGroupIds:
+            pasarguardGroupIds.isEmpty ? null : pasarguardGroupIds,
         ipLimit: _ipLimitEditText.text.isNotEmpty
             ? int.tryParse(_ipLimitEditText.text)
             : 0,
         sampleInbound: _sampleInboundEditText.text,
+        upsellCategoryId: _upsellCategoryId,
       );
 
       if (val) {

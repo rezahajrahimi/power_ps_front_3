@@ -12,6 +12,7 @@ class Pannel {
   String? secretCode;
   String? domin;
   int? capacity;
+  String? apiVersion;
   Pannel(
       {required this.id,
       required this.type,
@@ -25,7 +26,8 @@ class Pannel {
       this.userLink,
       this.secretCode,
       this.domin,
-      this.capacity});
+      this.capacity,
+      this.apiVersion});
 
   factory Pannel.fromJson(Map<String, dynamic> json) {
     return Pannel(
@@ -42,6 +44,7 @@ class Pannel {
         secretCode: json['secret_code'] ?? json['secret_code'].toString(),
         domin: json['domin'] ?? json['domin'].toString(),
         capacity:
-            json['capacity'] ?? int.tryParse(json['capacity'].toString()));
+            json['capacity'] ?? int.tryParse(json['capacity'].toString()),
+        apiVersion: json['api_version']?.toString());
   }
 }

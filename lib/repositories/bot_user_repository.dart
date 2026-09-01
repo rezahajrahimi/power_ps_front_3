@@ -258,6 +258,38 @@ Future searchBotUsers({required String searchUserText}) async {
   }
 }
 
+Future<BotUser?> updateBotUserAdminAlias({
+  int? botUserId,
+  int? accountId,
+  String? adminAlias,
+}) async {
+  try {
+    final response = await GenaralApi.dio.patch(
+      '/api/updateBotUserAdminAlias',
+      data: {
+        if (botUserId != null) 'bot_user_id': botUserId,
+        if (accountId != null) 'account_id': accountId,
+        'admin_alias': adminAlias,
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Charset': 'utf-8',
+        'Access-Control-Allow-Origin': '*',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data?['bot_user'] != null) {
+      return BotUser.fromJson(response.data['bot_user']);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}
+
 Future getBotUserByID({required int id}) async {
   try {
     Response response = await GenaralApi.dio.get("/api/getBotUserByID/$id",
@@ -303,6 +335,12 @@ Future sendAdminMessageToUser(
     if (response.statusCode == 200) {
       return true;
     } else {
+      final errorMessage = response.data is Map
+          ? response.data['message']?.toString()
+          : null;
+      if (errorMessage != null && errorMessage.isNotEmpty) {
+        debugPrint("sendAdminMessageToUser failed: $errorMessage");
+      }
       return false;
     }
   } catch (e) {
@@ -474,6 +512,69 @@ Future syncUserProductsHistoryByAccountIDwithPanels({required int id}) async {
     } else {
       return false;
     }
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future<List<Map<String, dynamic>>?> previewMissingUserProductsOnPanels({
+  required int botUserId,
+}) async {
+  try {
+    Response response = await GenaralApi.dio.get(
+      "/api/previewMissingUserProductsOnPanels/$botUserId",
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        "Content-Type": "application/json;charset=UTF-8",
+        "Charset": "utf-8",
+        'Access-Control-Allow-Origin': '*'
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      final data = response.data;
+      final missing = data is Map ? data['missing'] : null;
+      if (missing is List) {
+        return missing
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      return [];
+    }
+    return null;
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future<Map<String, dynamic>?> deleteSelectedMissingUserProducts({
+  required int botUserId,
+  required List<int> productIds,
+}) async {
+  try {
+    Response response = await GenaralApi.dio.post(
+      "/api/deleteSelectedMissingUserProducts",
+      data: {
+        "bot_user_id": botUserId,
+        "product_ids": productIds,
+      },
+      options: Options(headers: {
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        "Content-Type": "application/json;charset=UTF-8",
+        "Charset": "utf-8",
+        'Access-Control-Allow-Origin': '*'
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+    return null;
   } catch (e) {
     debugPrint(e.toString());
     return null;

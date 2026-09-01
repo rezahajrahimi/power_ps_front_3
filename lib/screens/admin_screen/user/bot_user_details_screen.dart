@@ -6,6 +6,7 @@ import 'package:powerps/repositories/agent_product_repository.dart';
 import 'package:powerps/repositories/blocked_user_repository.dart';
 import 'package:powerps/repositories/product_categoy_repository.dart';
 import 'package:powerps/repositories/product_details_repository.dart';
+import 'package:powerps/repositories/loyalty_setting_repository.dart';
 import 'package:powerps/repositories/referral_setting_repository.dart';
 import 'package:powerps/widgets/product_details/user_bougth_products_info_card_widget.dart';
 import 'package:provider/provider.dart';
@@ -19,9 +20,16 @@ import 'package:powerps/repositories/bot_user_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/log/recent_events_list_widget.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
+import 'package:powerps/widgets/public/bot_user_admin_alias_widget.dart';
+import 'package:powerps/widgets/public/user_group_selector_widget.dart';
+import 'package:powerps/widgets/public/user_verification_toggle_widget.dart';
 import 'package:powerps/widgets/public/custome_text_from_field_widget.dart';
 import 'package:powerps/widgets/public/details_info_item_widget.dart';
 import 'package:powerps/widgets/public/widgets_gridview_widget_v4.dart';
+import 'package:powerps/models/loyalty_wallet_model.dart';
+import 'package:powerps/models/referral_wallet_model.dart';
+import 'package:powerps/screens/admin_screen/user/loyalty/loyalty_report_screen.dart';
+import 'package:powerps/screens/admin_screen/user/referral/referral_report_screen.dart';
 import 'package:powerps/widgets/transaction/transaction_info_item_widget.dart';
 
 class BotUserDetailsScreen extends StatefulWidget {
@@ -61,8 +69,12 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          appBar:
-              appBarWithBackButton(context: context, title: "اطلاعات کاربر"),
+          appBar: appBarWithBackButton(
+            context: context,
+            title: _botUser?.adminAlias?.isNotEmpty == true
+                ? _botUser!.adminAlias!
+                : "اطلاعات کاربر",
+          ),
           body: _showData == false
               ? const Center(
                   child: Column(
@@ -88,34 +100,48 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   }
 
   void _fillData() async {
-    await getBotUserByID(id: widget.id.toInt()).then((value) {
+    // Load user profile first so the page can render without waiting on product list.
+    if (mounted) {
+      setState(() {
+        _showBoughtProduct = false;
+      });
+    }
+
+    final productsFuture =
+        getUserProductsHistoryByAccountIDWithPagination(userID: widget.id.toInt());
+
+    try {
+      final value = await getBotUserByID(id: widget.id.toInt());
+      if (!mounted) return;
       if (value != null && value != false) {
         setStateIfMounted(() {
           _botUser = value;
           _showBlockedUser = _botUser!.blockedUser != null;
           _showData = true;
         });
+      } else {
+        showMsg(msg: "خطا", context: context, type: "error");
+        Navigator.of(context).pop();
+        return;
       }
-    }).onError((e, s) {
+    } catch (e) {
       if (!mounted) return;
       showMsg(msg: "خطا", context: context, type: "error");
       Navigator.of(context).pop();
-    });
-    await getUserProductsHistoryByAccountIDWithPagination(
-            userID: widget.id.toInt())
-        .then((value) {
-      if (!mounted) return;
-      if (value != false && value != null) {
-        setState(() {
-          _lastPageOfUserBought = lastPageOfUserBought;
+      return;
+    }
 
-          _showBoughtProduct = true;
-        });
-      } else {
-        showMsg(msg: "خطا", context: context, type: "error");
-        debugPrint("error on dashboard biding $value");
-      }
-    });
+    final productsValue = await productsFuture;
+    if (!mounted) return;
+    if (productsValue != false && productsValue != null) {
+      setState(() {
+        _lastPageOfUserBought = lastPageOfUserBought;
+        _showBoughtProduct = true;
+      });
+    } else {
+      showMsg(msg: "خطا", context: context, type: "error");
+      debugPrint("error on dashboard biding $productsValue");
+    }
   }
 
   void setStateIfMounted(f) {
@@ -138,10 +164,39 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   children: [
                     _mainInfoItemCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
+                    BotUserAdminAliasWidget(
+                      botUser: _botUser!,
+                      onChanged: _fillData,
+                    ),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    if (_botUser?.panelUser != null &&
+                        _botUser!.panelUser!.role == 'user')
+                      UserVerificationToggleWidget(
+                        userId: _botUser!.panelUser!.id,
+                        isVerified: _botUser!.panelUser!.isVerified,
+                        onChanged: _fillData,
+                      ),
+                    if (_botUser?.panelUser != null &&
+                        _botUser!.panelUser!.role == 'user')
+                      SizedBox(height: AppStyle.defaultPadding),
+                    if (_botUser?.panelUser != null &&
+                        (_botUser!.panelUser!.role == 'user' ||
+                            _botUser!.panelUser!.role == 'agent'))
+                      UserGroupSelectorWidget(
+                        userId: _botUser!.panelUser!.id,
+                        roleType: _botUser!.panelUser!.role,
+                        currentGroupId: _botUser!.panelUser!.userGroupId,
+                      ),
+                    if (_botUser?.panelUser != null &&
+                        (_botUser!.panelUser!.role == 'user' ||
+                            _botUser!.panelUser!.role == 'agent'))
+                      SizedBox(height: AppStyle.defaultPadding),
                     if (Responsive.isMobile(context))
                       _accountBallanceInfoCard(context),
                     if (Responsive.isMobile(context))
                       _referralBallanceInfoCard(context),
+                    if (Responsive.isMobile(context))
+                      _loyaltyPointsInfoCard(context),
                     if (Responsive.isMobile(context))
                       SizedBox(height: AppStyle.defaultPadding),
                     _showBoughtProduct
@@ -170,6 +225,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                     _accountBallanceInfoCard(context),
                     SizedBox(height: AppStyle.defaultPadding),
                     _referralBallanceInfoCard(context),
+                    SizedBox(height: AppStyle.defaultPadding),
+                    _loyaltyPointsInfoCard(context),
                   ],
                 ),
               ),
@@ -220,6 +277,21 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               icon: const Icon(Icons.person_outline, color: Colors.green),
               itemName: "نام",
               itemValue: "${_botUser!.firstName} ${_botUser!.lastName}")),
+      DetailsInfoItemWidget(
+          item: DetailsInfoItem(
+              icon:
+                  const Icon(Icons.phone_android_outlined, color: Colors.cyan),
+              itemName: "شماره موبایل تاییدشده",
+              itemValue: _botUser!.phoneNumber?.isNotEmpty == true
+                  ? _botUser!.phoneNumber!
+                  : "ثبت نشده")),
+      if (_botUser!.adminAlias != null && _botUser!.adminAlias!.isNotEmpty)
+        DetailsInfoItemWidget(
+            item: DetailsInfoItem(
+                icon:
+                    const Icon(Icons.label_outline, color: Colors.amberAccent),
+                itemName: "اسم مستعار",
+                itemValue: _botUser!.adminAlias!)),
       DetailsInfoItemWidget(
           item: DetailsInfoItem(
               icon: const Icon(Icons.calendar_today_outlined,
@@ -431,6 +503,108 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     );
   }
 
+  _loyaltyPointsInfoCard(BuildContext context) {
+    final points = _botUser!.loyaltyWallet?.balance ?? 0;
+    final actionsWidgetList = [
+      _buildActionButton(
+        context: context,
+        label: 'ویرایش امتیاز',
+        icon: Icons.edit_note,
+        onPressed: () => _editLoyaltyPointsDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: 'تاریخچه امتیاز',
+        icon: Icons.history,
+        onPressed: () {
+          final displayName =
+              '${_botUser!.firstName ?? ''} ${_botUser!.lastName ?? ''}'.trim();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LoyaltyReportScreen(
+                accountId: _botUser!.accountId,
+                userName: displayName.isNotEmpty
+                    ? displayName
+                    : (_botUser!.username?.isNotEmpty == true
+                        ? _botUser!.username
+                        : null),
+                currentBalance: _botUser!.loyaltyWallet?.balance ?? 0,
+              ),
+            ),
+          );
+        },
+      ),
+    ];
+
+    return Container(
+      margin: Responsive.isMobile(context)
+          ? EdgeInsets.only(top: AppStyle.defaultPadding)
+          : EdgeInsets.zero,
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.stars_outlined, color: Colors.amber),
+              SizedBox(width: 8),
+              Text(
+                'امتیاز باشگاه مشتریان',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 32, color: Colors.white10),
+          DetailsInfoItemWidget(
+            item: DetailsInfoItem(
+              icon: const Icon(Icons.stars, color: Colors.amber),
+              itemName: 'موجودی امتیاز',
+              itemValue:
+                  '${thousandSeperatorFormatter(points.toString())} امتیاز',
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                  childAspectRatio: 3.5,
+                  context: context,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              tablet: widgetsGridview(
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2,
+                  importedList: actionsWidgetList),
+              desktop: widgetsGridview(
+                  importedList: actionsWidgetList,
+                  context: context,
+                  childAspectRatio: 4.5,
+                  crossAxisCount: 2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   _referralBallanceInfoCard(BuildContext context) {
     List<Widget> mainWidgetList = [
       DetailsInfoItemWidget(
@@ -449,6 +623,21 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
         label: "ویرایش موجودی",
         icon: Icons.edit_note,
         onPressed: () => _editReferralBallanceDialog(context),
+      ),
+      _buildActionButton(
+        context: context,
+        label: "گزارش بازاریابی",
+        icon: Icons.history,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReferralReportScreen(
+                accountId: _botUser!.accountId,
+              ),
+            ),
+          );
+        },
       ),
     ];
 
@@ -509,18 +698,18 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
               mobile: widgetsGridview(
                   childAspectRatio: 3.5,
                   context: context,
-                  crossAxisCount: 1,
+                  crossAxisCount: 2,
                   importedList: actionsWidgetList),
               tablet: widgetsGridview(
                   context: context,
                   childAspectRatio: 4.5,
-                  crossAxisCount: 1,
+                  crossAxisCount: 2,
                   importedList: actionsWidgetList),
               desktop: widgetsGridview(
                   importedList: actionsWidgetList,
                   context: context,
                   childAspectRatio: 4.5,
-                  crossAxisCount: 1),
+                  crossAxisCount: 2),
             ),
           ),
         ],
@@ -678,7 +867,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                   importedList: actionsWidgetList,
                   context: context,
                   childAspectRatio: 4.5,
-                  crossAxisCount: 1),
+                  crossAxisCount: 2),
             ),
           ),
         ],
@@ -790,7 +979,7 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                 if (messageController.text.isEmpty) return;
                 EasyLoading.show();
                 await sendAdminMessageToUser(
-                  userID: _botUser!.accountId.toInt(),
+                  userID: _botUser!.id.toInt(),
                   message: messageController.text,
                 ).then((value) {
                   if (!context.mounted) return;
@@ -814,65 +1003,224 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     );
   }
 
-  _showSyncDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: AppStyle.secondaryColor,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              const Icon(Icons.sync, color: Colors.orangeAccent),
-              const SizedBox(width: 10),
-              const Text("همگام‌سازی کاربر",
-                  style: TextStyle(color: Colors.white, fontSize: 18)),
+  Future<void> _showSyncDialog(BuildContext context) async {
+    EasyLoading.show(status: 'در حال بررسی پنل‌ها...');
+    final missing = await previewMissingUserProductsOnPanels(
+      botUserId: widget.id.toInt(),
+    );
+    EasyLoading.dismiss();
+    if (!context.mounted) return;
+
+    if (missing == null) {
+      showMsg(context: context, msg: "خطا در همگام‌سازی", type: "error");
+      return;
+    }
+
+    if (missing.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: AppStyle.secondaryColor,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.tealAccent),
+                SizedBox(width: 10),
+                Text("همگام‌سازی",
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
+              ],
+            ),
+            content: const Text(
+              "همه اکانت‌های این کاربر روی پنل موجود هستند. موردی برای حذف یافت نشد.",
+              style: TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("باشه",
+                    style: TextStyle(color: Colors.white70)),
+              ),
             ],
           ),
-          content: const Text(
-            "آیا از همگام‌سازی اطلاعات کاربر با ربات اطمینان دارید؟",
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child:
-                  const Text("انصراف", style: TextStyle(color: Colors.white70)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        ),
+      );
+      return;
+    }
+
+    final selectedIds = <int>{
+      for (final item in missing)
+        if (item['id'] != null) int.parse(item['id'].toString()),
+    };
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.sync, color: Colors.orangeAccent),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "اکانت‌های حذف‌شده از پنل",
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () async {
-                EasyLoading.show();
-                await syncUserProductsHistoryByAccountIDwithPanels(
-                        id: _botUser!.accountId.toInt())
-                    .then((value) {
-                  if (!context.mounted) return;
-                  EasyLoading.dismiss();
-                  if (value != null && value != false) {
-                    showMsg(
-                        context: context, msg: "همگام‌سازی با موفقیت انجام شد");
-                    _fillData();
-                    Navigator.pop(context);
-                  } else {
-                    showMsg(
-                        context: context,
-                        msg: "خطا در همگام‌سازی",
-                        type: "error");
-                  }
-                });
-              },
-              child: const Text("تایید همگام‌سازی"),
-            ),
-          ],
+              content: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${missing.length} اکانت روی سرور پیدا نشد. موارد انتخاب‌شده از دیتابیس حذف می‌شوند.",
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              selectedIds
+                                ..clear()
+                                ..addAll(missing
+                                    .where((e) => e['id'] != null)
+                                    .map((e) =>
+                                        int.parse(e['id'].toString())));
+                            });
+                          },
+                          child: const Text("انتخاب همه",
+                              style: TextStyle(color: Colors.orangeAccent)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() => selectedIds.clear());
+                          },
+                          child: const Text("لغو انتخاب",
+                              style: TextStyle(color: Colors.white54)),
+                        ),
+                      ],
+                    ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 360),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: missing.length,
+                        separatorBuilder: (_, __) =>
+                            const Divider(color: Colors.white10, height: 1),
+                        itemBuilder: (context, index) {
+                          final item = missing[index];
+                          final id = int.parse(item['id'].toString());
+                          final remark =
+                              (item['remark']?.toString().trim().isNotEmpty ==
+                                      true)
+                                  ? item['remark'].toString()
+                                  : 'بدون نام';
+                          final category =
+                              item['category_name']?.toString() ?? '—';
+                          final panelType =
+                              item['panel_type']?.toString() ?? '—';
+                          final reason = item['reason']?.toString();
+                          final reasonLabel = reason == 'panel_unreachable'
+                              ? 'پنل در دسترس نیست'
+                              : 'روی سرور نیست';
+                          final checked = selectedIds.contains(id);
+
+                          return CheckboxListTile(
+                            value: checked,
+                            activeColor: Colors.orange,
+                            checkColor: Colors.white,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              remark,
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              "$category · $panelType · $reasonLabel · #$id",
+                              style: TextStyle(
+                                color: reason == 'panel_unreachable'
+                                    ? Colors.orangeAccent
+                                    : Colors.white54,
+                                fontSize: 12,
+                              ),
+                            ),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                if (value == true) {
+                                  selectedIds.add(id);
+                                } else {
+                                  selectedIds.remove(id);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text("انصراف",
+                      style: TextStyle(color: Colors.white70)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                  ),
+                  onPressed: selectedIds.isEmpty
+                      ? null
+                      : () async {
+                          EasyLoading.show(status: 'در حال حذف...');
+                          final result =
+                              await deleteSelectedMissingUserProducts(
+                            botUserId: widget.id.toInt(),
+                            productIds: selectedIds.toList(),
+                          );
+                          EasyLoading.dismiss();
+                          if (!dialogContext.mounted) return;
+                          if (result != null) {
+                            final deleted = result['deleted'] ?? 0;
+                            Navigator.pop(dialogContext);
+                            showMsg(
+                              context: this.context,
+                              msg: "$deleted اکانت با موفقیت حذف شد",
+                            );
+                            _fillData();
+                          } else {
+                            showMsg(
+                              context: dialogContext,
+                              msg: "خطا در حذف اکانت‌ها",
+                              type: "error",
+                            );
+                          }
+                        },
+                  child: Text("حذف ${selectedIds.length} مورد"),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1043,6 +1391,8 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
   }
 
   _editReferralBallanceDialog(BuildContext context) async {
+    _ballanceController.text =
+        (_botUser!.referralWallet?.amount ?? 0).toString();
     showDialog(
         context: context,
         builder: (context) => Directionality(
@@ -1093,31 +1443,135 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
                         horizontal: 20, vertical: 10),
                   ),
                   onPressed: () async {
+                    final amount =
+                        int.tryParse(_ballanceController.text.trim());
+                    if (amount == null || amount < 0) {
+                      showMsg(
+                        context: context,
+                        msg: "مبلغ معتبر وارد کنید",
+                        type: "error",
+                      );
+                      return;
+                    }
+
                     EasyLoading.show();
-                    await setNewReferralBallance(
-                            ballance: int.parse(_ballanceController.text),
-                            userID: _botUser!.accountId.toInt())
-                        .then((value) {
-                      if (!context.mounted) return;
-                      if (value) {
-                        setState(() {
-                          _botUser!.ballance!.ballance =
-                              BigInt.from(int.parse(_ballanceController.text));
-                        });
-                        EasyLoading.dismiss();
-                        showMsg(
-                            context: context,
-                            msg: "موجودی با موفقیت ویرایش شد");
-                        Navigator.pop(context);
-                        _ballanceController.clear();
-                        _fillData();
-                      } else {
-                        EasyLoading.dismiss();
-                        showMsg(context: context, msg: "خطا", type: "error");
-                      }
-                    });
+                    final value = await setNewReferralBallance(
+                      ballance: amount,
+                      userID: _botUser!.accountId.toInt(),
+                    );
+                    if (!context.mounted) return;
+
+                    EasyLoading.dismiss();
+                    if (value == true) {
+                      setState(() {
+                        _botUser!.referralWallet = (_botUser!.referralWallet ??
+                                ReferralWalletModel(
+                                  id: 0,
+                                  referralUserId: _botUser!.id.toInt(),
+                                  amount: 0,
+                                ))
+                            .copyWith(amount: amount);
+                      });
+                      showMsg(
+                        context: context,
+                        msg: "موجودی همکاری با موفقیت ویرایش شد",
+                      );
+                      Navigator.pop(context);
+                      _ballanceController.clear();
+                      _fillData();
+                    } else {
+                      showMsg(context: context, msg: "خطا", type: "error");
+                    }
                   },
                   child: const Text("تایید"),
+                )
+              ],
+            ))));
+  }
+
+  _editLoyaltyPointsDialog(BuildContext context) async {
+    _ballanceController.text =
+        (_botUser!.loyaltyWallet?.balance ?? 0).toString();
+    showDialog(
+        context: context,
+        builder: (context) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: SingleChildScrollView(
+                child: AlertDialog(
+              backgroundColor: AppStyle.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.stars_outlined, color: Colors.amber),
+                  SizedBox(width: 10),
+                  Text('ویرایش امتیاز باشگاه مشتریان',
+                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('لطفا تعداد امتیاز را وارد کنید',
+                      style: TextStyle(color: Colors.white70)),
+                  SizedBox(height: AppStyle.defaultPadding),
+                  CustomTextFromFieldWidget(
+                    controller: _ballanceController,
+                    textHint: 'تعداد امتیاز',
+                    validationError: 'تعداد امتیاز را وارد کنید',
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('انصراف',
+                      style: TextStyle(color: Colors.white70)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final balance =
+                        int.tryParse(_ballanceController.text.trim());
+                    if (balance == null || balance < 0) {
+                      showMsg(
+                        context: context,
+                        msg: 'امتیاز معتبر وارد کنید',
+                        type: 'error',
+                      );
+                      return;
+                    }
+
+                    EasyLoading.show();
+                    final value = await setLoyaltyPointsBalance(
+                      balance: balance,
+                      userID: _botUser!.accountId.toInt(),
+                    );
+                    if (!context.mounted) return;
+                    EasyLoading.dismiss();
+                    if (value) {
+                      setState(() {
+                        _botUser!.loyaltyWallet = (_botUser!.loyaltyWallet ??
+                                LoyaltyWalletModel(
+                                  id: 0,
+                                  userId: _botUser!.id.toInt(),
+                                  balance: 0,
+                                ))
+                            .copyWith(balance: balance);
+                      });
+                      showMsg(
+                        context: context,
+                        msg: 'امتیاز با موفقیت ویرایش شد',
+                      );
+                      Navigator.pop(context);
+                      _ballanceController.clear();
+                      _fillData();
+                    } else {
+                      showMsg(context: context, msg: 'خطا', type: 'error');
+                    }
+                  },
+                  child: const Text('تایید'),
                 )
               ],
             ))));
@@ -1398,137 +1852,220 @@ class _BotUserDetailsScreenState extends State<BotUserDetailsScreen> {
     List<ProductCategory> productCategoryList = [];
     List<String> productCategoryItemList = [];
     String selectedItem = "";
-    final nameEditText = TextEditingController();
+    final nameEditText = TextEditingController(
+      text: _botUser?.accountId.toString() ?? '',
+    );
+    final userGroupId = _botUser?.panelUser?.userGroupId;
 
     await getAllProdctCategory().then((res) {
       if (res != null && res != false) {
-        productCategoryList = res;
+        productCategoryList = (res as List<ProductCategory>)
+            .where((c) => c.isAllowedForUserGroup(userGroupId))
+            .toList();
         for (var i in productCategoryList) {
           productCategoryItemList.add("${i.id} - ${i.categoryName}");
         }
-        selectedItem = productCategoryItemList[0];
+        if (productCategoryItemList.isNotEmpty) {
+          selectedItem = productCategoryItemList[0];
+        }
       }
     }).whenComplete(() async {
       if (!context.mounted) return;
       EasyLoading.dismiss();
+      if (productCategoryItemList.isEmpty) {
+        showMsg(
+          msg: "برای گروه این کاربر، کانفیگ قابل خریدی وجود ندارد",
+          context: context,
+          type: "warning",
+        );
+        return;
+      }
 
       showDialog(
           context: context,
-          builder: (context) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                backgroundColor: AppStyle.secondaryColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                scrollable: true,
-                contentPadding: const EdgeInsets.all(20),
-                title: const Row(
-                  children: [
-                    Icon(Icons.shopping_cart_outlined,
-                        color: Colors.greenAccent),
-                    SizedBox(width: 10),
-                    Text("خرید کانفیگ جدید",
-                        style: TextStyle(color: Colors.white, fontSize: 18)),
-                  ],
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("نام کانفیگ را وارد کنید:",
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    const SizedBox(height: 12),
-                    CustomTextFromFieldWidget(
-                      controller: nameEditText,
-                      textHint: "نام کانفیگ جدید",
-                      validationError: "لطفا نام کانفیگ را وارد کنید",
+          builder: (dialogContext) {
+            bool deductFromWallet = true;
+            String dialogSelectedItem = selectedItem;
+
+            return StatefulBuilder(
+              builder: (context, setDialogState) => Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: AlertDialog(
+                    backgroundColor: AppStyle.secondaryColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    scrollable: true,
+                    contentPadding: const EdgeInsets.all(20),
+                    title: const Row(
+                      children: [
+                        Icon(Icons.shopping_cart_outlined,
+                            color: Colors.greenAccent),
+                        SizedBox(width: 10),
+                        Text("خرید کانفیگ جدید",
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 18)),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    const Text("کانفیگ را انتخاب کنید:",
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white10),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          dropdownColor: AppStyle.secondaryColor,
-                          decoration:
-                              const InputDecoration(border: InputBorder.none),
-                          hint: const Text('انتخاب کانفیگ',
-                              style: TextStyle(color: Colors.white54)),
-                          initialValue: selectedItem,
-                          onChanged: (newValue) {
-                            setState(() {
-                              selectedItem = newValue.toString();
-                            });
-                          },
-                          items: productCategoryItemList.map((clType) {
-                            return DropdownMenuItem(
-                              value: clType,
-                              child: Text(clType,
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 13)),
-                            );
-                          }).toList(),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("نام کانفیگ را وارد کنید:",
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14)),
+                        const SizedBox(height: 12),
+                        CustomTextFromFieldWidget(
+                          controller: nameEditText,
+                          textHint: "نام کانفیگ جدید",
+                          validationError: "لطفا نام کانفیگ را وارد کنید",
                         ),
+                        const SizedBox(height: 24),
+                        const Text("کانفیگ را انتخاب کنید:",
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButtonFormField<String>(
+                              isExpanded: true,
+                              dropdownColor: AppStyle.secondaryColor,
+                              decoration: const InputDecoration(
+                                  border: InputBorder.none),
+                              hint: const Text('انتخاب کانفیگ',
+                                  style: TextStyle(color: Colors.white54)),
+                              initialValue: dialogSelectedItem.isEmpty
+                                  ? null
+                                  : dialogSelectedItem,
+                              onChanged: (newValue) {
+                                setDialogState(() {
+                                  dialogSelectedItem = newValue.toString();
+                                });
+                              },
+                              items: productCategoryItemList.map((clType) {
+                                return DropdownMenuItem(
+                                  value: clType,
+                                  child: Text(clType,
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 13)),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: SwitchListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 12),
+                            title: const Text(
+                              'کسر از کیف پول کاربر',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              deductFromWallet
+                                  ? 'هزینه بسته از موجودی کاربر کم می‌شود'
+                                  : 'خرید بدون کسر موجودی انجام می‌شود',
+                              style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 12),
+                            ),
+                            value: deductFromWallet,
+                            activeThumbColor: Colors.greenAccent,
+                            onChanged: (value) {
+                              setDialogState(() {
+                                deductFromWallet = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text("لغو",
+                            style: TextStyle(color: Colors.white70)),
                       ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("لغو",
-                        style: TextStyle(color: Colors.white70)),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                    ),
-                    onPressed: () async {
-                      if (nameEditText.text.isEmpty) return;
-                      EasyLoading.show();
-                      int prcatID = int.parse(selectedItem.split(" - ")[0]);
-                      await buyProductByAdmin(
-                        productID: prcatID,
-                        remark: nameEditText.text,
-                        username: _botUser!.username,
-                        userID: _botUser!.id.toInt(),
-                        accountId: _botUser!.accountId.toInt(),
-                      ).then((val) {
-                        if (!context.mounted) return;
-                        if (val != null) {
-                          EasyLoading.dismiss();
-                          Navigator.pop(context);
-                          showMsg(
-                              context: context, msg: "خرید با موفقیت انجام شد");
-                          _fillData();
-                        } else {
-                          EasyLoading.dismiss();
-                          showMsg(context: context, msg: "خطا", type: "error");
-                        }
-                      }).onError((error, stackTrace) {
-                        if (!context.mounted) return;
-                        EasyLoading.dismiss();
-                        debugPrint(error.toString());
-                        showMsg(context: context, msg: "خطا", type: "error");
-                      });
-                    },
-                    child: const Text("تایید خرید"),
-                  ),
-                ],
-              )));
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                        ),
+                        onPressed: () async {
+                          if (nameEditText.text.isEmpty ||
+                              dialogSelectedItem.isEmpty) {
+                            return;
+                          }
+                          EasyLoading.show();
+                          int prcatID =
+                              int.parse(dialogSelectedItem.split(" - ")[0]);
+                          await buyProductByAdmin(
+                            productID: prcatID,
+                            remark: nameEditText.text,
+                            username: _botUser!.username,
+                            userID: _botUser!.id.toInt(),
+                            accountId: _botUser!.accountId.toInt(),
+                            deductFromWallet: deductFromWallet,
+                          ).then((val) {
+                            if (!dialogContext.mounted) return;
+                            EasyLoading.dismiss();
+                            final isSuccess = val != null &&
+                                val != false &&
+                                !(val is String &&
+                                    (val.contains('خطا') ||
+                                        val.contains('موجودی') ||
+                                        val.contains('Error')));
+                            if (isSuccess) {
+                              Navigator.pop(dialogContext);
+                              showMsg(
+                                  context: context,
+                                  msg: deductFromWallet
+                                      ? "خرید با موفقیت انجام شد و پیام برای کاربر ارسال شد"
+                                      : "خرید با موفقیت انجام شد (بدون کسر موجودی) و پیام برای کاربر ارسال شد");
+                              _fillData();
+                            } else {
+                              final errorMsg = val is String && val.isNotEmpty
+                                  ? val
+                                  : "خطا در خرید کانفیگ";
+                              showMsg(
+                                  context: context,
+                                  msg: errorMsg,
+                                  type: "error");
+                            }
+                          }).onError((error, stackTrace) {
+                            if (!dialogContext.mounted) return;
+                            EasyLoading.dismiss();
+                            debugPrint(error.toString());
+                            showMsg(
+                                context: context,
+                                msg: "خطا در خرید کانفیگ",
+                                type: "error");
+                          });
+                        },
+                        child: const Text("تایید خرید"),
+                      ),
+                    ],
+                  )),
+            );
+          });
     }).onError((error, stackTrace) {
       EasyLoading.dismiss();
       if (!context.mounted) return;

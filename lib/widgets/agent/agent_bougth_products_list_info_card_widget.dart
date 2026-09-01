@@ -146,6 +146,7 @@ class _AgentBougthProductsListInfoCardWidgetState
         for (var i in boughtProducts) {
           _productsItemList.add(AgentBoughtProductInfoWidget(
             boughtProductDetailsModel: i,
+            userRole: widget.lggedUSerRole,
           ));
         }
         _showData = true;

@@ -1,4 +1,5 @@
 import 'package:powerps/helper/connector/dio.dart';
+import 'package:powerps/helper/env_loader.dart';
 import 'package:powerps/helper/shared_prefrencess.dart';
 import 'package:powerps/models/user_model.dart';
 import 'package:powerps/provider/agent/agent_ballance_provider.dart';
@@ -14,21 +15,20 @@ import 'package:powerps/provider/transaction_provider.dart';
 import 'package:powerps/provider/app_info_provider.dart';
 import 'package:powerps/provider/user_admin_provider.dart';
 import 'package:powerps/provider/user_provider.dart';
+import 'package:powerps/provider/purchase_cart_provider.dart';
 import 'package:powerps/screens/admin_screen/auth/login_screen.dart';
 import 'package:powerps/screens/home_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import 'package:flutter/material.dart';
 
 Future main() async {
-  // await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
-  // load persisted base URL (if set)
+  await loadAppEnv();
   await initBaseUrl();
+  await restoreAuthSession();
   // await AppInfoPreference().init();
   runApp(const MyApp());
 }
@@ -58,18 +58,14 @@ class MyApp extends StatelessWidget {
               create: (context) => ProductCategoryProvider()),
           ChangeNotifierProvider(create: (context) => UserAdminProvider()),
           ChangeNotifierProvider(create: (context) => PaymentProvider()),
-          ChangeNotifierProvider(create: (context) => AppInfoProvider()),
-          ChangeNotifierProvider(create: (context) => AuthChangeController()),
           ChangeNotifierProvider(create: (context) => CategoryTypeProvider()),
+          ChangeNotifierProvider(create: (context) => PurchaseCartProvider()),
         ],
-        child: Consumer<AuthChangeController>(
-          builder: (context, authController, child) {
-            // فراخوانی متد checkAuthStatus
-            authController.checkAuthStatus();
-
+        child: Consumer<AppInfoProvider>(
+          builder: (context, appInfoProvider, child) {
             return MaterialApp(
               builder: EasyLoading.init(),
-              title: "PowerPS",
+              title: appInfoProvider.displayTitle,
               onGenerateRoute: (setting) {
                 if (setting.name!.contains("/login/")) {
                   String url =
@@ -99,8 +95,9 @@ class MyApp extends StatelessWidget {
                       textDirection: TextDirection.rtl,
                       child: CheckAuth(),
                     ),
-                '/home': (context) => const HomeScreen(
-                      selectedPage: 0,
+                '/home': (context) => const Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: CheckAuth(),
                     ),
                 '/login': (context) => const LoginScreen(),
               },

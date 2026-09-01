@@ -18,21 +18,32 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   bool _showData = false;
+  bool _loadFailed = false;
+  bool _isSubmitting = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   User? _currentUserData;
+  String _originalName = '';
 
   final _name = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
 
+  bool get _isAdmin => _currentUserData?.role == 'admin';
+
   @override
   void initState() {
-    _name.clear();
-    _password.clear();
-    _confirmPassword.clear();
-
-    _getUserData();
-
     super.initState();
+    _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _password.dispose();
+    _confirmPassword.dispose();
+    super.dispose();
   }
 
   @override
@@ -41,265 +52,154 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          bottomNavigationBar: Responsive.isMobile(context)
+          bottomNavigationBar: Responsive.isMobile(context) && _showData
               ? _buildBottomNavigationBar(context)
-              : const Opacity(opacity: 1),
-          appBar: appBarWithBackButton(context: context, title: "پروفایل شما"),
+              : null,
+          appBar: appBarWithBackButton(context: context, title: 'پروفایل شما'),
           body: SafeArea(
-            child: SingleChildScrollView(
-              primary: false,
-              padding: EdgeInsets.all(AppStyle.defaultPadding),
-              child: _showData
-                  ? _content(context)
-                  : const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-            ),
+            child: _buildBody(context),
           ),
         ),
       ),
     );
   }
 
-  void _getUserData() async {
-    await getUserInfo().then((value) {
-      if (value != null) {
-        setState(() {
-          _currentUserData = value;
-        });
-        _name.text = _currentUserData!.name;
-
-        setState(() {
-          _showData = true;
-        });
-      }
-    });
-  }
-
-  _content(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildBody(BuildContext context) {
+    if (_loadFailed) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              flex: 5,
-              child: Column(
-                children: [
-                  _userCard(context),
-                ],
-              ),
+            const Icon(Icons.error_outline, size: 48, color: Colors.white54),
+            SizedBox(height: AppStyle.defaultPadding),
+            const Text('بارگذاری اطلاعات کاربری ناموفق بود'),
+            SizedBox(height: AppStyle.defaultPadding),
+            ElevatedButton(
+              onPressed: _loadUserData,
+              child: const Text('تلاش مجدد'),
             ),
-            SizedBox(width: AppStyle.defaultPadding),
-            // On Mobile means if the screen is less than 850 we dont want to show it
-            if (!Responsive.isMobile(context)) // side windows
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    _submitActionCard(context),
-                    SizedBox(width: AppStyle.defaultPadding),
-                  ],
-                ),
-              ),
           ],
-        )
-      ],
-    );
-  }
+        ),
+      );
+    }
 
-  _userCard(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-    List<Widget> myList = [];
-    setState(() {
-      myList.add(CustomTextFromFieldWidget(
-        controller: _name,
-        textHint: "نام کاربری",
-        validationError: "نام کاربری را وارد کنید.",
-        textInputAction: TextInputAction.next,
-        keyboardType: TextInputType.text,
-      ));
-      myList.add(CustomTextFromFieldWidget(
-        controller: _password,
-        textHint: "رمز عبور",
-        validationError: "رمز عبور را وارد کنید",
-        keyboardType: TextInputType.text,
-        obscureText: true,
-        validatorType: "password",
-      ));
-      myList.add(CustomTextFromFieldWidget(
-        controller: _confirmPassword,
-        textHint: "تکرار رمز عبور",
-        validationError: "تکرار رمز عبور را وارد کنید",
-        keyboardType: TextInputType.text,
-        obscureText: true,
-        validatorType: "password",
-      ));
-    });
-    return Container(
+    if (!_showData) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SingleChildScrollView(
+      primary: false,
       padding: EdgeInsets.all(AppStyle.defaultPadding),
-      decoration: BoxDecoration(
-        color: AppStyle.secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "اطلاعات کاربری شما",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-            width: double.infinity,
-            child: Responsive(
-              mobile: widgetsGridview(
-                  childAspectRatio: 2.9,
-                  context: context,
-                  importedList: myList,
-                  crossAxisCount: 1),
-              tablet: widgetsGridview(
-                  context: context,
-                  childAspectRatio: 4,
-                  importedList: myList,
-                  crossAxisCount: 2),
-              desktop: widgetsGridview(
-                  importedList: myList,
-                  context: context,
-                  childAspectRatio: size.width < 1400 ? 4 : 5.5,
-                  crossAxisCount: 2),
+          Expanded(
+            flex: 5,
+            child: Column(
+              children: [
+                _profileHeaderCard(context),
+                SizedBox(height: AppStyle.defaultPadding),
+                _accountInfoCard(context),
+                SizedBox(height: AppStyle.defaultPadding),
+                _passwordChangeCard(context),
+              ],
             ),
           ),
+          if (!Responsive.isMobile(context)) ...[
+            SizedBox(width: AppStyle.defaultPadding),
+            Expanded(
+              flex: 2,
+              child: _submitActionCard(context),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  _buildBottomNavigationBar(BuildContext context) {
-    return SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: 50.0,
-        child: ElevatedButton(
-          onPressed: () {
-            _submitData(context);
-          },
-          style: ElevatedButton.styleFrom(
-              backgroundColor: AppStyle.secondaryColor),
-          child: const Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.done,
-                  color: Colors.white,
-                ),
-                SizedBox(
-                  width: 4.0,
-                ),
+  Widget _profileHeaderCard(BuildContext context) {
+    final user = _currentUserData!;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppStyle.defaultPadding * 1.25),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 32,
+            backgroundColor: AppStyle.primaryColor.withValues(alpha: 0.2),
+            child: Icon(
+              Icons.person,
+              size: 36,
+              color: AppStyle.primaryColor,
+            ),
+          ),
+          SizedBox(width: AppStyle.defaultPadding),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  "ثبت تغییرات",
-                  style: TextStyle(color: Colors.white),
+                  user.name,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: AppStyle.defaultPadding / 4),
+                Text(
+                  'شناسه حساب: ${user.accountId}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white70,
+                      ),
                 ),
               ],
             ),
           ),
-        ));
+          _roleBadge(user.role),
+        ],
+      ),
+    );
   }
 
-  void _submitData(BuildContext context) async {
-    // بررسی خالی بودن همه فیلدها
-    if (_name.text.isEmpty &&
-        _password.text.isEmpty &&
-        _confirmPassword.text.isEmpty) {
-      showMsg(
-          msg: "اطلاعات درخواستی را وارد کنید",
-          context: context,
-          type: "error");
-      return;
-    }
+  Widget _roleBadge(String role) {
+    final label = _roleLabel(role);
+    final color = switch (role) {
+      'admin' => AppStyle.primaryColor,
+      'agent' => Colors.orangeAccent,
+      _ => Colors.greenAccent,
+    };
 
-    // بررسی رمز عبور
-    if (_password.text.isNotEmpty || _confirmPassword.text.isNotEmpty) {
-      // بررسی یکسان بودن رمز عبور و تکرار آن
-      if (_password.text != _confirmPassword.text) {
-        showMsg(
-            msg: "رمز عبور و تکرار آن باید یکسان باشند",
-            context: context,
-            type: "error");
-        return;
-      }
-
-      // بررسی طول رمز عبور
-      if (_password.text.length < 8) {
-        showMsg(
-            msg: "رمز عبور باید حداقل 8 کاراکتر باشد",
-            context: context,
-            type: "error");
-        return;
-      }
-    }
-
-    // اعتبارسنجی نام کاربری
-    if (_name.text.isEmpty) {
-      showMsg(
-          msg: "نام کاربری نمی‌تواند خالی باشد",
-          context: context,
-          type: "error");
-      return;
-    }
-
-    // اگر همه شرایط برقرار بود، به‌روزرسانی را انجام بده
-    if (_currentUserData!.role == "admin") {
-      if (!context.mounted) return;
-      EasyLoading.show();
-
-      await updateUser(
-              user: User(
-                  id: _currentUserData!.id,
-                  name: _name.text,
-                  accountId: _currentUserData!.accountId,
-                  role: _currentUserData!.role),
-              password: _password.text)
-          .then((value) {
-        if (!context.mounted) return;
-        if (value) {
-          showMsg(msg: "با موفقیت انجام شد", context: context);
-          return;
-        }
-        showMsg(msg: "خطا", context: context, type: "error");
-      });
-      EasyLoading.dismiss();
-    } else {
-      await updateUserPassword(password: _password.text).then((value) {
-        if (!context.mounted) return;
-        if (value) {
-          showMsg(msg: "با موفقیت انجام شد", context: context);
-          return;
-        }
-        showMsg(msg: "خطا", context: context, type: "error");
-      });
-    }
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppStyle.defaultPadding * 0.75,
+        vertical: AppStyle.defaultPadding / 4,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.w600),
+      ),
+    );
   }
 
-  _submitActionCard(BuildContext context) {
-    List<Widget> myList = [];
-    final Size size = MediaQuery.of(context).size;
-    setState(() {
-      myList.add(ElevatedButton.icon(
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppStyle.defaultPadding * 1.5,
-            vertical: AppStyle.defaultPadding /
-                (Responsive.isMobile(context) ? 2 : 1),
-          ),
-        ),
-        onPressed: () async {
-          _submitData(context);
-        },
-        icon: const Icon(Icons.done),
-        label: const Text("ثبت تغییرات"),
-      ));
-    });
+  String _roleLabel(String role) {
+    return switch (role) {
+      'admin' => 'مدیر',
+      'agent' => 'نماینده',
+      'user' => 'کاربر',
+      _ => role,
+    };
+  }
+
+  Widget _accountInfoCard(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    final fieldMaxWidth = isMobile ? double.infinity : 400.0;
+
     return Container(
       padding: EdgeInsets.all(AppStyle.defaultPadding),
       decoration: BoxDecoration(
@@ -309,32 +209,362 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('اطلاعات حساب', style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: AppStyle.defaultPadding / 2),
           Text(
-            "عملیات‌ها",
-            style: Theme.of(context).textTheme.titleMedium,
+            _isAdmin
+                ? 'نام کاربری قابل ویرایش است.'
+                : 'نام کاربری فقط خواندنی است. برای تغییر رمز، بخش پایین را تکمیل کنید.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white60,
+                ),
           ),
-          SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Responsive(
-                mobile: widgetsGridview(
-                    context: context,
-                    crossAxisCount: 2,
-                    childAspectRatio: 3,
-                    importedList: myList),
-                tablet: widgetsGridview(
-                    context: context,
-                    crossAxisCount: 1,
-                    childAspectRatio: size.width < 1400 ? 3 : 4.5,
-                    importedList: myList),
-                desktop: widgetsGridview(
-                    importedList: myList,
-                    context: context,
-                    childAspectRatio: size.width < 1400 ? 3 : 4.5,
-                    crossAxisCount: 2),
-              )),
+          SizedBox(height: AppStyle.defaultPadding / 2),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: fieldMaxWidth),
+              child: CustomTextFromFieldWidget(
+                controller: _name,
+                textHint: 'نام کاربری',
+                validationError: 'نام کاربری را وارد کنید.',
+                textInputAction: TextInputAction.next,
+                keyboardType: TextInputType.text,
+                enable: _isAdmin,
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _passwordChangeCard(BuildContext context) {
+    final fields = <Widget>[
+      _passwordField(
+        controller: _password,
+        hint: 'رمز عبور جدید',
+        obscure: _obscurePassword,
+        onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+      ),
+      _passwordField(
+        controller: _confirmPassword,
+        hint: 'تکرار رمز عبور جدید',
+        obscure: _obscureConfirmPassword,
+        onToggle: () =>
+            setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+      ),
+    ];
+
+    return _sectionCard(
+      context: context,
+      title: 'تغییر رمز عبور',
+      subtitle: 'در صورت عدم نیاز به تغییر رمز، این فیلدها را خالی بگذارید.',
+      fields: fields,
+      crossAxisCount: Responsive.isMobile(context) ? 1 : 2,
+      childAspectRatio: Responsive.isMobile(context) ? 2.9 : 4,
+    );
+  }
+
+  Widget _passwordField({
+    required TextEditingController controller,
+    required String hint,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(top: AppStyle.defaultPadding),
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        border: Border.all(
+          width: 2,
+          color: AppStyle.primaryColor.withValues(alpha: 0.15),
+        ),
+        borderRadius: BorderRadius.all(
+          Radius.circular(AppStyle.defaultPadding),
+        ),
+      ),
+      child: TextFormField(
+        controller: controller,
+        textDirection: TextDirection.rtl,
+        textAlign: TextAlign.right,
+        obscureText: obscure,
+        decoration: InputDecoration(
+          hintText: hint,
+          labelText: hint,
+          labelStyle: const TextStyle(
+            color: Colors.grey,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+            onPressed: onToggle,
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.transparent, width: 1),
+          ),
+          fillColor: AppStyle.secondaryColor,
+          filled: true,
+          border: const OutlineInputBorder(
+            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required List<Widget> fields,
+    required int crossAxisCount,
+    required double childAspectRatio,
+  }) {
+    final size = MediaQuery.of(context).size;
+
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: AppStyle.defaultPadding / 2),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white60,
+                ),
+          ),
+          SizedBox(height: AppStyle.defaultPadding / 2),
+          SizedBox(
+            width: double.infinity,
+            child: Responsive(
+              mobile: widgetsGridview(
+                childAspectRatio: childAspectRatio,
+                context: context,
+                importedList: fields,
+                crossAxisCount: crossAxisCount,
+              ),
+              tablet: widgetsGridview(
+                context: context,
+                childAspectRatio: childAspectRatio,
+                importedList: fields,
+                crossAxisCount: crossAxisCount,
+              ),
+              desktop: widgetsGridview(
+                importedList: fields,
+                context: context,
+                childAspectRatio: size.width < 1400 ? childAspectRatio : 5.5,
+                crossAxisCount: crossAxisCount,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : () => _submitData(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppStyle.primaryColor,
+          disabledBackgroundColor: AppStyle.primaryColor.withValues(alpha: 0.5),
+        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.done, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('ثبت تغییرات', style: TextStyle(color: Colors.white)),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _submitActionCard(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(AppStyle.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppStyle.secondaryColor,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('عملیات', style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: AppStyle.defaultPadding),
+          ElevatedButton.icon(
+            onPressed: _isSubmitting ? null : () => _submitData(context),
+            icon: _isSubmitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.done),
+            label: Text(_isSubmitting ? 'در حال ذخیره...' : 'ثبت تغییرات'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _showData = false;
+      _loadFailed = false;
+    });
+
+    final value = await getUserInfo();
+    if (!mounted) return;
+
+    if (value == null) {
+      setState(() => _loadFailed = true);
+      return;
+    }
+
+    setState(() {
+      _currentUserData = value;
+      _originalName = value.name;
+      _name.text = value.name;
+      _showData = true;
+    });
+  }
+
+  String? _validatePasswordChange() {
+    final hasPassword = _password.text.isNotEmpty;
+    final hasConfirm = _confirmPassword.text.isNotEmpty;
+
+    if (!hasPassword && !hasConfirm) return null;
+
+    if (hasPassword != hasConfirm) {
+      return 'هر دو فیلد رمز عبور باید تکمیل شوند';
+    }
+
+    if (_password.text != _confirmPassword.text) {
+      return 'رمز عبور و تکرار آن باید یکسان باشند';
+    }
+
+    if (_password.text.length < 8) {
+      return 'رمز عبور باید حداقل ۸ کاراکتر باشد';
+    }
+
+    return null;
+  }
+
+  Future<void> _submitData(BuildContext context) async {
+    if (_currentUserData == null || _isSubmitting) return;
+
+    final passwordError = _validatePasswordChange();
+    if (passwordError != null) {
+      showMsg(msg: passwordError, context: context, type: 'error');
+      return;
+    }
+
+    final wantsPasswordChange =
+        _password.text.isNotEmpty || _confirmPassword.text.isNotEmpty;
+    final wantsNameChange = _isAdmin && _name.text.trim() != _originalName;
+
+    if (!wantsPasswordChange && !wantsNameChange) {
+      showMsg(
+        msg: 'تغییری برای ذخیره وجود ندارد',
+        context: context,
+        type: 'error',
+      );
+      return;
+    }
+
+    if (_isAdmin && _name.text.trim().isEmpty) {
+      showMsg(
+        msg: 'نام کاربری نمی‌تواند خالی باشد',
+        context: context,
+        type: 'error',
+      );
+      return;
+    }
+
+    if (!_isAdmin && !wantsPasswordChange) {
+      showMsg(
+        msg: 'برای ذخیره، رمز عبور جدید را وارد کنید',
+        context: context,
+        type: 'error',
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    EasyLoading.show();
+
+    try {
+      final success = await _performUpdate(wantsNameChange, wantsPasswordChange);
+      if (!context.mounted) return;
+
+      if (success) {
+        _password.clear();
+        _confirmPassword.clear();
+        if (wantsNameChange) {
+          _originalName = _name.text.trim();
+        }
+        showMsg(msg: 'تغییرات با موفقیت ذخیره شد', context: context);
+      } else {
+        showMsg(
+          msg: 'ذخیره تغییرات ناموفق بود. لطفاً دوباره تلاش کنید',
+          context: context,
+          type: 'error',
+        );
+      }
+    } finally {
+      EasyLoading.dismiss();
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<bool> _performUpdate(
+    bool wantsNameChange,
+    bool wantsPasswordChange,
+  ) async {
+    final user = _currentUserData!;
+
+    if (_isAdmin) {
+      return updateUser(
+        user: User(
+          id: user.id,
+          name: _name.text.trim(),
+          accountId: user.accountId,
+          role: user.role,
+        ),
+        password: wantsPasswordChange ? _password.text : null,
+      );
+    }
+
+    if (user.role == 'agent') {
+      return changeAgentPassword(password: _password.text);
+    }
+
+    return updateUserPassword(password: _password.text);
   }
 }

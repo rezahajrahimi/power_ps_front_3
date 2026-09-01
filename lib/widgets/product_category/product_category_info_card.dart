@@ -90,6 +90,7 @@ class _ProductCategoryCardWidgetState extends State<ProductCategoryCardWidget> {
               price: i.price,
               rechargable: i.rechargable,
               showPannelLink: i.showPannelLink,
+              sendConfigToUser: i.sendConfigToUser,
               isActive: i.isActive,
               showSubscriptionLink: i.showSubscriptionLink),
         ));

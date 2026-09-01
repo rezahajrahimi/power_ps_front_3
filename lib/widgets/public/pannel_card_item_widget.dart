@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/pannel_model.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/edit_pannel_screen.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/edit_marzban_panel_screen.dart';
 import 'package:powerps/screens/admin_screen/settings/pannel/edit_sanaei_panel_screen.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
 import 'package:powerps/styles/app_theme.dart';
@@ -80,6 +81,14 @@ class _PannelItemInfoWidgetState extends State<PannelItemInfoWidget> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => EditSanaeiPanelScreen(
+                            selectedPannel: widget.pannel,
+                          ),
+                        )).then((value) => {widget.callback!(true)});
+                  } else if (isMarzbanCompatiblePanel(widget.pannel.type)) {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditMarzbanPanelScreen(
                             selectedPannel: widget.pannel,
                           ),
                         )).then((value) => {widget.callback!(true)});

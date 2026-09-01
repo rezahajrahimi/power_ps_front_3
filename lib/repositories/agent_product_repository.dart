@@ -7,7 +7,9 @@ import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
 import 'package:powerps/models/hiffify_config_model.dart';
+import 'package:powerps/models/marzban_config_model.dart';
 import 'package:powerps/models/sanaei_config_model.dart';
+import 'package:powerps/helper/public.dart';
 import 'package:powerps/models/product_category_model.dart';
 
 Future createAndEditBatchOfUserAgentProduct(
@@ -17,11 +19,14 @@ Future createAndEditBatchOfUserAgentProduct(
   var formData = FormData.fromMap({
     'UserID': userID,
     'minusBallance': agentPermisson.minusBallance,
+    'minusBallanceLimit': agentPermisson.minusBallanceLimit,
     'deleteProducts': agentPermisson.deleteProducts,
     'createProducts': agentPermisson.createProducts,
     'trafficLimitationTB': agentPermisson.trafficLimitationTB,
     'productLimitation': agentPermisson.productLimitation,
-    'selectedProductList': json.encode(gentAddCategoriyList),
+    'selectedProductList': json.encode(
+      gentAddCategoriyList.map((item) => item.toMap()).toList(),
+    ),
   });
 
   try {
@@ -96,7 +101,7 @@ Future obtainBatchOfExistProductsToUser({
   var formData = FormData.fromMap({
     'accountID': accountID,
     'pannelID': pannelID,
-    'configs': json.encode(hiddifyConfig),
+    'configs': json.encode(hiddifyConfig.map((config) => config.toMap()).toList()),
   });
 
   try {
@@ -135,7 +140,9 @@ Future deleteBatchOfUserAgentProduct({
 }) async {
   var formData = FormData.fromMap({
     'UserID': userID,
-    'selectedProductList': json.encode(gentAddCategoriyList),
+    'selectedProductList': json.encode(
+      gentAddCategoriyList.map((item) => item.toMap()).toList(),
+    ),
   });
 
   // try {
@@ -179,11 +186,11 @@ Future batchExistSubscriptionJobDayOpr(
     'panel_id': panelId,
     'days': day,
     'vol': vol,
-    'configs': json.encode(hiddifyConfig),
+    'configs': json.encode(hiddifyConfig.map((config) => config.toMap()).toList()),
   });
 
   try {
-    await GenaralApi.dio.post("/api/batchExistSubscriptionJob",
+    final response = await GenaralApi.dio.post("/api/batchExistSubscriptionJob",
         data: formData,
         options: Options(headers: {
           'Accept': 'application/json',
@@ -192,19 +199,13 @@ Future batchExistSubscriptionJobDayOpr(
           "Charset": "utf-8",
           'Access-Control-Allow-Origin': '*'
         }));
-    // debugPrint("response ${response.statusCode}");
-    // debugPrint("status code:=>${response.statusMessage}");
-    // if (response.statusCode == 200 && response.data != null) {
-    return true;
-    // } else if (response.statusCode == 201) {
-    //   return false;
-    // } else if (response.statusCode == 401) {
-    //   return false;
-    // } else if (response.statusCode == 500) {
-    //   return false;
-    // } else {
-    //   return false;
-    // }
+    if (response.statusCode == 200 && response.data != null) {
+      final status = response.data is Map
+          ? response.data['status']?.toString()
+          : null;
+      return status == null || status == 'success';
+    }
+    return false;
   } on DioException catch (e) {
     debugPrint(e.message.toString());
     return null;
@@ -261,7 +262,9 @@ Future getAgentProductsByUserID({required int userID}) async {
       List<AgentAddCategoriyModel> selected = [];
       var dataSelected = response.data;
       for (var i in dataSelected) {
-        selected.add(AgentAddCategoriyModel.fromMap(i));
+        selected.add(AgentAddCategoriyModel.fromMap(
+          Map<String, dynamic>.from(i as Map),
+        ));
       }
 
       return selected;
@@ -310,12 +313,22 @@ Future getAgentSelledProducts() async {
   }
 }
 
-Future buyProductByAgentWithPrID(
-    {required int productID, required String remark}) async {
+Future buyProductByAgentWithPrID({
+  required int productID,
+  required String remark,
+  String? promoCode,
+  bool useLoyaltyPoints = true,
+}) async {
   try {
     Response response =
         await GenaralApi.dio.put("/api/buyProductByAgentWithPrID",
-            data: {"id": productID, "remark": remark},
+            data: {
+              "id": productID,
+              "remark": remark,
+              if (promoCode != null && promoCode.isNotEmpty)
+                "promo_code": promoCode,
+              "use_loyalty_points": useLoyaltyPoints,
+            },
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -340,12 +353,22 @@ Future buyProductByAgentWithPrID(
   }
 }
 
-Future buyProductByUserWithPrID(
-    {required int productID, required String remark}) async {
+Future buyProductByUserWithPrID({
+  required int productID,
+  required String remark,
+  String? promoCode,
+  bool useLoyaltyPoints = true,
+}) async {
   try {
     Response response =
         await GenaralApi.dio.put("/api/buyProductByUserWithPrID",
-            data: {"id": productID, "remark": remark},
+            data: {
+              "id": productID,
+              "remark": remark,
+              if (promoCode != null && promoCode.isNotEmpty)
+                "promo_code": promoCode,
+              "use_loyalty_points": useLoyaltyPoints,
+            },
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',
@@ -356,6 +379,8 @@ Future buyProductByUserWithPrID(
 
     if (response.statusCode == 200) {
       return response.data;
+    } else if (response.statusCode == 403 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {
@@ -366,6 +391,10 @@ Future buyProductByUserWithPrID(
       return false;
     }
   } on DioException catch (e) {
+    final data = e.response?.data;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
     return e.error;
   }
 }
@@ -375,7 +404,8 @@ Future buyProductByAdmin(
     required String remark,
     username,
     required int userID,
-    required int accountId}) async {
+    required int accountId,
+    bool deductFromWallet = true}) async {
   try {
     Response response = await GenaralApi.dio.put("/api/buyProductByAdmin",
         data: {
@@ -383,7 +413,8 @@ Future buyProductByAdmin(
           "remark": remark,
           "account_id": accountId,
           "username": username,
-          "user_id": userID
+          "user_id": userID,
+          "deduct_from_wallet": deductFromWallet,
         },
         options: Options(headers: {
           'Accept': 'application/json',
@@ -395,73 +426,76 @@ Future buyProductByAdmin(
 
     if (response.statusCode == 200) {
       return response.data;
-    } else if (response.statusCode == 201) {
-      return false;
     } else if (response.statusCode == 401) {
-      return false;
+      return response.data ?? 'موجودی کیف پول کاربر کافی نیست';
     } else if (response.statusCode == 500) {
-      return false;
+      return response.data ?? false;
     } else {
       return false;
     }
   } on DioException catch (e) {
+    final data = e.response?.data;
+    if (data is String && data.isNotEmpty) return data;
     return e.error;
   }
 }
 
 Future getBoughtProductsStatusFromServerById({required int productID}) async {
-  try {
-    Response response = await GenaralApi.dio
-        .get("/api/getBoughtProductsStatusFromServerById/$productID",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
-
-    if (response.statusCode == 200) {
-      if (response.data.containsKey('client') ||
-          response.data.containsKey('inbound')) {
-        return SanaeiConfig.fromJson(response.data);
-      }
-      HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
-      return hiddifyConfig;
-    } else if (response.statusCode == 201) {
-      return false;
-    } else if (response.statusCode == 401) {
-      return false;
-    } else if (response.statusCode == 500) {
-      return false;
-    } else {
-      return false;
-    }
-  } on DioException catch (e) {
-    debugPrint(e.error.toString());
-    return false;
-  }
+  return _fetchBoughtProductStatus(
+    endpoint: "/api/getBoughtProductsStatusFromServerById/$productID",
+  );
 }
 
 Future getProductBoughtedByProductIdUserMode({required int productID}) async {
-  try {
-    Response response = await GenaralApi.dio
-        .get("/api/getProductBoughtedByProductIdUserMode/$productID",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+  return _fetchBoughtProductStatus(
+    endpoint: "/api/getProductBoughtedByProductIdUserMode/$productID",
+  );
+}
 
-    if (response.statusCode == 200) {
-      if (response.data.containsKey('client') ||
-          response.data.containsKey('inbound')) {
-        return SanaeiConfig.fromJson(response.data);
-      }
-      HiddifyConfig hiddifyConfig = HiddifyConfig.fromJson(response.data);
-      return hiddifyConfig;
+Future<dynamic> fetchBoughtProductStatus({
+  required int productID,
+  String userRole = "user",
+}) {
+  if (userRole == "agent") {
+    return getBoughtProductsStatusFromServerById(productID: productID);
+  }
+  return getProductBoughtedByProductIdUserMode(productID: productID);
+}
+
+dynamic parseBoughtProductStatusJson(Map<String, dynamic> json) {
+  final panelType = json['panel_type']?.toString() ?? '';
+  if (isMarzbanCompatiblePanel(panelType) ||
+      (json.containsKey('used_traffic') &&
+          json.containsKey('username') &&
+          !json.containsKey('uuid'))) {
+    return MarzbanConfig.fromJson(json);
+  }
+  if (panelType == 'hiddify' ||
+      (json.containsKey('uuid') && json.containsKey('current_usage_GB'))) {
+    return HiddifyConfig.fromJson(json);
+  }
+  if (panelType == 'sanaei' ||
+      json.containsKey('client') ||
+      json.containsKey('inbound')) {
+    return SanaeiConfig.fromJson(json);
+  }
+  return HiddifyConfig.fromJson(json);
+}
+
+Future _fetchBoughtProductStatus({required String endpoint}) async {
+  try {
+    Response response = await GenaralApi.dio.get(endpoint,
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data is Map) {
+      return parseBoughtProductStatusJson(
+          Map<String, dynamic>.from(response.data));
     } else if (response.statusCode == 201) {
       return false;
     } else if (response.statusCode == 401) {

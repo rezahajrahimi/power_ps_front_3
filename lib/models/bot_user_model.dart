@@ -4,8 +4,10 @@ import 'package:powerps/models/ballance_model.dart';
 import 'package:powerps/models/blocked_user_model.dart';
 import 'package:powerps/models/log_model.dart';
 import 'package:powerps/models/product_details_model.dart';
+import 'package:powerps/models/loyalty_wallet_model.dart';
 import 'package:powerps/models/referral_wallet_model.dart';
 import 'package:powerps/models/transaction_model.dart';
+import 'package:powerps/models/user_model.dart';
 
 class BotUser {
   BigInt id;
@@ -13,6 +15,8 @@ class BotUser {
   String? username;
   String? firstName;
   String? lastName;
+  String? phoneNumber;
+  String? adminAlias;
   String createdAt;
   String updatedAt;
   List<Log>? logs = [];
@@ -20,38 +24,56 @@ class BotUser {
   List<Transaction>? transactions = [];
   Ballance? ballance;
   ReferralWalletModel? referralWallet;
-  BlockedUserModel? blockedUser;  
+  LoyaltyWalletModel? loyaltyWallet;
+  BlockedUserModel? blockedUser;
+  User? panelUser;
   BotUser(
       {required this.id,
       required this.accountId,
       required this.username,
       required this.firstName,
       required this.lastName,
+      this.phoneNumber,
+      this.adminAlias,
       required this.createdAt,
       required this.updatedAt,
       this.logs,
       this.ballance,
       this.referralWallet,
+      this.loyaltyWallet,
       this.transactions,
       this.products,
-      this.blockedUser});
+      this.blockedUser,
+      this.panelUser});
   // List<Log> itemsList = List<Log>.from(json['logs'].map<Log>((dynamic i) => Log.fromJson(i)));
 
   factory BotUser.fromJson(Map<dynamic, dynamic> json) {
+    final accountId = json['account_id'] ?? json['id'] ?? 0;
+
     return BotUser(
-      id: BigInt.from(json['id']),
-      accountId: BigInt.from(json['account_id'] ?? 0),
+      id: BigInt.from(json['id'] ?? accountId),
+      accountId: BigInt.from(accountId),
       username: json['username'] != null ? json['username'].toString() : "",
       firstName:
           json['first_name'] != null ? json['first_name'].toString() : "",
       lastName: json['last_name'] != null ? json['last_name'].toString() : "",
-      createdAt: json['created_at'].toString(),
-      updatedAt: json['updated_at'].toString(),
+      phoneNumber: json['phone_number']?.toString().trim().isEmpty == true
+          ? null
+          : json['phone_number']?.toString(),
+      adminAlias: json['admin_alias']?.toString().trim().isEmpty == true
+          ? null
+          : json['admin_alias']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
       ballance:
           json['ballance'] != null ? Ballance.fromJson(json['ballance']) : null,
       referralWallet:
           json['user'] != null && json['user']['referral_wallet'] != null
               ? ReferralWalletModel.fromJson(json['user']['referral_wallet'])
+              : null,
+      loyaltyWallet:
+          json['user'] != null && json['user']['loyalty_wallet'] != null
+              ? LoyaltyWalletModel.fromJson(json['user']['loyalty_wallet'])
               : null,
       logs: json['logs'] != null
           ? List<Log>.from(
@@ -68,6 +90,7 @@ class BotUser {
       blockedUser: json['blocked_user'] != null
           ? BlockedUserModel.fromJson(json['blocked_user'])
           : null,
+      panelUser: json['user'] != null ? User.fromJson(json['user']) : null,
     );
   }
 
@@ -78,6 +101,8 @@ class BotUser {
       'username': username,
       'firstName': firstName,
       'lastName': lastName,
+      'phoneNumber': phoneNumber,
+      'adminAlias': adminAlias,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'ballance': ballance?.toMap(),
@@ -93,6 +118,8 @@ class BotUser {
       username: map['username'],
       firstName: map['firstName'],
       lastName: map['lastName'],
+      phoneNumber: map['phoneNumber'],
+      adminAlias: map['adminAlias'],
       createdAt: map['createdAt'] ?? '',
       updatedAt: map['updatedAt'] ?? '',
       ballance: map['ballance'] != null

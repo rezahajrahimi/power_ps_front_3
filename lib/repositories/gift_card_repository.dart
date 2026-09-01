@@ -224,3 +224,25 @@ Future deleteGiftCardByCode({required String code}) async {
     return null;
   }
 }
+
+Future getGiftCardUsers({required String code}) async {
+  try {
+    Response response = await GenaralApi.dio.get("/api/getGiftCardUsers/$code",
+        options: Options(headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          "Content-Type": "application/json;charset=UTF-8",
+          "Charset": "utf-8",
+          'Access-Control-Allow-Origin': '*'
+        }));
+
+    if (response.statusCode == 200 && response.data != null) {
+      return response.data;
+    } else {
+      return null;
+    }
+  } on DioException catch (e) {
+    debugPrint(e.message.toString());
+    return null;
+  }
+}

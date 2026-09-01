@@ -39,19 +39,25 @@ class ProductDetails {
     return ProductDetails(
       id: BigInt.from(json['id']),
       productCategoriesId: BigInt.from(json['product_categories_id']),
-      remark: json['remark'].toString(),
-      accountId: BigInt.from(json['account_id'] ?? 0),
+      remark: _parseNullableString(json['remark']),
+      accountId: json['account_id'] == null
+          ? null
+          : BigInt.from(json['account_id']),
       configs: json['configs'].toString(),
       subscriptionLink: json['subscription_link'].toString(),
       panelLink: json['panel_link'].toString(),
-      isActive: int.parse(json['isActive'].toString()) == 1 ||
-              json['isActive'].toString() == "true"
-          ? true
-          : false,
-      deactiveByAdmin: int.parse(json['deactive_by_admin'].toString()) == 1 ||
-              json['deactive_by_admin'].toString() == "true"
-          ? true
-          : false,
+      isActive: json['isActive'] == null
+          ? null
+          : json['isActive'] == true ||
+              json['isActive'] == 1 ||
+              json['isActive'].toString() == '1' ||
+              json['isActive'].toString() == 'true',
+      deactiveByAdmin: json['deactive_by_admin'] == null
+          ? false
+          : json['deactive_by_admin'] == true ||
+              json['deactive_by_admin'] == 1 ||
+              json['deactive_by_admin'].toString() == '1' ||
+              json['deactive_by_admin'].toString() == 'true',
       createdAt: json['created_at'].toString(),
       updatedAt: json['updated_at'].toString(),
       botUser: json['user'] != null ? BotUser.fromJson(json['user']) : null,
@@ -59,6 +65,14 @@ class ProductDetails {
           ? ProductCategory.fromMap(json['product_category'])
           : null,
     );
+  }
+
+  static String? _parseNullableString(dynamic value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+      return null;
+    }
+    return text;
   }
 
   Map<String, dynamic> toMap() {

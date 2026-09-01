@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/models/agent_add_categoriy_model.dart';
 import 'package:powerps/models/agent_dashboard_model.dart';
+import 'package:powerps/models/agent_limit_usage_model.dart';
+import 'package:powerps/models/agent_permisson_model.dart';
 import 'package:powerps/models/ballance_model.dart';
 import 'package:powerps/models/bot_user_model.dart';
 import 'package:powerps/models/bought_product_details_model.dart';
@@ -20,59 +22,86 @@ Future<Dashboard?> getDashboardAnalytics({int unconfirmedPage = 1}) async {
   try {
     Response response = await GenaralApi.dio
         .get("/api/getDashboardAnalytics?page=$unconfirmedPage",
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Connection': 'keep-alive',
-              "Content-Type": "application/json;charset=UTF-8",
-              "Charset": "utf-8",
-              'Access-Control-Allow-Origin': '*'
-            }));
+            options: Options(
+              receiveTimeout: const Duration(seconds: 25),
+              sendTimeout: const Duration(seconds: 25),
+              headers: {
+                'Accept': 'application/json',
+                'Connection': 'keep-alive',
+                "Content-Type": "application/json;charset=UTF-8",
+                "Charset": "utf-8",
+                'Access-Control-Allow-Origin': '*'
+              },
+            ));
 
     if (response.statusCode == 200 && response.data != null) {
-      var data = response.data;
-      List<BotUser> users = [];
-      List<Log> logs = [];
-      List<Transaction> conTransactions = [];
-      List<Transaction> unConTransactions = [];
+      final data = response.data as Map<String, dynamic>;
+      final List<BotUser> users = [];
+      final List<Log> logs = [];
+      final List<Transaction> conTransactions = [];
+      final List<Transaction> unConTransactions = [];
       int unConTransactionsLastPage = 1;
       int unConTransactionsCurrentPage = 1;
-      List<DetailsInfoItem> mostSelledProductCategory = [];
-      List<ProductDetails> last10ProductSelled = [];
+      final List<DetailsInfoItem> mostSelledProductCategory = [];
+      final List<ProductDetails> last10ProductSelled = [];
 
-      for (var i in data["Last10User"]) {
-        users.add(BotUser.fromJson(i));
-      }
-
-      for (var i in data["Last20Logs"]) {
-        logs.add(Log.fromJson(i));
-      }
-      for (var i in data["Last10ConfirmedTransaction"]) {
-        conTransactions.add(Transaction.fromJson(i));
-      }
-
-      if (data["UnConfirmedTransaction"] != null) {
-        unConTransactionsLastPage =
-            data["UnConfirmedTransaction"]["last_page"] ?? 1;
-        unConTransactionsCurrentPage =
-            data["UnConfirmedTransaction"]["current_page"] ?? 1;
-        for (var i in data["UnConfirmedTransaction"]["data"]) {
-          unConTransactions.add(Transaction.fromJson(i));
+      for (final i in (data["Last10User"] as List? ?? [])) {
+        try {
+          users.add(BotUser.fromJson(i));
+        } catch (e) {
+          debugPrint('getDashboardAnalytics: skip user $e');
         }
       }
 
-      for (var i in data["MostSelledProductCategory"]) {
-        mostSelledProductCategory.add(DetailsInfoItem(
-            icon: const Icon(Icons.info),
-            itemName: i["category_name"],
-            itemValue: i["count"].toString()));
+      for (final i in (data["Last20Logs"] as List? ?? [])) {
+        try {
+          logs.add(Log.fromJson(i));
+        } catch (e) {
+          debugPrint('getDashboardAnalytics: skip log $e');
+        }
       }
-      for (var i in data["last10ProductSelled"]) {
-        last10ProductSelled.add(ProductDetails.fromJson(i));
+      for (final i in (data["Last10ConfirmedTransaction"] as List? ?? [])) {
+        try {
+          conTransactions.add(Transaction.fromJson(i));
+        } catch (e) {
+          debugPrint('getDashboardAnalytics: skip confirmed tx $e');
+        }
       }
 
-      List<Map<String, dynamic>> pannelsStatus = [];
+      if (data["UnConfirmedTransaction"] != null) {
+        final unconfirmed = data["UnConfirmedTransaction"];
+        unConTransactionsLastPage = unconfirmed["last_page"] ?? 1;
+        unConTransactionsCurrentPage = unconfirmed["current_page"] ?? 1;
+        for (final i in (unconfirmed["data"] as List? ?? [])) {
+          try {
+            unConTransactions.add(Transaction.fromJson(i));
+          } catch (e) {
+            debugPrint('getDashboardAnalytics: skip unconfirmed tx $e');
+          }
+        }
+      }
+
+      for (final i in (data["MostSelledProductCategory"] as List? ?? [])) {
+        try {
+          mostSelledProductCategory.add(DetailsInfoItem(
+              icon: const Icon(Icons.info),
+              itemName: i["category_name"],
+              itemValue: i["count"].toString()));
+        } catch (e) {
+          debugPrint('getDashboardAnalytics: skip category $e');
+        }
+      }
+      for (final i in (data["last10ProductSelled"] as List? ?? [])) {
+        try {
+          last10ProductSelled.add(ProductDetails.fromJson(i));
+        } catch (e) {
+          debugPrint('getDashboardAnalytics: skip product $e');
+        }
+      }
+
+      final List<Map<String, dynamic>> pannelsStatus = [];
       if (data["PannelsStatus"] != null) {
-        for (var i in data["PannelsStatus"]) {
+        for (final i in (data["PannelsStatus"] as List? ?? [])) {
           pannelsStatus.add(Map<String, dynamic>.from(i));
         }
       }
@@ -82,7 +111,7 @@ Future<Dashboard?> getDashboardAnalytics({int unconfirmedPage = 1}) async {
         financialSummary = Map<String, dynamic>.from(data["FinancialSummary"]);
       }
 
-      Dashboard dashboard = Dashboard(
+      return Dashboard(
           users: users,
           logs: logs,
           conTransactions: conTransactions,
@@ -93,7 +122,6 @@ Future<Dashboard?> getDashboardAnalytics({int unconfirmedPage = 1}) async {
           last10ProductSelled: last10ProductSelled,
           pannelsStatus: pannelsStatus,
           financialSummary: financialSummary);
-      return dashboard;
     } else if (response.statusCode == 201) {
       return null;
     } else if (response.statusCode == 401) {
@@ -104,7 +132,36 @@ Future<Dashboard?> getDashboardAnalytics({int unconfirmedPage = 1}) async {
       return null;
     }
   } on DioException catch (e) {
-    debugPrint(e.message);
+    debugPrint('getDashboardAnalytics: ${e.message}');
+    return null;
+  } catch (e) {
+    debugPrint('getDashboardAnalytics parse error: $e');
+    return null;
+  }
+}
+
+Future<Map<String, dynamic>?> getPanelDashboardStatus(int panelId) async {
+  try {
+    final response = await GenaralApi.dio.get(
+      '/api/getPanelDashboardStatus/$panelId',
+      options: Options(
+        receiveTimeout: const Duration(seconds: 12),
+        sendTimeout: const Duration(seconds: 12),
+        headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive',
+          'Content-Type': 'application/json;charset=UTF-8',
+          'Charset': 'utf-8',
+          'Access-Control-Allow-Origin': '*',
+        },
+      ),
+    );
+    if (response.statusCode == 200 && response.data is Map) {
+      return Map<String, dynamic>.from(response.data);
+    }
+    return null;
+  } on DioException catch (e) {
+    debugPrint('getPanelDashboardStatus($panelId): ${e.message}');
     return null;
   }
 }
@@ -136,11 +193,24 @@ Future<AgentDashboard?> getAgentDashboardData() async {
       logs.add(Log.fromJson(i));
     }
 
+    AgentPermisson? permission;
+    if (response.data["agentPermisson"] != null) {
+      permission = AgentPermisson.fromMap(response.data["agentPermisson"]);
+    }
+
+    AgentLimitUsage? limitUsage;
+    if (response.data["agentLimitUsage"] != null) {
+      limitUsage = AgentLimitUsage.fromMap(
+          Map<String, dynamic>.from(response.data["agentLimitUsage"]));
+    }
+
     final agentDashboard = AgentDashboard(
         ballance: agentBallance,
         agentProducts: agentAddCategories,
         boughtProducts: null,
-        logs: logs);
+        logs: logs,
+        permission: permission,
+        limitUsage: limitUsage);
     return agentDashboard;
   }
   debugPrint(response.data);
@@ -264,6 +334,10 @@ Future getAgentPaymentWays() async {
       "name": "crypto_payment_status",
       "status": response.data["crypto_payment_status"]
     });
+    res.add({
+      "name": "swappay_payment_status",
+      "status": response.data["swappay_payment_status"] ?? false
+    });
 
     return res;
   }
@@ -301,6 +375,27 @@ Future createNewAgentDollarBillUrl({required int amount}) async {
   try {
     Response response =
         await GenaralApi.dio.get("/api/createNewAgentDollarBillUrl/$amount",
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              "Content-Type": "application/json;charset=UTF-8",
+              "Charset": "utf-8",
+              'Access-Control-Allow-Origin': '*',
+            }));
+    if (response.statusCode == 200 && response.data != null) {
+      return response.data;
+    }
+    return null;
+  } catch (e) {
+    debugPrint(e.toString());
+    return null;
+  }
+}
+
+Future createNewAgentSwapPayBillUrl({required int amount}) async {
+  try {
+    Response response =
+        await GenaralApi.dio.get("/api/createNewAgentSwapPayBillUrl/$amount",
             options: Options(headers: {
               'Accept': 'application/json',
               'Connection': 'keep-alive',

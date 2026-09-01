@@ -113,4 +113,30 @@ class ReportRepository {
       return [];
     }
   }
+
+  static Future<Map<String, dynamic>> getRetentionStats() async {
+    try {
+      final response = await GenaralApi.dio.get('/api/getRetentionStats');
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data ?? {});
+      }
+      return {};
+    } catch (e) {
+      debugPrint('Error in getRetentionStats: $e');
+      return {};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getRetentionChart() async {
+    try {
+      final response = await GenaralApi.dio.get('/api/getRetentionChart');
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data ?? {});
+      }
+      return {};
+    } catch (e) {
+      debugPrint('Error in getRetentionChart: $e');
+      return {};
+    }
+  }
 }

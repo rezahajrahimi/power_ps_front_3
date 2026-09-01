@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:powerps/helpers/sanaei_inbound_sync.dart';
+import 'package:powerps/helpers/sanaei_panel_version.dart';
 import 'package:powerps/helper/public.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/pannel_model.dart';
@@ -7,6 +9,7 @@ import 'package:powerps/models/proxy_model.dart';
 import 'package:powerps/repositories/hiddify_repository.dart';
 import 'package:powerps/repositories/marzban_repository.dart';
 import 'package:powerps/repositories/pannel_repository.dart';
+import 'package:powerps/screens/admin_screen/settings/pannel/edit_marzban_panel_screen.dart';
 import 'package:powerps/styles/app_theme.dart';
 import 'package:powerps/widgets/public/appbar_with_back_buttun.dart';
 import 'package:powerps/widgets/public/custom_switch_widget.dart';
@@ -56,12 +59,30 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
   final _adminUrlEditTxt = TextEditingController();
   final _secretCodeEditTxt = TextEditingController();
   final _userLinkEditTxt = TextEditingController();
+  final _subPortEditTxt = TextEditingController();
+  final _apiTokenEditTxt = TextEditingController();
   final List<Widget> _sanaeiWidgetList = [];
+  String _selectedApiVersion = SanaeiApiVersion.v3;
 
   @override
   void initState() {
-    _fillData();
     super.initState();
+    if (isMarzbanCompatiblePanel(widget.selectedPannel.type)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditMarzbanPanelScreen(
+              selectedPannel: widget.selectedPannel,
+              panelType: widget.selectedPannel.type,
+            ),
+          ),
+        );
+      });
+      return;
+    }
+    _fillData();
   }
 
   @override
@@ -383,54 +404,23 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
                     crossAxisCount: 2),
               )),
           SizedBox(height: AppStyle.defaultPadding),
-          SizedBox(
-              width: double.infinity,
-              child: Row(
-                children: [
-                  ElevatedButton.icon(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppStyle.defaultPadding * 1.5,
-                        vertical: AppStyle.defaultPadding /
-                            (Responsive.isMobile(context) ? 2 : 1),
-                      ),
-                    ),
-                    onPressed: () async {
-                      if (_adminUrlEditTxt.text.isNotEmpty &&
-                          _userNameEditTxt.text.isNotEmpty &&
-                          _userPasswordEditTxt.text.isNotEmpty) {
-                        EasyLoading.show();
-                        await checkSanaeiLogin(
-                                url: _getHiddifyUrl(_adminUrlEditTxt.text),
-                                username: _userNameEditTxt.text,
-                                password: _userPasswordEditTxt.text)
-                            .then((value) {
-                          EasyLoading.dismiss();
-                          if (!context.mounted) return;
-
-                          if (value == true) {
-                            showMsg(
-                                msg: "موفق، اطلاعات وارد شده صحیح است.",
-                                context: context);
-                            return;
-                          }
-                          showMsg(
-                              msg: "ناموفق، اطلاعات وارد شده را بررسی کنید.",
-                              context: context,
-                              type: "error");
-                        });
-                      } else {
-                        showMsg(
-                            msg: "لطفاً آدرس، نام کاربری و رمز را وارد کنید.",
-                            context: context,
-                            type: "error");
-                      }
-                    },
-                    icon: const Icon(Icons.checklist_rtl),
-                    label: const Text("بررسی لینک "),
-                  )
-                ],
-              )),
+          SanaeiApiVersionDropdown(
+            value: _selectedApiVersion,
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _selectedApiVersion = v);
+            },
+          ),
+          SizedBox(height: AppStyle.defaultPadding),
+          SanaeiPanelActionButtons(
+            pannelId: int.tryParse(widget.selectedPannel.id),
+            adminUrlController: _adminUrlEditTxt,
+            usernameController: _userNameEditTxt,
+            passwordController: _userPasswordEditTxt,
+            apiTokenController: _apiTokenEditTxt,
+            normalizeUrl: normalizeSanaeiAdminUrl,
+            apiVersion: _selectedApiVersion,
+          ),
         ],
       ),
     );
@@ -779,6 +769,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _showOtherData = false;
 
         break;
+      case 'sanaei':
       case 'Sanaei':
         _selectedPannelType = "Sanaei";
         _showMarzbanData = false;
@@ -786,6 +777,8 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _showProxiesData = false;
         _showOtherData = false;
         _showSanaeiData = true;
+        _selectedApiVersion =
+            SanaeiApiVersion.normalize(widget.selectedPannel.apiVersion);
 
         break;
       case "custome":
@@ -808,84 +801,67 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         _selectedPannelType = "دیگر";
     }
     _marzbanToken = widget.selectedPannel.token ?? "";
+    _apiTokenEditTxt.text = widget.selectedPannel.token ?? "";
     _locationEditTxt.text = widget.selectedPannel.location ?? "";
     _capacityEditTxt.text = widget.selectedPannel.capacity.toString();
     _userNameEditTxt.text = widget.selectedPannel.username ?? "";
     _userPasswordEditTxt.text = widget.selectedPannel.password ?? "";
     _urlPortEditTxt.text = widget.selectedPannel.urlPort ?? "";
+    _subPortEditTxt.text = widget.selectedPannel.subPort ?? "";
     _adminUrlEditTxt.text = widget.selectedPannel.adminUrl ?? "";
     _secretCodeEditTxt.text = widget.selectedPannel.secretCode ?? "";
     _userLinkEditTxt.text = widget.selectedPannel.userLink ?? "";
     _showData = false;
     if (widget.selectedPannel.type == 'marzban') {
       await getProxiesByPannelID(pannelId: int.parse(widget.selectedPannel.id))
-          .then((value) => {
-                if (value != [])
-                  {
-                    for (var i in value)
-                      {
-                        if (i.type == 'vmess')
-                          {
-                            setState(
-                              () {
-                                _vmessProxy = i.isActive;
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'VMess TCP') {
-                                    _vmessInboundTCP = j.isActive;
-                                  }
-                                  if (j.name == 'VMess Websocket') {
-                                    _vmessinboundWebSocket = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                        else if (i.type == 'vless')
-                          {
-                            setState(
-                              () {
-                                _vlessProxy = i.isActive;
-
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'VLESS TCP REALITY') {
-                                    _vlessInboundTcpReality = j.isActive;
-                                  }
-                                  if (j.name == 'VLESS GRPC REALITY') {
-                                    _vlessInboundGprcReality = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                        else if (i.type == 'trojan')
-                          {
-                            setState(
-                              () {
-                                _trojanProxy = i.isActive;
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'Trojan Websocket TLS') {
-                                    _trojanInboundWebsocketTLS = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                        else if (i.type == 'shadowsocks')
-                          {
-                            setState(
-                              () {
-                                _shadowsocksProxy = i.isActive;
-                                for (var j in i.inbounds!) {
-                                  if (j.name == 'Shadowsocks TCP') {
-                                    _shadowsocksIboundTCP = j.isActive;
-                                  }
-                                }
-                              },
-                            )
-                          }
-                      }
-                  }
-              });
+          .then((value) {
+        if (value.isEmpty) return;
+        for (final i in value) {
+          if (i.type == 'vmess') {
+            setState(() {
+              _vmessProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'VMess TCP') {
+                  _vmessInboundTCP = j.isActive;
+                }
+                if (j.name == 'VMess Websocket') {
+                  _vmessinboundWebSocket = j.isActive;
+                }
+              }
+            });
+          } else if (i.type == 'vless') {
+            setState(() {
+              _vlessProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'VLESS TCP REALITY') {
+                  _vlessInboundTcpReality = j.isActive;
+                }
+                if (j.name == 'VLESS GRPC REALITY') {
+                  _vlessInboundGprcReality = j.isActive;
+                }
+              }
+            });
+          } else if (i.type == 'trojan') {
+            setState(() {
+              _trojanProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'Trojan Websocket TLS') {
+                  _trojanInboundWebsocketTLS = j.isActive;
+                }
+              }
+            });
+          } else if (i.type == 'shadowsocks') {
+            setState(() {
+              _shadowsocksProxy = i.isActive;
+              for (final j in i.inbounds ?? []) {
+                if (j.name == 'Shadowsocks TCP') {
+                  _shadowsocksIboundTCP = j.isActive;
+                }
+              }
+            });
+          }
+        }
+      });
     }
     setState(() {
       _otherWidgetList.add(CustomTextFromFieldWidget(
@@ -904,6 +880,13 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         keyboardType: TextInputType.text,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _subPortEditTxt,
+        textHint: "پورت سابسکریپشن (اختیاری)",
+        textDirection: TextDirection.ltr,
+        validationError: "",
+        keyboardType: TextInputType.number,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
         controller: _userNameEditTxt,
         textHint: "نام کاربری (admin)",
         validationError: "نام کاربری را وارد کنید.",
@@ -913,6 +896,13 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
         controller: _userPasswordEditTxt,
         textHint: "رمز عبور (admin)",
         validationError: "رمز عبور را وارد کنید.",
+        keyboardType: TextInputType.text,
+      ));
+      _sanaeiWidgetList.add(CustomTextFromFieldWidget(
+        controller: _apiTokenEditTxt,
+        textHint: "API Token (اختیاری - 3x-ui v3)",
+        textDirection: TextDirection.ltr,
+        validationError: "",
         keyboardType: TextInputType.text,
       ));
       _sanaeiWidgetList.add(CustomTextFromFieldWidget(
@@ -1011,6 +1001,48 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
     return str;
   }
 
+  _submitSanaeiSection(BuildContext context) async {
+    EasyLoading.show();
+    final capacity = int.tryParse(_capacityEditTxt.text) ?? 0;
+    if (capacity <= 0) {
+      EasyLoading.dismiss();
+      showMsg(msg: "ظرفیت نامعتبر است.", context: context, type: "error");
+      return;
+    }
+    final res = await updateSanaeiPannel(
+      pannel: Pannel(
+        id: widget.selectedPannel.id,
+        type: "sanaei",
+        location: _locationEditTxt.text,
+        adminUrl: normalizeSanaeiAdminUrl(_adminUrlEditTxt.text),
+        subPort: _subPortEditTxt.text.trim().isEmpty
+            ? null
+            : _subPortEditTxt.text.trim(),
+        username: _userNameEditTxt.text,
+        password: _userPasswordEditTxt.text,
+        token: _apiTokenEditTxt.text.trim().isEmpty
+            ? null
+            : _apiTokenEditTxt.text.trim(),
+        apiVersion: _selectedApiVersion,
+        capacity: capacity,
+      ),
+    );
+    EasyLoading.dismiss();
+    if (!context.mounted) return;
+    if (res) {
+      showMsg(msg: "با موفقیت ثبت شد.", context: context);
+      Navigator.pop(context, true);
+    } else {
+      showMsg(
+        msg: lastPannelAddError.isNotEmpty
+            ? lastPannelAddError
+            : "خطا، اطلاعات وارد شده را بررسی کنید.",
+        context: context,
+        type: "error",
+      );
+    }
+  }
+
   _submitOtherSection(BuildContext context) async {
     EasyLoading.show();
 
@@ -1078,16 +1110,7 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
           token: _marzbanToken,
           capacity: int.parse(_capacityEditTxt.text),
         ),
-        vmess: _vmessProxy,
-        vless: _vlessProxy,
-        trojan: _trojanProxy,
-        shadowsocks: _shadowsocksProxy,
-        vmessTCP: _vmessInboundTCP,
-        shadowsocksTCP: _shadowsocksIboundTCP,
-        trojanWebsocketTLS: _trojanInboundWebsocketTLS,
-        vlessGprcReality: _vlessInboundGprcReality,
-        vlessTcpReality: _vlessInboundTcpReality,
-        vmessWebSocket: _vmessinboundWebSocket);
+        dynamicInbounds: []);
     if (res) {
       if (context.mounted) {
         showMsg(msg: "با موفقیت ثبت شد.", context: context);
@@ -1126,6 +1149,11 @@ class _EditPanelScreenState extends State<EditPanelScreen> {
             showMsg(
                 msg: "ابتدا بر روی بررسی لینک کلیک کنید.", context: context);
           }
+        }
+        break;
+      case "Sanaei":
+        if (context.mounted) {
+          await _submitSanaeiSection(context);
         }
         break;
 
