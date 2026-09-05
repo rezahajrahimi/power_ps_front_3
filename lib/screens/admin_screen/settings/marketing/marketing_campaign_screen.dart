@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:powerps/helper/public.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/repositories/general_repository.dart';
 import 'package:powerps/repositories/marketing_campaign_repository.dart';
@@ -72,9 +73,10 @@ class _MarketingCampaignScreenState extends State<MarketingCampaignScreen> {
   }
 
   Future<void> _checkLicenseAndLoad() async {
-    final license = (await getLicenseType()).toLowerCase();
+    final license = await getLicenseType();
     if (!mounted) return;
-    if (license != 'gold') {
+    final allowed = LicenseHelper.isGold(license);
+    if (!allowed) {
       setState(() {
         _licenseChecked = true;
         _isGoldLicense = false;

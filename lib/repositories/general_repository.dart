@@ -414,6 +414,7 @@ Future createNewAgentSwapPayBillUrl({required int amount}) async {
 }
 
 Future<String> getLicenseType() async {
+  // Open source: all features unlocked (gold).
   try {
     Response response = await GenaralApi.dio.get("/api/get-license-type",
         options: Options(headers: {
@@ -424,11 +425,14 @@ Future<String> getLicenseType() async {
           'Access-Control-Allow-Origin': '*',
         }));
     if (response.statusCode == 200 && response.data != null) {
-      return response.data;
+      final value = response.data.toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
     }
-    return "Trial";
+    return 'gold';
   } catch (e) {
     debugPrint(e.toString());
-    return "Trial";
+    return 'gold';
   }
 }

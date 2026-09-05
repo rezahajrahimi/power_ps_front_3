@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:powerps/helper/connector/dio.dart';
 import 'package:powerps/helper/constes.dart';
+import 'package:powerps/helper/license_helper.dart';
 import 'package:powerps/helper/responsive.dart';
 import 'package:powerps/models/app_info_model.dart';
 import 'package:powerps/provider/app_info_provider.dart';
@@ -63,9 +64,10 @@ class _AppInfoManageScreenState extends State<AppInfoManageScreen> {
   }
 
   Future<void> _checkLicenseAndLoad() async {
-    final license = (await getLicenseType()).toLowerCase();
+    final license = await getLicenseType();
     if (!mounted) return;
-    if (license != 'gold') {
+    final allowed = LicenseHelper.isGold(license);
+    if (!allowed) {
       setState(() {
         _licenseChecked = true;
         _isGoldLicense = false;
